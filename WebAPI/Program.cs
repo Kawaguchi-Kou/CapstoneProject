@@ -1,7 +1,11 @@
 using System;
 using System.Text;
+using Application.Interfaces;
 using Application.Mappings;
+using Application.Services;
+using Domain.Interfaces;
 using Infrastructure.EntitiesConfigurations;
+using Infrastructure.Repositories;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -14,9 +18,19 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // Add services 
+//Auth
+builder.Services.AddScoped<IAuthService, AuthServices>();
+builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddScoped<IRefreshTokenService, RefreshTokenService>();
+
+//User
+builder.Services.AddScoped<IUserService, UsersService>();
+
 
 //Add repositories
-
+builder.Services.AddScoped<IAuthRepository, AuthRepository>();
+builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
 
 // add CORS
 builder.Services.AddCors(options =>

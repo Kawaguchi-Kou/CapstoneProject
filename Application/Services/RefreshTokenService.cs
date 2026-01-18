@@ -7,7 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace AuthService.Application.Services
+namespace Application.Services
 {
     public class RefreshTokenService: IRefreshTokenService
     {
