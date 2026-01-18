@@ -16,6 +16,9 @@ namespace Infrastructure.EntitiesConfigurations
         public DbSet<Role> Roles { get; set; }
         public DbSet<RefreshToken> RefreshTokens { get; set; }
 
+        //User
+        public DbSet<User> Users { get; set; }
+
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -74,6 +77,17 @@ namespace Infrastructure.EntitiesConfigurations
             });
 
 
+            //User
+            modelBuilder.Entity<User>(entity =>
+            {
+                entity.HasKey(u => u.Id);
+                entity.Property(u => u.DateOfBirth).IsRequired();
+                entity.Property(u => u.Address).IsRequired(false);
+                entity.Property(u => u.AvatarUrl).IsRequired(false);
+                entity.Property(u => u.Gender).IsRequired();
+                entity.Property(u => u.PhoneNumber).IsRequired(false);
+                entity.Property(u => u.Name).IsRequired();
+            });
 
             base.OnModelCreating(modelBuilder);
         }
