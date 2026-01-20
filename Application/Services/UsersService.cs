@@ -61,8 +61,8 @@ namespace Application.Services
 
         public async Task<User> CreateProfile(User user)
         {
-            var existedUser = _userRepository.GetByIdAsync(user.Id);
-            if (existedUser != null && existedUser.Result != null)
+            var existedUser = await _userRepository.GetByIdAsync(user.Id);
+            if (existedUser != null)
             {
                 throw new Exception("User already exists");
             }

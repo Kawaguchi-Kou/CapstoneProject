@@ -29,7 +29,7 @@ namespace Application.Services
 
             var payload = new
             {
-                sender = new { name = "TravelPlanner", email = "haonc.t2.1922@gmail.com" },
+                sender = new { name = "TravelPlanner", email = "ha.anh.khang@gmail.com" },
                 to = new[] { new { email = toEmail } },
                 subject = subjects,
                 htmlContent = body
