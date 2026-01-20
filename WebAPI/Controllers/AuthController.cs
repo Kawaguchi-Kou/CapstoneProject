@@ -149,6 +149,7 @@ namespace WebAPI.Controllers
         }
 
         [HttpPost("change-password")]
+        [Authorize]
         public async Task<IActionResult> ChangePassword(ChangePasswordRequest request)
         {
             try
