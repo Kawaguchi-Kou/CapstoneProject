@@ -19,33 +19,33 @@ namespace Infrastructure.Repositories
             _context = context;
         }
         
-        public async Task<User?> GetByIdAsync(Guid id)
+        public async Task<Account?> GetByIdAsync(Guid id)
         {
-            return await _context.Users.FindAsync(id);
+            return await _context.Accounts.FindAsync(id);
         }
 
-        public async Task<List<User>> GetAllAsync()
+        public async Task<List<Account>> GetAllAsync()
         {
-            return await _context.Users.ToListAsync();
+            return await _context.Accounts.ToListAsync();
         }
 
-        public async Task<User> UpdateProfileAsync(User user)
+        public async Task<Account> UpdateProfileAsync(Account user)
         {
-            _context.Users.Update(user);
+            _context.Accounts.Update(user);
             await _context.SaveChangesAsync();
             return user;
         }
 
-        public async Task<User> CreateProfileAsync(User user)
+        public async Task<Account> CreateProfileAsync(Account user)
         {
-            await _context.Users.AddAsync(user);
+            await _context.Accounts.AddAsync(user);
             await _context.SaveChangesAsync();
             return user;
         }
 
-        public async Task<List<User>> GetByIdsAsync(List<Guid> ids)
+        public async Task<List<Account>> GetByIdsAsync(List<Guid> ids)
         {
-            return await _context.Users
+            return await _context.Accounts
             .Where(u => ids.Contains(u.Id))
             .ToListAsync();
         }

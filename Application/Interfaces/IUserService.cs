@@ -9,10 +9,10 @@ namespace Application.Interfaces
 {
     public interface IUserService
     {
-        Task<User?> GetById(Guid id);
-        Task<List<User>> GetAll();
-        Task<User> UpdateProfile(User user);
-        Task<User> CreateProfile(User user);
-        Task<List<User>> GetByIdsAsync(List<Guid> ids);
+        Task<Account?> GetById(Guid id);
+        Task<List<Account>> GetAll();
+        Task<Account> UpdateProfile(Account user);
+        Task<Account> CreateProfile(Account user);
+        Task<List<Account>> GetByIdsAsync(List<Guid> ids);
     }
 }

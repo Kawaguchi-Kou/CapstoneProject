@@ -11,6 +11,8 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Infrastructure.ExternalApis.OpenMeteo;
+
 
 //load .env
 Env.Load();
@@ -20,6 +22,14 @@ var builder = WebApplication.CreateBuilder(args);
 // Add DbContext
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("Supabase")));
+
+// =====================
+// WEATHER - OPEN METEO
+// =====================
+builder.Services.Configure<OpenMeteoOptions>(
+    builder.Configuration.GetSection(OpenMeteoOptions.SectionName));
+
+builder.Services.AddHttpClient<IOpenMeteoService, OpenMeteoService>();
 
 // Add services 
 //Auth
@@ -94,7 +104,6 @@ builder.Services.AddAuthentication(options =>
 
 builder.Services.AddAuthorization();
 builder.Services.AddHttpContextAccessor();
-builder.Services.AddControllers();
 builder.Services.AddControllers();
 
 // Add AutoMapper

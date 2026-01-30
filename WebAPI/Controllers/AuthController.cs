@@ -39,12 +39,12 @@ namespace WebAPI.Controllers
                 account.Id = accountId;
                 await _authService.RegisterAsync(account);
 
-                //Tạo Profile User trong UserService qua ServiceClient
-                var profile = _mapper.Map<CreateProfileRequest>(registerDto);
-                profile.Id = accountId;
+                ////Tạo Profile User trong UserService qua ServiceClient
+                //var profile = _mapper.Map<CreateProfileRequest>(registerDto);
+                //profile.Id = accountId;
 
-                var user = _mapper.Map<User>(profile);
-                await _userService.CreateProfile(user);
+                //var user = _mapper.Map<Account>(profile);
+                //await _userService.CreateProfile(user);
 
                 return Ok(new { Message = "Đã gửi OTP về email của bạn" });
             }

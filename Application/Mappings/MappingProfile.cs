@@ -7,9 +7,6 @@ using Application.DTOs.Requests;
 using Application.DTOs.Responses;
 using AutoMapper;
 using Domain.Entities;
-using static System.Runtime.InteropServices.JavaScript.JSType;
-//using Application.DTOs.Response;
-//using Application.DTOs.Request;
 
 namespace Application.Mappings
 {
@@ -31,7 +28,7 @@ namespace Application.Mappings
 
             //User
             //CreateMap<UpdateUserRequest, User>();
-            CreateMap<CreateProfileRequest, User>();
+            CreateMap<CreateProfileRequest, Account>();
 
             CreateMap<User, UserResponse>();
         }

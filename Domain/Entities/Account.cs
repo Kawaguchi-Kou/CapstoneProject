@@ -20,6 +20,12 @@ namespace Domain.Entities
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public bool IsActive { get; set; } = false;
         public string ResetToken { get; set; } = string.Empty ;
+        public DateTime DateOfBirth { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string Address { get; set; } = string.Empty;
+        public string PhoneNumber { get; set; } = string.Empty;
+        public string AvatarUrl { get; set; } = string.Empty;
+        public string Gender { get; set; } = string.Empty;
 
         [Required]
         public int RoleId { get; set; }

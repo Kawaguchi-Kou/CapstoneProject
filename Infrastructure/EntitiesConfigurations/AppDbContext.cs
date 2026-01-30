@@ -16,9 +16,6 @@ namespace Infrastructure.EntitiesConfigurations
         public DbSet<Role> Roles { get; set; }
         public DbSet<RefreshToken> RefreshTokens { get; set; }
 
-        //User
-        public DbSet<User> Users { get; set; }
-
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -31,6 +28,12 @@ namespace Infrastructure.EntitiesConfigurations
                 entity.Property(u => u.PasswordHash).IsRequired().HasMaxLength(255);
                 entity.Property(u => u.CreatedAt).HasColumnType("timestamp with time zone");
                 entity.Property(u => u.IsActive).IsRequired();
+                entity.Property(u => u.DateOfBirth).IsRequired();
+                entity.Property(u => u.Address).IsRequired(false);
+                entity.Property(u => u.AvatarUrl).IsRequired(false);
+                entity.Property(u => u.Gender).IsRequired();
+                entity.Property(u => u.PhoneNumber).IsRequired(false);
+                entity.Property(u => u.Name).IsRequired();
                 entity.Property(u => u.ResetToken).IsRequired(false);
 
                 // Unique constraint cho email
@@ -75,21 +78,6 @@ namespace Infrastructure.EntitiesConfigurations
                       .HasForeignKey(rt => rt.AccountId)
                       .OnDelete(DeleteBehavior.Cascade);
             });
-
-
-            //User
-            modelBuilder.Entity<User>(entity =>
-            {
-                entity.HasKey(u => u.Id);
-                entity.Property(u => u.DateOfBirth).IsRequired();
-                entity.Property(u => u.Address).IsRequired(false);
-                entity.Property(u => u.AvatarUrl).IsRequired(false);
-                entity.Property(u => u.Gender).IsRequired();
-                entity.Property(u => u.PhoneNumber).IsRequired(false);
-                entity.Property(u => u.Name).IsRequired();
-            });
-
-            base.OnModelCreating(modelBuilder);
         }
     }
 }
@@ -97,7 +85,7 @@ namespace Infrastructure.EntitiesConfigurations
 //dotnet ef migrations add InitialCreate --project Infrastructure --startup-project WebAPI
 //dotnet ef migrations add InitSupabase  --project Infrastructure --startup-project WebAPI
 
-//dotnet ef database update --project Infrastructure --startup-project WebAPI
+//dot
 
 //dotnet ef migrations remove --project Infrastructure --startup-project WebAPI
 

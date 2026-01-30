@@ -17,7 +17,7 @@ namespace Application.Services
         {
             _userRepository = userRepository;
         }
-        public Task<List<User>> GetAll()
+        public Task<List<Account>> GetAll()
         {
             var users = _userRepository.GetAllAsync();
             if(users == null || users.Result.Count == 0)
@@ -27,7 +27,7 @@ namespace Application.Services
             return users;
         }
 
-        public Task<User?> GetById(Guid id)
+        public Task<Account?> GetById(Guid id)
         {
             var user = _userRepository.GetByIdAsync(id);
             if(user == null || user.Result == null)
@@ -37,7 +37,7 @@ namespace Application.Services
             return user;
         }
 
-        public async Task<User> UpdateProfile(User user)
+        public async Task<Account> UpdateProfile(Account user)
         {
             var existedUser = await _userRepository.GetByIdAsync(user.Id);
             if(existedUser == null || existedUser == null)
@@ -59,7 +59,7 @@ namespace Application.Services
             return await _userRepository.UpdateProfileAsync(existedUser);
         }
 
-        public async Task<User> CreateProfile(User user)
+        public async Task<Account> CreateProfile(Account user)
         {
             var existedUser = await _userRepository.GetByIdAsync(user.Id);
             if (existedUser != null)
@@ -69,7 +69,7 @@ namespace Application.Services
             return await _userRepository.CreateProfileAsync(user);
         }
 
-        public async Task<List<User>> GetByIdsAsync(List<Guid> ids)
+        public async Task<List<Account>> GetByIdsAsync(List<Guid> ids)
         {
             if (ids == null || !ids.Any())
                 throw new ArgumentException("Ids list cannot be null or empty");
