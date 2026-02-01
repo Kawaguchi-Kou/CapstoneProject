@@ -30,7 +30,9 @@ namespace Application.Mappings
             //CreateMap<UpdateUserRequest, User>();
             CreateMap<CreateProfileRequest, Account>();
 
-            CreateMap<User, UserResponse>();
+            CreateMap<UpdateUserRequest, Account>();
+
+            CreateMap<Account, UserResponse>();
         }
     }
 }

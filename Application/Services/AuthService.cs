@@ -52,6 +52,11 @@ namespace Application.Services
                 Email = newAccount.Email, 
                 PasswordHash = passwordHash,
                 IsActive = false,
+                Name = newAccount.Name,
+                DateOfBirth = newAccount.DateOfBirth,
+                Address = newAccount.Address,
+                PhoneNumber = newAccount.PhoneNumber,
+                Gender = newAccount.Gender,
                 RoleId = 2 // Mặc định role user
             };
             await _authRepository.AddAsync(account);

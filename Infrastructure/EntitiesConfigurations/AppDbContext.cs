@@ -16,10 +16,18 @@ namespace Infrastructure.EntitiesConfigurations
         public DbSet<Role> Roles { get; set; }
         public DbSet<RefreshToken> RefreshTokens { get; set; }
 
+        //Trip
+        public DbSet<Trip> Trips { get; set; }
+        public DbSet<TripSegment> TripSegments { get; set; }
+        public DbSet<Itinerary> Itineraries { get; set; }
+        public DbSet<ItineraryDetail> ItineraryDetails { get; set; }
+
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            //Auth
+            // =========================
+            // AUTH
+            // =========================
             modelBuilder.Entity<Account>(entity =>
             {
                 entity.HasKey(u => u.Id);
@@ -78,6 +86,116 @@ namespace Infrastructure.EntitiesConfigurations
                       .HasForeignKey(rt => rt.AccountId)
                       .OnDelete(DeleteBehavior.Cascade);
             });
+
+            // =========================
+            // TRIPS
+            // =========================
+            modelBuilder.Entity<Trip>(entity =>
+            {
+                entity.ToTable("trips");
+
+                entity.HasKey(t => t.TripId);
+
+                entity.Property(t => t.StartLocation)
+                      .IsRequired()
+                      .HasMaxLength(255);
+
+                entity.Property(t => t.EndLocation)
+                      .IsRequired()
+                      .HasMaxLength(255);
+
+                entity.Property(t => t.Status)
+                      .IsRequired();
+
+                entity.Property(t => t.CreatedAt)
+                      .HasDefaultValueSql("NOW()");
+
+                // Relationships
+                entity.HasMany(t => t.TripSegments)
+                      .WithOne(s => s.Trip)
+                      .HasForeignKey(s => s.TripId)
+                      .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasMany(t => t.Itineraries)
+                      .WithOne(i => i.Trip)
+                      .HasForeignKey(i => i.TripId)
+                      .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // =========================
+            // TRIP_SEGMENTS
+            // =========================
+            modelBuilder.Entity<TripSegment>(entity =>
+            {
+                entity.ToTable("trip_segments");
+
+                entity.HasKey(s => s.SegmentId);
+
+                entity.Property(s => s.SequenceNo)
+                      .IsRequired();
+
+                entity.Property(s => s.FromLocation)
+                      .IsRequired()
+                      .HasMaxLength(255);
+
+                entity.Property(s => s.ToLocation)
+                      .IsRequired()
+                      .HasMaxLength(255);
+
+                entity.Property(s => s.CreatedAt)
+                      .HasDefaultValueSql("NOW()");
+
+                // Ensure sequence is unique per trip
+                entity.HasIndex(s => new { s.TripId, s.SequenceNo })
+                      .IsUnique();
+            });
+
+            // =========================
+            // ITINERARIES
+            // =========================
+            modelBuilder.Entity<Itinerary>(entity =>
+            {
+                entity.ToTable("itineraries");
+
+                entity.HasKey(i => i.ItineraryId);
+
+                entity.Property(i => i.Version)
+                      .IsRequired();
+
+                entity.Property(i => i.IsActive)
+                      .HasDefaultValue(false);
+
+                entity.Property(i => i.GeneratedAt)
+                      .HasDefaultValueSql("NOW()");
+
+                entity.HasMany(i => i.ItineraryDetails)
+                      .WithOne(d => d.Itinerary)
+                      .HasForeignKey(d => d.ItineraryId)
+                      .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // =========================
+            // ITINERARY_DETAILS
+            // =========================
+            modelBuilder.Entity<ItineraryDetail>(entity =>
+            {
+                entity.ToTable("itinerary_details");
+
+                entity.HasKey(d => d.DetailId);
+
+                entity.Property(d => d.WeatherRiskScore)
+                      .HasDefaultValue(0);
+
+                entity.Property(d => d.CreatedAt)
+                      .HasDefaultValueSql("NOW()");
+
+                // Optional relationship to TripSegment
+                entity.HasOne(d => d.TripSegment)
+                      .WithMany()
+                      .HasForeignKey(d => d.SegmentId)
+                      .OnDelete(DeleteBehavior.SetNull);
+            });
+
         }
     }
 }
@@ -85,7 +203,7 @@ namespace Infrastructure.EntitiesConfigurations
 //dotnet ef migrations add InitialCreate --project Infrastructure --startup-project WebAPI
 //dotnet ef migrations add InitSupabase  --project Infrastructure --startup-project WebAPI
 
-//dot
+//dotnet ef database update --project Infrastructure --startup-project WebAPI
 
 //dotnet ef migrations remove --project Infrastructure --startup-project WebAPI
 

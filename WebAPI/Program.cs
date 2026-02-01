@@ -6,12 +6,13 @@ using Application.Services;
 using Domain.Interfaces;
 using DotNetEnv;
 using Infrastructure.EntitiesConfigurations;
+using Infrastructure.ExternalApis.OpenMeteo;
 using Infrastructure.Repositories;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using Infrastructure.ExternalApis.OpenMeteo;
+using WebAPI.Converters;
 
 
 //load .env
@@ -39,6 +40,7 @@ builder.Services.AddScoped<IRefreshTokenService, RefreshTokenService>();
 
 //User
 builder.Services.AddScoped<IUserService, UsersService>();
+builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
 
 
 //Add repositories
@@ -104,7 +106,12 @@ builder.Services.AddAuthentication(options =>
 
 builder.Services.AddAuthorization();
 builder.Services.AddHttpContextAccessor();
-builder.Services.AddControllers();
+builder.Services
+    .AddControllers()
+    .AddJsonOptions(options =>
+{
+    options.JsonSerializerOptions.Converters.Add(new DateOnlyJsonConverter());
+});
 
 // Add AutoMapper
 builder.Services.AddAutoMapper(typeof(MappingProfile));
