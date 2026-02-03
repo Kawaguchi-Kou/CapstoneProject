@@ -4,6 +4,7 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
+using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 
 namespace Domain.Entities
@@ -35,6 +36,12 @@ namespace Domain.Entities
         public Role? Role { get; set; }
 
         public ICollection<RefreshToken>? RefreshTokens { get; set; }
+        public ICollection<NotificationRecipient>? Recipients { get; set; }
+        public ICollection<UserPreferenceVector>? UserPreferenceVectors { get; set; }
+        public ICollection<Advertisement> Advertisements { get; set; } = new List<Advertisement>();
+        public ICollection<AccountSubscription> AccountSubscriptions { get; set; } = new List<AccountSubscription>();
+        public ICollection<Feedback> Feedbacks { get; set; } = new List<Feedback>();
+
 
     }
 }

@@ -33,5 +33,7 @@ namespace Domain.Entities
 
         [ForeignKey(nameof(SegmentId))]
         public TripSegment TripSegment { get; set; }
+
+        public ICollection<ManualOverride> Overrides { get; set; }
     }
 }

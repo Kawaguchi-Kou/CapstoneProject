@@ -4,6 +4,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Domain.Enums;
 
 namespace Domain.Entities
 {
@@ -29,13 +30,13 @@ namespace Domain.Entities
 
         public int? PreferencesId { get; set; }
 
-        [Required]
-        public string Status { get; set; }
+        public TripStatus Status { get; set; }
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         // Navigation
         public ICollection<TripSegment> TripSegments { get; set; }
         public ICollection<Itinerary> Itineraries { get; set; }
-    }
+        public ICollection<Notification> Notifications { get; set; }
+        }
 }
