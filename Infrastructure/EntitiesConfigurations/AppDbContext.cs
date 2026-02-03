@@ -16,10 +16,36 @@ namespace Infrastructure.EntitiesConfigurations
         public DbSet<Role> Roles { get; set; }
         public DbSet<RefreshToken> RefreshTokens { get; set; }
 
+        //Trip
+        public DbSet<Trip> Trips { get; set; }
+        public DbSet<TripSegment> TripSegments { get; set; }
+        public DbSet<Itinerary> Itineraries { get; set; }
+        public DbSet<ItineraryDetail> ItineraryDetails { get; set; }
+        public DbSet<ManualOverride> ManualOverrides { get; set; }
+
+        //Notification
+        public DbSet<Notification> Notifications { get; set; }
+        public DbSet<NotificationRecipient> Recipients { get; set; }
+
+        //POI&Preference Vector
+        public DbSet<POI> POIs { get; set; }
+        public DbSet<UserPreferenceVector> UserPreferenceVectors { get; set; }
+        public DbSet<POIPreference> POIPreferences { get; set; }
+        public DbSet<Preference> Preferences { get; set; }
+
+        //Advertisement
+        public DbSet<Advertisement> Advertisements { get; set; }
+        public DbSet<AdSubscriptionPackage> adSubscriptionPackages { get; set; }
+        public DbSet<Feedback> Feedbacks { get; set; }
+        public DbSet<AdPayment> adPayments { get; set; }
+        public DbSet<AccountSubscription> accountSubscriptions { get; set; }
+
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            //Auth
+            // =========================
+            // AUTH
+            // =========================
             modelBuilder.Entity<Account>(entity =>
             {
                 entity.HasKey(u => u.Id);
@@ -44,6 +70,10 @@ namespace Infrastructure.EntitiesConfigurations
                       .WithMany(r => r.Accounts)
                       .HasForeignKey(u => u.RoleId)
                       .OnDelete(DeleteBehavior.Restrict); // tránh xóa Role thì xóa luôn Account
+                entity.HasMany(u => u.Recipients)
+                      .WithOne(r => r.Recipient)
+                      .HasForeignKey(r => r.RecipientId)
+                      .OnDelete(DeleteBehavior.Cascade);
 
             });
 
@@ -78,6 +108,332 @@ namespace Infrastructure.EntitiesConfigurations
                       .HasForeignKey(rt => rt.AccountId)
                       .OnDelete(DeleteBehavior.Cascade);
             });
+
+            // =========================
+            // TRIPS
+            // =========================
+            modelBuilder.Entity<Trip>(entity =>
+            {
+                entity.ToTable("trips");
+
+                entity.HasKey(t => t.TripId);
+
+                entity.Property(t => t.StartLocation)
+                      .IsRequired()
+                      .HasMaxLength(255);
+
+                entity.Property(t => t.EndLocation)
+                      .IsRequired()
+                      .HasMaxLength(255);
+
+                entity.Property(t => t.Status)
+                      .IsRequired();
+
+                entity.Property(t => t.CreatedAt)
+                      .HasDefaultValueSql("NOW()");
+
+                // Relationships
+                entity.HasMany(t => t.TripSegments)
+                      .WithOne(s => s.Trip)
+                      .HasForeignKey(s => s.TripId)
+                      .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasMany(t => t.Itineraries)
+                      .WithOne(i => i.Trip)
+                      .HasForeignKey(i => i.TripId)
+                      .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // =========================
+            // TRIP_SEGMENTS
+            // =========================
+            modelBuilder.Entity<TripSegment>(entity =>
+            {
+                entity.ToTable("trip_segments");
+
+                entity.HasKey(s => s.SegmentId);
+
+                entity.Property(s => s.SequenceNo)
+                      .IsRequired();
+
+                entity.Property(s => s.FromLocation)
+                      .IsRequired()
+                      .HasMaxLength(255);
+
+                entity.Property(s => s.ToLocation)
+                      .IsRequired()
+                      .HasMaxLength(255);
+
+                entity.Property(s => s.CreatedAt)
+                      .HasDefaultValueSql("NOW()");
+
+                // Ensure sequence is unique per trip
+                entity.HasIndex(s => new { s.TripId, s.SequenceNo })
+                      .IsUnique();
+            });
+
+            // =========================
+            // ITINERARIES
+            // =========================
+            modelBuilder.Entity<Itinerary>(entity =>
+            {
+                entity.ToTable("itineraries");
+
+                entity.HasKey(i => i.ItineraryId);
+
+                entity.Property(i => i.Version)
+                      .IsRequired();
+
+                entity.Property(i => i.IsActive)
+                      .HasDefaultValue(false);
+
+                entity.Property(i => i.GeneratedAt)
+                      .HasDefaultValueSql("NOW()");
+
+                entity.HasMany(i => i.ItineraryDetails)
+                      .WithOne(d => d.Itinerary)
+                      .HasForeignKey(d => d.ItineraryId)
+                      .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // =========================
+            // ITINERARY_DETAILS
+            // =========================
+            modelBuilder.Entity<ItineraryDetail>(entity =>
+            {
+                entity.ToTable("itinerary_details");
+
+                entity.HasKey(d => d.DetailId);
+
+                entity.Property(d => d.WeatherRiskScore)
+                      .HasDefaultValue(0);
+
+                entity.Property(d => d.CreatedAt)
+                      .HasDefaultValueSql("NOW()");
+
+                // Optional relationship to TripSegment
+                entity.HasOne(d => d.TripSegment)
+                      .WithMany()
+                      .HasForeignKey(d => d.SegmentId)
+                      .OnDelete(DeleteBehavior.SetNull);
+            });
+
+            // =========================
+            // MANUAL_OVERRIDES
+            // =========================
+            modelBuilder.Entity<ManualOverride>(entity =>
+            {
+                entity.ToTable("manual_overrides");
+                entity.HasKey(o => o.Id);
+                entity.Property(o => o.CreatedAt)
+                      .HasDefaultValueSql("NOW()");
+                entity.HasOne(o => o.Detail)
+                      .WithMany(d => d.Overrides)
+                      .HasForeignKey(o => o.DetailId)
+                      .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // =========================
+            // NOTIFICATIONS
+            // =========================
+            modelBuilder.Entity<Notification>(entity =>
+            {
+                entity.ToTable("notifications");
+                entity.HasKey(n => n.Id);
+                entity.Property(n => n.Title)
+                      .IsRequired()
+                      .HasMaxLength(255);
+                entity.Property(n => n.Message)
+                      .IsRequired();
+                entity.Property(n => n.CreatedAt)
+                      .HasDefaultValueSql("NOW()");
+                entity.HasMany(n => n.Recipients)
+                      .WithOne(r => r.Notification)
+                      .HasForeignKey(r => r.NotificationId)
+                      .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // =========================
+            // POI & PREFERENCE VECTORS
+            // =========================
+            modelBuilder.Entity<POI>(entity =>
+            {
+                entity.ToTable("pois");
+                entity.HasKey(p => p.Id);
+                entity.Property(p => p.Name)
+                      .IsRequired()
+                      .HasMaxLength(255);
+                entity.Property(p => p.ApproxCost)
+                      .IsRequired()
+                      .HasMaxLength(255);
+                entity.Property(p => p.City)
+                      .IsRequired()
+                      .HasMaxLength(255);
+                entity.Property(p => p.City)
+                      .IsRequired()
+                      .HasMaxLength(255);
+            });
+
+            modelBuilder.Entity<POIPreference>(entity =>
+            {
+                // composite key
+                entity.HasKey(pp => new { pp.PoiId, pp.PreferenceId });
+
+                entity.HasOne(pp => pp.POI)
+                      .WithMany(p => p.PoiPreferences)
+                      .HasForeignKey(pp => pp.PoiId)
+                      .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(pp => pp.Preference)
+                      .WithMany(p => p.PoiPreferences)
+                      .HasForeignKey(pp => pp.PreferenceId)
+                      .OnDelete(DeleteBehavior.Cascade);
+
+                entity.Property(pp => pp.Weight)
+                      .IsRequired();
+            });
+
+            modelBuilder.Entity<UserPreferenceVector>(entity =>
+            {
+                entity.HasKey(upv => upv.Id);
+
+                entity.HasOne(upv => upv.Account)
+                      .WithMany(a => a.UserPreferenceVectors)
+                      .HasForeignKey(upv => upv.AccountId)
+                      .OnDelete(DeleteBehavior.Cascade);
+
+                entity.Property(upv => upv.PreferenceCode)
+                      .IsRequired()
+                      .HasMaxLength(50);
+
+                // 1 user chỉ có 1 score cho 1 preference
+                entity.HasIndex(upv => new { upv.AccountId, upv.PreferenceCode })
+                      .IsUnique();
+            });
+
+            // =========================
+            // ADVERTISEMENT
+            // =========================
+            modelBuilder.Entity<AdSubscriptionPackage>(entity =>
+            {
+                entity.ToTable("ad_subscription_packages");
+
+                entity.HasKey(e => e.PackageId);
+
+                entity.Property(e => e.Title)
+                      .IsRequired()
+                      .HasMaxLength(150);
+
+                entity.Property(e => e.Description)
+                      .HasMaxLength(500);
+
+                entity.Property(e => e.Currency)
+                      .HasMaxLength(10);
+
+                entity.Property(e => e.Status)
+                      .HasMaxLength(50);
+
+                entity.Property(e => e.CreatedAt)
+                      .HasDefaultValueSql("NOW()");
+            });
+
+            modelBuilder.Entity<AccountSubscription>(entity =>
+            {
+                entity.ToTable("account_subscriptions");
+
+                entity.HasKey(e => e.SubscriptionId);
+
+                entity.Property(e => e.Status)
+                      .HasMaxLength(50);
+
+                entity.Property(e => e.CreatedAt)
+                      .HasDefaultValueSql("NOW()");
+
+                entity.HasOne(e => e.Account)
+                      .WithMany(a => a.AccountSubscriptions)
+                      .HasForeignKey(e => e.AccountId)
+                      .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(e => e.SubscriptionPackage)
+                      .WithMany(p => p.AccountSubscriptions)
+                      .HasForeignKey(e => e.SubscriptionPackageId)
+                      .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            modelBuilder.Entity<Advertisement>(entity =>
+            {
+                entity.ToTable("advertisements");
+
+                entity.HasKey(e => e.AdId);
+
+                entity.Property(e => e.Title)
+                      .IsRequired()
+                      .HasMaxLength(200);
+
+                entity.Property(e => e.Status)
+                      .HasConversion<int>() // enum -> int
+                      .IsRequired();
+
+                entity.Property(e => e.CreatedAt)
+                      .HasDefaultValueSql("NOW()");
+
+                entity.HasOne(e => e.Account)
+                      .WithMany(a => a.Advertisements)
+                      .HasForeignKey(e => e.AccountId)
+                      .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(e => e.Package)
+                      .WithMany()
+                      .HasForeignKey(e => e.PackageId)
+                      .OnDelete(DeleteBehavior.SetNull);
+            });
+
+            modelBuilder.Entity<AdPayment>(entity =>
+            {
+                entity.ToTable("ad_payments");
+
+                entity.HasKey(e => e.PaymentId);
+
+                entity.Property(e => e.Currency)
+                      .HasMaxLength(10);
+
+                entity.Property(e => e.PaymentMethod)
+                      .HasMaxLength(50);
+
+                entity.Property(e => e.PaymentStatus)
+                      .HasMaxLength(50);
+
+                entity.Property(e => e.PaidAt)
+                      .HasDefaultValueSql("NOW()");
+
+                entity.HasOne(e => e.Subscription)
+                      .WithMany(s => s.Payments)
+                      .HasForeignKey(e => e.SubscriptionId)
+                      .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            modelBuilder.Entity<Feedback>(entity =>
+            {
+                entity.ToTable("feedbacks");
+
+                entity.HasKey(e => e.FeedbackId);
+
+                entity.Property(e => e.FeedbackType)
+                      .HasMaxLength(50);
+
+                entity.Property(e => e.CreatedAt)
+                      .HasDefaultValueSql("NOW()");
+
+                entity.HasOne(e => e.User)
+                      .WithMany(a => a.Feedbacks)
+                      .HasForeignKey(e => e.UserId)
+                      .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(e => e.Advertisement)
+                      .WithMany()
+                      .HasForeignKey(e => e.AdId)
+                      .OnDelete(DeleteBehavior.SetNull);
+            });
         }
     }
 }
@@ -85,7 +441,7 @@ namespace Infrastructure.EntitiesConfigurations
 //dotnet ef migrations add InitialCreate --project Infrastructure --startup-project WebAPI
 //dotnet ef migrations add InitSupabase  --project Infrastructure --startup-project WebAPI
 
-//dot
+//dotnet ef database update --project Infrastructure --startup-project WebAPI
 
 //dotnet ef migrations remove --project Infrastructure --startup-project WebAPI
 

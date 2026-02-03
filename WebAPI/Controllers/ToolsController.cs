@@ -41,9 +41,9 @@ public class ToolsController : ControllerBase
     // MCP: weather (daily)
     [HttpPost("get_weather")]
     public async Task<IActionResult> GetWeather(
-    [FromBody] McpRequest<WeatherRequest> request)
+    [FromBody] WeatherRequest request)
     {
-        var r = request.Req;
+        var r = request;
 
         var result = await _weather.GetDailyAsync(
             r.Latitude,

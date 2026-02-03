@@ -37,6 +37,13 @@ namespace Infrastructure.ExternalApis.OpenMeteo
             response.EnsureSuccessStatusCode();
 
             var json = await response.Content.ReadAsStringAsync();
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new OpenMeteoApiException(
+                    response.StatusCode,
+                    json
+                );
+            }
             var data = JsonSerializer.Deserialize<OpenMeteoDailyResponse>(json)!;
 
             var result = new List<DailyWeatherDto>();

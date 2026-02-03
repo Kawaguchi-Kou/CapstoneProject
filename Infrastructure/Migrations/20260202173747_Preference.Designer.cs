@@ -3,6 +3,7 @@ using System;
 using Infrastructure.EntitiesConfigurations;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260202173747_Preference")]
+    partial class Preference
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -82,214 +85,6 @@ namespace Infrastructure.Migrations
                     b.HasIndex("RoleId");
 
                     b.ToTable("Accounts");
-                });
-
-            modelBuilder.Entity("Domain.Entities.AccountSubscription", b =>
-                {
-                    b.Property<Guid>("SubscriptionId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("AccountId")
-                        .HasColumnType("uuid");
-
-                    b.Property<float>("AdsUsed")
-                        .HasColumnType("real");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamp with time zone")
-                        .HasDefaultValueSql("NOW()");
-
-                    b.Property<float>("MaxAds")
-                        .HasColumnType("real");
-
-                    b.Property<int>("Status")
-                        .HasMaxLength(50)
-                        .HasColumnType("integer");
-
-                    b.Property<Guid>("SubscriptionPackageId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("SubscriptionId");
-
-                    b.HasIndex("AccountId");
-
-                    b.HasIndex("SubscriptionPackageId");
-
-                    b.ToTable("account_subscriptions", (string)null);
-                });
-
-            modelBuilder.Entity("Domain.Entities.AdPayment", b =>
-                {
-                    b.Property<Guid>("PaymentId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<float>("Amount")
-                        .HasColumnType("real");
-
-                    b.Property<string>("Currency")
-                        .IsRequired()
-                        .HasMaxLength(10)
-                        .HasColumnType("character varying(10)");
-
-                    b.Property<DateTime>("PaidAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamp with time zone")
-                        .HasDefaultValueSql("NOW()");
-
-                    b.Property<string>("PaymentMethod")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
-                    b.Property<int>("PaymentStatus")
-                        .HasMaxLength(50)
-                        .HasColumnType("integer");
-
-                    b.Property<Guid>("SubscriptionId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("PaymentId");
-
-                    b.HasIndex("SubscriptionId");
-
-                    b.ToTable("ad_payments", (string)null);
-                });
-
-            modelBuilder.Entity("Domain.Entities.AdSubscriptionPackage", b =>
-                {
-                    b.Property<Guid>("PackageId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamp with time zone")
-                        .HasDefaultValueSql("NOW()");
-
-                    b.Property<string>("Currency")
-                        .IsRequired()
-                        .HasMaxLength(10)
-                        .HasColumnType("character varying(10)");
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
-
-                    b.Property<int>("DurationDays")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("MaxAdsPerPeriod")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<float>("Price")
-                        .HasColumnType("real");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasMaxLength(150)
-                        .HasColumnType("character varying(150)");
-
-                    b.HasKey("PackageId");
-
-                    b.ToTable("ad_subscription_packages", (string)null);
-                });
-
-            modelBuilder.Entity("Domain.Entities.Advertisement", b =>
-                {
-                    b.Property<Guid>("AdId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("AccountId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Content")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamp with time zone")
-                        .HasDefaultValueSql("NOW()");
-
-                    b.Property<DateTime>("EndDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("ImageUrl")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<Guid>("POIId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("PackageId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("StartDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<string>("VideoUrl")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("AdId");
-
-                    b.HasIndex("AccountId");
-
-                    b.HasIndex("POIId");
-
-                    b.HasIndex("PackageId");
-
-                    b.ToTable("advertisements", (string)null);
-                });
-
-            modelBuilder.Entity("Domain.Entities.Feedback", b =>
-                {
-                    b.Property<Guid>("FeedbackId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid?>("AdId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamp with time zone")
-                        .HasDefaultValueSql("NOW()");
-
-                    b.Property<string>("FeedbackType")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("FeedbackId");
-
-                    b.HasIndex("AdId");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("feedbacks", (string)null);
                 });
 
             modelBuilder.Entity("Domain.Entities.Itinerary", b =>
@@ -501,17 +296,12 @@ namespace Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<Guid>("ForecastId")
-                        .HasColumnType("uuid");
-
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("ForecastId");
 
                     b.ToTable("pois", (string)null);
                 });
@@ -707,33 +497,6 @@ namespace Infrastructure.Migrations
                     b.ToTable("UserPreferenceVectors");
                 });
 
-            modelBuilder.Entity("Domain.Entities.WeatherForecast", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("City")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("ForecastDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<double>("PrecipitationProbability")
-                        .HasColumnType("double precision");
-
-                    b.Property<double>("TemperatureCelsius")
-                        .HasColumnType("double precision");
-
-                    b.Property<double>("WindSpeed")
-                        .HasColumnType("double precision");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("WeatherForecast");
-                });
-
             modelBuilder.Entity("Domain.Entities.Account", b =>
                 {
                     b.HasOne("Domain.Entities.Role", "Role")
@@ -743,81 +506,6 @@ namespace Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("Role");
-                });
-
-            modelBuilder.Entity("Domain.Entities.AccountSubscription", b =>
-                {
-                    b.HasOne("Domain.Entities.Account", "Account")
-                        .WithMany("AccountSubscriptions")
-                        .HasForeignKey("AccountId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Domain.Entities.AdSubscriptionPackage", "SubscriptionPackage")
-                        .WithMany("AccountSubscriptions")
-                        .HasForeignKey("SubscriptionPackageId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Account");
-
-                    b.Navigation("SubscriptionPackage");
-                });
-
-            modelBuilder.Entity("Domain.Entities.AdPayment", b =>
-                {
-                    b.HasOne("Domain.Entities.AccountSubscription", "Subscription")
-                        .WithMany("Payments")
-                        .HasForeignKey("SubscriptionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Subscription");
-                });
-
-            modelBuilder.Entity("Domain.Entities.Advertisement", b =>
-                {
-                    b.HasOne("Domain.Entities.Account", "Account")
-                        .WithMany("Advertisements")
-                        .HasForeignKey("AccountId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Domain.Entities.POI", "POI")
-                        .WithMany()
-                        .HasForeignKey("POIId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Domain.Entities.AdSubscriptionPackage", "Package")
-                        .WithMany()
-                        .HasForeignKey("PackageId")
-                        .OnDelete(DeleteBehavior.SetNull)
-                        .IsRequired();
-
-                    b.Navigation("Account");
-
-                    b.Navigation("POI");
-
-                    b.Navigation("Package");
-                });
-
-            modelBuilder.Entity("Domain.Entities.Feedback", b =>
-                {
-                    b.HasOne("Domain.Entities.Advertisement", "Advertisement")
-                        .WithMany()
-                        .HasForeignKey("AdId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
-                    b.HasOne("Domain.Entities.Account", "User")
-                        .WithMany("Feedbacks")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Advertisement");
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Domain.Entities.Itinerary", b =>
@@ -898,17 +586,6 @@ namespace Infrastructure.Migrations
                     b.Navigation("Recipient");
                 });
 
-            modelBuilder.Entity("Domain.Entities.POI", b =>
-                {
-                    b.HasOne("Domain.Entities.WeatherForecast", "Forecast")
-                        .WithMany()
-                        .HasForeignKey("ForecastId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Forecast");
-                });
-
             modelBuilder.Entity("Domain.Entities.POIPreference", b =>
                 {
                     b.HasOne("Domain.Entities.POI", "POI")
@@ -963,27 +640,11 @@ namespace Infrastructure.Migrations
 
             modelBuilder.Entity("Domain.Entities.Account", b =>
                 {
-                    b.Navigation("AccountSubscriptions");
-
-                    b.Navigation("Advertisements");
-
-                    b.Navigation("Feedbacks");
-
                     b.Navigation("Recipients");
 
                     b.Navigation("RefreshTokens");
 
                     b.Navigation("UserPreferenceVectors");
-                });
-
-            modelBuilder.Entity("Domain.Entities.AccountSubscription", b =>
-                {
-                    b.Navigation("Payments");
-                });
-
-            modelBuilder.Entity("Domain.Entities.AdSubscriptionPackage", b =>
-                {
-                    b.Navigation("AccountSubscriptions");
                 });
 
             modelBuilder.Entity("Domain.Entities.Itinerary", b =>
