@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Application.DTOs.Requests;
 using Application.Interfaces;
 using Domain.Entities;
 using Domain.Interfaces;
@@ -80,6 +81,22 @@ namespace Application.Services
                 throw new KeyNotFoundException("No users found for the provided Ids");
 
             return users;
+        }
+
+        public async Task UpdateUserPreferencesAsync(Guid accountId, UserPreferencesRequest request)
+        {
+            var entities = request.Preferences.Select(p => new UserPreferenceVector
+            {
+                PreferenceCode = p.PreferenceCode,
+                Score = p.Score
+            }).ToList();
+
+            await _userRepository.UpsertAsync(accountId, entities);
+        }
+
+        public async Task<List<UserPreferenceVector>> GetUserPreferencesAsync(Guid accountId)
+        {
+            return await _userRepository.GetByAccountIdAsync(accountId);
         }
     }
 }

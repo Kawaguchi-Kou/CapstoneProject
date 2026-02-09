@@ -33,6 +33,7 @@ namespace Application.Mappings
             CreateMap<UpdateUserRequest, Account>();
 
             CreateMap<Account, UserResponse>();
+            CreateMap<Account, ProfileResponse>();
         }
     }
 }

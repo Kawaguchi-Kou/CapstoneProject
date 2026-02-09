@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Application.DTOs.Requests;
 using Domain.Entities;
 
 namespace Application.Interfaces
@@ -14,5 +15,7 @@ namespace Application.Interfaces
         Task<Account> UpdateProfile(Account user);
         Task<Account> CreateProfile(Account user);
         Task<List<Account>> GetByIdsAsync(List<Guid> ids);
+        Task UpdateUserPreferencesAsync(Guid accountId, UserPreferencesRequest request);
+        Task<List<UserPreferenceVector>> GetUserPreferencesAsync(Guid accountId);
     }
 }

@@ -49,5 +49,69 @@ namespace Infrastructure.Repositories
             .Where(u => ids.Contains(u.Id))
             .ToListAsync();
         }
+
+        public async Task<List<UserPreferenceVector>> GetByAccountIdAsync(Guid accountId)
+        {
+            return await _context.UserPreferenceVectors
+                .Where(x => x.AccountId == accountId)
+                .ToListAsync();
+        }
+
+        //public async Task UpsertAsync(Guid accountId, List<UserPreferenceVector> preferences)
+        //{
+        //    var existing = await _context.UserPreferenceVectors
+        //        .Where(x => x.AccountId == accountId)
+        //        .ToListAsync();
+
+        //    foreach (var pref in preferences)
+        //    {
+        //        var current = existing.FirstOrDefault(x =>
+        //            x.PreferenceCode == pref.PreferenceCode);
+
+        //        if (current != null)
+        //        {
+        //            // update
+        //            current.Score = pref.Score;
+        //        }
+        //        else
+        //        {
+        //            // insert
+        //            _context.UserPreferenceVectors.Add(pref);
+        //        }
+        //    }
+
+        //    await _context.SaveChangesAsync();
+        //}
+
+        public async Task UpsertAsync(Guid accountId, List<UserPreferenceVector> preferences)
+        {
+            var existing = await _context.UserPreferenceVectors
+                .Where(x => x.AccountId == accountId)
+                .ToListAsync();
+
+            foreach (var pref in preferences)
+            {
+                var current = existing.FirstOrDefault(x =>
+                    x.PreferenceCode == pref.PreferenceCode);
+
+                if (current != null)
+                {
+                    current.Score = pref.Score;
+                }
+                else
+                {
+                    pref.Id = Guid.NewGuid();
+                    pref.AccountId = accountId;
+
+                    _context.UserPreferenceVectors.Add(pref);
+                }
+            }
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task SaveChangesAsync()
+        {
+            await _context.SaveChangesAsync();
+        }
     }
 }
