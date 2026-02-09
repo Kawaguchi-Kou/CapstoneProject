@@ -1,4 +1,5 @@
 using System;
+using System.Security.Claims;
 using System.Text;
 using Application.Interfaces;
 using Application.Mappings;
@@ -42,13 +43,27 @@ builder.Services.AddScoped<IRefreshTokenService, RefreshTokenService>();
 builder.Services.AddScoped<IUserService, UsersService>();
 builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
 
+// Preference
+builder.Services.AddScoped<IPreferenceService, PreferenceService>();
+
+//POI
+builder.Services.AddScoped<IPOIService, POIService>();
+
 
 //Add repositories
 //Auth
 builder.Services.AddScoped<IAuthRepository, AuthRepository>();
 builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
-builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IOtpRepository, OtpRepository>();
+
+//User
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+
+// Preference
+builder.Services.AddScoped<IPreferenceRepository, PreferenceRepository>();
+
+//POI
+builder.Services.AddScoped<IPOIRepository, POIRepository>();
 
 // add CORS
 builder.Services.AddCors(options =>
@@ -100,7 +115,9 @@ builder.Services.AddAuthentication(options =>
         ValidateIssuerSigningKey = true,
         ValidIssuer = issuer,
         ValidAudience = audience,
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey))
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey)),
+        NameClaimType = ClaimTypes.NameIdentifier, 
+        RoleClaimType = ClaimTypes.Role
     };
 });
 
@@ -150,11 +167,12 @@ builder.Services.AddSwaggerGen(c =>
 
 var app = builder.Build();
 
+app.UseRouting();
+
+app.UseCors("AllowSpecificOrigins");
+
 app.UseAuthentication();
 app.UseAuthorization();
-
-// Use CORS
-app.UseCors("AllowSpecificOrigins");
 
 app.UseSwagger();
 app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "ProjectName API v1"));

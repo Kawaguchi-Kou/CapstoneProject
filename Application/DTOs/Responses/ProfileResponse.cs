@@ -12,7 +12,7 @@ namespace Application.DTOs.Responses
         public string Name { get; set; } = string.Empty;
         public string Address { get; set; } = string.Empty;
         public string PhoneNumber { get; set; } = string.Empty;
-        public string AvatarUrl { get; set; } = string.Empty;
+        public string AvtUrl { get; set; } = string.Empty;
         public string Gender { get; set; } = string.Empty;
     }
 }

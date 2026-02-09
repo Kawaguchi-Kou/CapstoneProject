@@ -1,7 +1,9 @@
-﻿using Application.DTOs.Requests;
+﻿using System.Security.Claims;
+using Application.DTOs.Requests;
 using Application.DTOs.Responses;
 using Application.Interfaces;
 using AutoMapper;
+using Azure.Core;
 using Domain.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -15,12 +17,14 @@ namespace WebAPI.Controllers
         private readonly IUserService _userService;
         private readonly ICloudinaryService _cloudinaryService;
         private readonly IMapper _mapper;
+        private readonly IAuthService _authService;
 
-        public UserController(IUserService userService, IMapper mapper, ICloudinaryService cloudinaryService)
+        public UserController(IUserService userService, IMapper mapper, ICloudinaryService cloudinaryService, IAuthService authService)
         {
             _userService = userService;
             _mapper = mapper;
             _cloudinaryService = cloudinaryService;
+            _authService = authService;
         }
 
         [HttpGet("{id}")]
@@ -104,6 +108,49 @@ namespace WebAPI.Controllers
                 var updatedUser = await _userService.UpdateProfile(user);
                 var userResponse = _mapper.Map<UserResponse>(updatedUser);
                 return Ok(userResponse);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpPost("update-preference-vector")]
+        [Authorize]
+        public async Task<IActionResult> UpdatePreferences(
+        [FromBody] UserPreferencesRequest request)
+        {
+            try
+            {
+                var account = _authService.GetCurrentAccount();
+                var accountId = account.Result.Id;
+
+                await _userService.UpdateUserPreferencesAsync(accountId, request);
+
+                return Ok(new { message = "Preferences updated successfully" });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpGet("user-preferences")]
+        [Authorize]
+        public async Task<IActionResult> GetPreferences()
+        {
+            try
+            {
+                var accountId = Guid.Parse(
+                User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+
+                var result = await _userService.GetUserPreferencesAsync(accountId);
+
+                return Ok(result.Select(x => new
+                {
+                    x.PreferenceCode,
+                    x.Score
+                }));
             }
             catch (Exception ex)
             {

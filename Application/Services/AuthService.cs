@@ -3,17 +3,12 @@ using Application.DTOs.Responses;
 using Application.Interfaces;
 using Domain.Entities;
 using Domain.Interfaces;
-using BCrypt.Net;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
-using System;
-using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
-using System.Linq;
 using System.Security.Claims;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace Application.Services
 {
@@ -100,7 +95,7 @@ namespace Application.Services
 
             return new AuthResponse
             {
-                Token = token,
+                Token = $"Bearer {token}",
                 UserName = account.Email,
                 ExpiresAt = DateTime.Now.AddMinutes(expiryMinutes),
                 RefreshToken = refreshToken.Token
@@ -380,6 +375,25 @@ namespace Application.Services
                 throw new Exception($"Failed to validate token: {ex.Message}", ex);
             }
         }
+
+        //public async Task<Account> GetCurrentAccount()
+        //{
+        //    var user = _httpContextAccessor.HttpContext?.User
+        //        ?? throw new UnauthorizedAccessException();
+
+        //    var claim = _httpContextAccessor.HttpContext?.User
+        //        ?.FindFirst(ClaimTypes.NameIdentifier);
+
+        //    if (claim == null)
+        //        throw new UnauthorizedAccessException("User not authenticated");
+
+        //    var accountId = Guid.Parse(claim.Value);
+
+
+        //    return await _authRepository.GetByIdAsync(accountId)
+        //        ?? throw new Exception("Account not found");
+        //}
+
 
         public async Task<List<Account>> GetAllAccountsAsync()
         {
