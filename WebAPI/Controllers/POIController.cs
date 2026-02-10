@@ -1,5 +1,6 @@
 ﻿using System.Security.Claims;
 using Application.Interfaces;
+using Domain.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -10,10 +11,12 @@ namespace WebAPI.Controllers
     public class POIController : ControllerBase
     {
         private readonly IPOIService _poiService;
+        private readonly IAuthService _authService;
 
-        public POIController(IPOIService poiService)
+        public POIController(IPOIService poiService, IAuthService authService)
         {
             _poiService = poiService;
+            _authService = authService;
         }
 
         [HttpGet("recommended")]
@@ -21,14 +24,16 @@ namespace WebAPI.Controllers
         public async Task<IActionResult> GetRecommendedPois(
             [FromQuery] int limit = 10)
         {
-            var accountId = Guid.Parse(
-                User.FindFirstValue(ClaimTypes.NameIdentifier)!
-            );
+            //var accountId = Guid.Parse(
+            //    User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
 
-            var pois = await _poiService
-                .GetRecommendedPoisAsync(accountId, limit);
+            var account = _authService.GetCurrentAccount();
+            var accountId = account.Result.Id;
 
-            return Ok(pois);
+            var result = await _poiService
+                .GetAllPoisSortedByPreferenceAsync(accountId);
+
+            return Ok(result);
         }
     }
 

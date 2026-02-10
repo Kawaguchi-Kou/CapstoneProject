@@ -10,8 +10,6 @@ namespace Application.Interfaces
     public interface IPOIService
     {
         Task<List<POIScoreResult>> CalculateScoresAsync(Guid accountId);
-        Task<List<RecommendedPoiResponse>> GetRecommendedPoisAsync(
-        Guid accountId,
-        int limit = 10);
+        Task<List<RecommendedPoiResponse>> GetAllPoisSortedByPreferenceAsync(Guid accountId);
     }
 }

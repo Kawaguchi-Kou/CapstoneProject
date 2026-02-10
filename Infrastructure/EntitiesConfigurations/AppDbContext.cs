@@ -289,8 +289,8 @@ namespace Infrastructure.EntitiesConfigurations
                       .HasForeignKey(pp => pp.PreferenceId)
                       .OnDelete(DeleteBehavior.Cascade);
 
-                entity.Property(pp => pp.Weight)
-                      .IsRequired();
+                //entity.Property(pp => pp.Weight)
+                //      .IsRequired();
             });
 
             modelBuilder.Entity<UserPreferenceVector>(entity =>

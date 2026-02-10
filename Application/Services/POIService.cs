@@ -25,41 +25,29 @@ namespace Application.Services
 
         public async Task<List<POIScoreResult>> CalculateScoresAsync(Guid accountId)
         {
+            // 1. User preferences
             var userPrefs = await _userRepository.GetByAccountIdAsync(accountId);
-            var pois = await _poiRepository.GetAllWithPreferencesAsync();
 
-            // Map: PreferenceName → UserScore
-            var userPrefDict = userPrefs.ToDictionary(
-                x => x.PreferenceCode, // ở UserPreferenceVector bạn đang dùng string này
-                x => x.Score
-            );
+            var userPrefSet = userPrefs
+                .Select(x => x.PreferenceCode)
+                .ToHashSet();
+
+            // 2. All POIs
+            var pois = await _poiRepository.GetAllWithPreferencesAsync();
 
             var results = new List<POIScoreResult>();
 
             foreach (var poi in pois)
             {
-                double totalScore = 0;
-
-                foreach (var poiPref in poi.PoiPreferences)
-                {
-                    var preferenceName = poiPref.Preference?.Name;
-                    if (preferenceName == null)
-                        continue;
-
-                    if (!userPrefDict.TryGetValue(preferenceName, out var userScore))
-                        continue;
-
-                    var poiWeight = poiPref.Weight; // 0 → 1
-                    var systemWeight = PreferenceWeights.Get(preferenceName);
-
-                    totalScore += userScore * poiWeight * systemWeight;
-                }
+                int score = poi.PoiPreferences.Count(pp =>
+                    pp.Preference != null &&
+                    userPrefSet.Contains(pp.Preference.Name));
 
                 results.Add(new POIScoreResult
                 {
                     PoiId = poi.Id,
                     PoiName = poi.Name,
-                    Score = Math.Round(totalScore, 4)
+                    Score = score
                 });
             }
 
@@ -68,38 +56,41 @@ namespace Application.Services
                 .ToList();
         }
 
-        public async Task<List<RecommendedPoiResponse>> GetRecommendedPoisAsync(
-        Guid accountId,
-        int limit = 10)
+        public async Task<List<RecommendedPoiResponse>> GetAllPoisSortedByPreferenceAsync(
+    Guid accountId)
         {
-            var scores = await CalculateScoresAsync(accountId);
+            var userPrefs = await _userRepository.GetByAccountIdAsync(accountId);
             var pois = await _poiRepository.GetAllWithPreferencesAsync();
 
-            var poiDict = pois.ToDictionary(x => x.Id);
+            var userPrefSet = userPrefs
+                .Select(x => x.PreferenceCode)
+                .ToHashSet();
 
-            var result = scores
-                .Where(s => poiDict.ContainsKey(s.PoiId))
-                .OrderByDescending(s => s.Score)
-                .Take(limit)
-                .Select(s =>
+            var result = pois
+                .Select(poi => new
                 {
-                    var poi = poiDict[s.PoiId];
-                    return new RecommendedPoiResponse
-                    {
-                        Id = poi.Id,
-                        Name = poi.Name,
-                        City = poi.City,
-                        Description = poi.Description,
-                        ApproxCost = poi.ApproxCost,
-                        Latitude = poi.Latitude,
-                        Longitude = poi.Longitude,
-                        Score = s.Score
-                    };
+                    Poi = poi,
+                    Score = poi.PoiPreferences.Count(pp =>
+                        pp.Preference != null &&
+                        userPrefSet.Contains(pp.Preference.Name))
+                })
+                .OrderByDescending(x => x.Score)
+                .Select(x => new RecommendedPoiResponse
+                {
+                    Id = x.Poi.Id,
+                    Name = x.Poi.Name,
+                    City = x.Poi.City,
+                    Description = x.Poi.Description,
+                    ApproxCost = x.Poi.ApproxCost,
+                    Latitude = x.Poi.Latitude,
+                    Longitude = x.Poi.Longitude,
+                    Score = x.Score
                 })
                 .ToList();
 
             return result;
         }
+
     }
 
 }

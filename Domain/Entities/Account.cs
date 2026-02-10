@@ -27,7 +27,6 @@ namespace Domain.Entities
         public string PhoneNumber { get; set; } = string.Empty;
         public string AvatarUrl { get; set; } = string.Empty;
         public string Gender { get; set; } = string.Empty;
-        public string AvtUrl { get; set; } = string.Empty;  
 
         [Required]
         public int RoleId { get; set; }
