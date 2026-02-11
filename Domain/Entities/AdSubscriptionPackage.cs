@@ -13,10 +13,10 @@ namespace Domain.Entities
         public string Title { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
 
-        public float Price { get; set; }
+        public decimal Price { get; set; }
         public int DurationDays { get; set; }
-        public string MaxAdsPerPeriod { get; set; } = string.Empty;
-
+        public double MaxAdsPerPeriod { get; set; }
+        
         public string Status { get; set; } = "active";
         public DateTime CreatedAt { get; set; }
 

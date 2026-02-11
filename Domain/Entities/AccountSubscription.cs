@@ -14,8 +14,8 @@ namespace Domain.Entities
         public Guid SubscriptionPackageId { get; set; }
         public Guid AccountId { get; set; }
 
-        public float MaxAds { get; set; }
-        public float AdsUsed { get; set; }
+        public int MaxAds { get; set; }
+        public int AdsUsed { get; set; }
 
         public SubStatus Status { get; set; } = SubStatus.Active;
         public DateTime CreatedAt { get; set; }
