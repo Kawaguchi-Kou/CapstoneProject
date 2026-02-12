@@ -34,6 +34,10 @@ namespace Application.Mappings
 
             CreateMap<Account, UserResponse>();
             CreateMap<Account, ProfileResponse>();
+
+            //AdSubscriptionPackage
+            CreateMap<CreateAdSubscriptionPackageRequest, AdSubscriptionPackage>();
+            CreateMap<AdSubscriptionPackage, AdSubscriptionPackageResponse>();
         }
     }
 }
