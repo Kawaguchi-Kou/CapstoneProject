@@ -40,6 +40,9 @@ namespace Infrastructure.EntitiesConfigurations
         public DbSet<AdPayment> adPayments { get; set; }
         public DbSet<AccountSubscription> accountSubscriptions { get; set; }
 
+        //Weather Forecast
+        public DbSet<WeatherForecast> WeatherForecasts { get; set; }
+
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -434,6 +437,17 @@ namespace Infrastructure.EntitiesConfigurations
                       .HasForeignKey(e => e.AdId)
                       .OnDelete(DeleteBehavior.SetNull);
             });
+
+            //==========================
+            //WEATHER_FORECAST
+            //==========================
+            modelBuilder.Entity<WeatherForecast>(entity =>
+                {
+                    entity.ToTable("WeatherForecast");
+
+                    entity.HasIndex(x => x.City)
+                            .IsUnique();
+                });
         }
     }
 }
