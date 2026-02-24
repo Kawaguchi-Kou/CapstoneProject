@@ -14,9 +14,58 @@ namespace Application.Services
     {
         private readonly IAdSubscriptionPackageRepository _packageRepository;
 
+        // Swagger UI thường điền placeholder "string". Nếu FE/Swagger gửi nguyên "string"
+        // thì ta coi như chưa nhập và dùng default hợp lệ.
+        private static readonly HashSet<string> AllowedStatuses =
+            new(StringComparer.OrdinalIgnoreCase)
+            {
+                "active",
+                "inactive"
+            };
+
         public AdSubscriptionPackageService(IAdSubscriptionPackageRepository packageRepository)
         {
             _packageRepository = packageRepository;
+        }
+
+        private static string NormalizeStatusForCreate(string? status)
+        {
+            var raw = status?.Trim();
+
+            if (string.IsNullOrWhiteSpace(raw) ||
+                string.Equals(raw, "string", StringComparison.OrdinalIgnoreCase))
+            {
+                return "active";
+            }
+
+            var normalized = raw.ToLowerInvariant();
+            if (!AllowedStatuses.Contains(normalized))
+            {
+                throw new ArgumentException(
+                    $"Status không hợp lệ. Chỉ chấp nhận: {string.Join(", ", AllowedStatuses)}");
+            }
+
+            return normalized;
+        }
+
+        private static string? NormalizeStatusForUpdate(string? status)
+        {
+            var raw = status?.Trim();
+
+            if (string.IsNullOrWhiteSpace(raw) ||
+                string.Equals(raw, "string", StringComparison.OrdinalIgnoreCase))
+            {
+                return null; // không update
+            }
+
+            var normalized = raw.ToLowerInvariant();
+            if (!AllowedStatuses.Contains(normalized))
+            {
+                throw new ArgumentException(
+                    $"Status không hợp lệ. Chỉ chấp nhận: {string.Join(", ", AllowedStatuses)}");
+            }
+
+            return normalized;
         }
 
         public async Task<AdSubscriptionPackage> CreatePackageAsync(CreateAdSubscriptionPackageRequest request)
@@ -42,7 +91,7 @@ namespace Application.Services
                 Price = request.Price,
                 DurationDays = request.DurationDays,
                 MaxAdsPerPeriod = request.MaxAdsPerPeriod,
-                Status = request.Status ?? "active",
+                Status = NormalizeStatusForCreate(request.Status),
                 Currency = request.Currency ?? "VND"
             };
 
@@ -84,7 +133,13 @@ namespace Application.Services
             existingPackage.Price = request.Price;
             existingPackage.DurationDays = request.DurationDays;
             existingPackage.MaxAdsPerPeriod = request.MaxAdsPerPeriod;
-            existingPackage.Status = request.Status ?? existingPackage.Status;
+
+            var normalizedStatus = NormalizeStatusForUpdate(request.Status);
+            if (normalizedStatus != null)
+            {
+                existingPackage.Status = normalizedStatus;
+            }
+
             existingPackage.Currency = request.Currency ?? existingPackage.Currency;
 
             return await _packageRepository.UpdateAsync(existingPackage);
