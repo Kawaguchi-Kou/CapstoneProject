@@ -8,7 +8,6 @@ namespace Domain.Enums
 {
     public enum AdStatus
     {
-        Draft,
         PendingApproval,
         Active,
         Paused,
