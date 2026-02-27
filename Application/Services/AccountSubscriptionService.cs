@@ -18,6 +18,33 @@ namespace Application.Services
         private readonly IAdSubscriptionPackageRepository _packageRepository;
         private readonly IAuthRepository _authRepository;
 
+        private static bool IsExpiredByDuration(AccountSubscription subscription)
+        {
+            // DurationDays thuộc package. Nếu thiếu navigation/package invalid, coi như không active.
+            if (subscription.SubscriptionPackage == null || subscription.SubscriptionPackage.DurationDays <= 0)
+                return true;
+
+            var expiredAtUtc = subscription.CreatedAt.AddDays(subscription.SubscriptionPackage.DurationDays);
+            return DateTime.UtcNow >= expiredAtUtc;
+        }
+
+        private async Task<AccountSubscription?> GetAndRefreshActiveSubscriptionAsync(Guid accountId)
+        {
+            var subscription = await _subscriptionRepository.GetActiveByAccountIdAsync(accountId);
+            if (subscription == null)
+                return null;
+
+            // Tự động expire nếu đã quá hạn theo DurationDays
+            if (IsExpiredByDuration(subscription))
+            {
+                subscription.Status = SubStatus.Expired;
+                await _subscriptionRepository.UpdateAsync(subscription);
+                return null;
+            }
+
+            return subscription;
+        }
+
         public AccountSubscriptionService(
             IAccountSubscriptionRepository subscriptionRepository,
             IAdSubscriptionPackageRepository packageRepository,
@@ -44,7 +71,7 @@ namespace Application.Services
                 throw new KeyNotFoundException("Account not found");
 
             // 3. Kiểm tra account đã có subscription active chưa (optional: có thể cho phép nhiều subscription)
-            var existingActive = await _subscriptionRepository.GetActiveByAccountIdAsync(accountId);
+            var existingActive = await GetAndRefreshActiveSubscriptionAsync(accountId);
             if (existingActive != null)
             {
                 // Có thể throw exception hoặc suspend subscription cũ
@@ -83,13 +110,13 @@ namespace Application.Services
 
         public async Task<AccountSubscription?> GetActiveSubscriptionAsync(Guid accountId)
         {
-            return await _subscriptionRepository.GetActiveByAccountIdAsync(accountId);
+            return await GetAndRefreshActiveSubscriptionAsync(accountId);
         }
 
         public async Task<bool> CanCreateAdvertisementAsync(Guid accountId)
         {
-            var subscription = await _subscriptionRepository.GetActiveByAccountIdAsync(accountId);
-            
+            var subscription = await GetAndRefreshActiveSubscriptionAsync(accountId);
+
             if (subscription == null)
                 return false;
 
@@ -101,8 +128,8 @@ namespace Application.Services
 
         public async Task IncrementAdsUsedAsync(Guid accountId)
         {
-            var subscription = await _subscriptionRepository.GetActiveByAccountIdAsync(accountId);
-            
+            var subscription = await GetAndRefreshActiveSubscriptionAsync(accountId);
+
             if (subscription == null)
                 throw new InvalidOperationException("No active subscription found for this account");
 

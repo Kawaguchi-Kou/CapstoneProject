@@ -1,9 +1,5 @@
 using Domain.Entities;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Domain.Enums;
 
 namespace Domain.Interfaces
 {
@@ -13,6 +9,20 @@ namespace Domain.Interfaces
         Task<List<Advertisement>> GetByAccountIdAsync(Guid accountId);
         Task<Advertisement> CreateAsync(Advertisement advertisement);
         Task<Advertisement> UpdateAsync(Advertisement advertisement);
+
+        Task<List<(Account Account, int PendingAdsCount, DateTime LatestPendingAt)>> GetPendingAccountsAsync(
+            int skip,
+            int take,
+            string? search = null);
+        Task<int> CountPendingAccountsAsync(string? search = null);
+
+        Task<List<Advertisement>> GetPendingByAccountIdAsync(
+            Guid accountId,
+            int skip,
+            int take,
+            string? keyword = null);
+        Task<int> CountPendingByAccountIdAsync(Guid accountId, string? keyword = null);
+
         Task SaveChangesAsync();
     }
 }
