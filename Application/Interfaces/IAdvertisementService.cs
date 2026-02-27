@@ -1,11 +1,6 @@
 using Application.DTOs.Requests;
 using Application.DTOs.Responses;
 using Domain.Entities;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Application.Interfaces
 {
@@ -16,5 +11,16 @@ namespace Application.Interfaces
         Task<List<Advertisement>> GetByAccountIdAsync(Guid accountId);
         Task<Advertisement> ApproveAdvertisementAsync(Guid adId);
         Task<Advertisement> RejectAdvertisementAsync(Guid adId, string? reason = null);
+
+        Task<PagedResultResponse<PendingAdvertisementAccountItemResponse>> GetPendingAdvertisementAccountsAsync(
+            int page,
+            int pageSize,
+            string? search = null);
+
+        Task<PagedResultResponse<PendingAdvertisementItemResponse>> GetPendingAdvertisementsByAccountAsync(
+            Guid accountId,
+            int page,
+            int pageSize,
+            string? keyword = null);
     }
 }
