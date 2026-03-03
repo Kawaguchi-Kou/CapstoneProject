@@ -118,14 +118,14 @@ namespace WebAPI.Controllers
         [HttpPost("update-preference")]
         [Authorize]
         public async Task<IActionResult> UpdatePreferences(
-        [FromBody] UserPreferencesRequest request)
+        [FromBody] List<Guid> ids)
         {
             try
             {
                 var account = _authService.GetCurrentAccount();
                 var accountId = account.Result.Id;
 
-                await _userService.UpdateUserPreferencesAsync(accountId, request);
+                await _userService.UpdateUserPreferencesAsync(accountId, ids);
 
                 return Ok(new { message = "Preferences updated successfully" });
             }
