@@ -14,8 +14,11 @@ namespace Domain.Interfaces
         Task<Account> UpdateProfileAsync(Account user);
         Task<Account> CreateProfileAsync(Account user);
         Task<List<Account>> GetByIdsAsync(List<Guid> ids);
-        Task<List<UserPreferenceVector>> GetByAccountIdAsync(Guid accountId);
-        Task UpsertAsync(Guid accountId, List<UserPreferenceVector> preferences);
+        Task<List<UserPreference>> GetPreferenceByAccountIdAsync(Guid accountId);
+        //Task UpsertAsync(Guid accountId, List<UserPreference> preferences);
+        Task ReplaceUserPreferences(
+            Guid accountId,
+            List<Guid> preferenceIds);
         Task SaveChangesAsync();
     }
 }

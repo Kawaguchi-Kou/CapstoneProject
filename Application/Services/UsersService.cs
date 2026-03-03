@@ -83,20 +83,14 @@ namespace Application.Services
             return users;
         }
 
-        public async Task UpdateUserPreferencesAsync(Guid accountId, UserPreferencesRequest request)
+        public async Task UpdateUserPreferencesAsync(Guid accountId, List<Guid> preferenceIds)
         {
-            var entities = request.Preferences.Select(p => new UserPreferenceVector
-            {
-                PreferenceCode = p.PreferenceCode,
-                Score = p.Score
-            }).ToList();
-
-            await _userRepository.UpsertAsync(accountId, entities);
+            await _userRepository.ReplaceUserPreferences(accountId, preferenceIds);
         }
 
-        public async Task<List<UserPreferenceVector>> GetUserPreferencesAsync(Guid accountId)
+        public async Task<List<UserPreference>> GetUserPreferencesAsync(Guid accountId)
         {
-            return await _userRepository.GetByAccountIdAsync(accountId);
+            return await _userRepository.GetPreferenceByAccountIdAsync(accountId);
         }
     }
 }

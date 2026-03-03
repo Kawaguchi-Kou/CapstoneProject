@@ -4,10 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Application.DTOs.Requests
+namespace Application.DTOs.Geocode
 {
-    public class UserPreferenceItem
+    public class GeocodeRequest
     {
-        public Guid PreferenceId { get; set; }
+        public string PlaceName { get; set; } = string.Empty;
     }
 }

@@ -5,6 +5,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Domain.Enums;
 
 namespace Domain.Entities
 {
@@ -32,6 +33,8 @@ namespace Domain.Entities
         public float? DistanceKm { get; set; }
 
         public int? EstimatedMinutes { get; set; }
+
+        public SegmentType SegmentType { get; set; } = SegmentType.Waypoint;
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 

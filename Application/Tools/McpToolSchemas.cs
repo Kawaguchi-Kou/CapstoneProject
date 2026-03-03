@@ -34,19 +34,35 @@ namespace Application.Tools
             }
         };
 
-        public static object GetDistance => new
+        public static object GetCoordinates => new
         {
-            name = "get_distance",
-            description = "Get travel distance and duration",
+            name = "get_coordinates",
+            description = "Get latitude and longitude from a place name in Vietnam",
             input_schema = new
             {
                 type = "object",
                 properties = new
                 {
-                    origin = new { type = "string" },
-                    destination = new { type = "string" }
+                    req = new
+                    {
+                        type = "object",
+                        properties = new
+                        {
+                            placeName = new
+                            {
+                                type = "string",
+                                description = "Name of the place to geocode"
+                            },
+                            city = new
+                            {
+                                type = "string",
+                                description = "City where the place is located (optional)"
+                            }
+                        },
+                        required = new[] { "placeName" } // city NOT required
+                    }
                 },
-                required = new[] { "origin", "destination" }
+                required = new[] { "req" }
             }
         };
     }

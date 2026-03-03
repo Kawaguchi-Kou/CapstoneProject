@@ -35,6 +35,11 @@ namespace Application.Mappings
             CreateMap<Account, UserResponse>();
             CreateMap<Account, ProfileResponse>();
 
+            //Preference
+             CreateMap<UserPreferenceItem, UserPreference>();
+             CreateMap<UserPreference, UserPreferenceResponse>()
+                .ForMember(dest => dest.PreferenceName,
+                opt => opt.MapFrom(src => src.Preference)); ;
             //AdSubscriptionPackage
             CreateMap<CreateAdSubscriptionPackageRequest, AdSubscriptionPackage>();
             CreateMap<AdSubscriptionPackage, AdSubscriptionPackageResponse>();
