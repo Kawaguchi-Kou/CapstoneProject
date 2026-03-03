@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -17,6 +17,12 @@ namespace Infrastructure.Repositories
         public POIRepository(AppDbContext context)
         {
             _context = context;
+        }
+
+        public async Task<POI?> GetByIdAsync(Guid poiId)
+        {
+            return await _context.POIs
+                .FirstOrDefaultAsync(p => p.Id == poiId);
         }
 
         public async Task<List<POI>> GetAllWithPreferencesAsync()

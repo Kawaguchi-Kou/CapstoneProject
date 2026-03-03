@@ -55,6 +55,14 @@ builder.Services.AddScoped<IPreferenceService, PreferenceService>();
 //POI
 builder.Services.AddScoped<IPOIService, POIService>();
 
+//AdSubscriptionPackage
+builder.Services.AddScoped<Application.Interfaces.IAdSubscriptionPackageService, Application.Services.AdSubscriptionPackageService>();
+
+//AccountSubscription
+builder.Services.AddScoped<Application.Interfaces.IAccountSubscriptionService, Application.Services.AccountSubscriptionService>();
+
+//Advertisement
+builder.Services.AddScoped<Application.Interfaces.IAdvertisementService, Application.Services.AdvertisementService>();
 
 //Add repositories
 //Auth
@@ -72,6 +80,14 @@ builder.Services.AddScoped<IPreferenceRepository, PreferenceRepository>();
 builder.Services.AddScoped<IPOIRepository, POIRepository>();
 
 
+//AdSubscriptionPackage
+builder.Services.AddScoped<Domain.Interfaces.IAdSubscriptionPackageRepository, Infrastructure.Repositories.AdSubscriptionPackageRepository>();
+
+//AccountSubscription
+builder.Services.AddScoped<Domain.Interfaces.IAccountSubscriptionRepository, Infrastructure.Repositories.AccountSubscriptionRepository>();
+
+//Advertisement
+builder.Services.AddScoped<Domain.Interfaces.IAdvertisementRepository, Infrastructure.Repositories.AdvertisementRepository>();
 
 // add CORS
 builder.Services.AddCors(options =>

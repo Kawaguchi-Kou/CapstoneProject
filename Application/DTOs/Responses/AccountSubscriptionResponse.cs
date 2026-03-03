@@ -1,29 +1,22 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Domain.Enums;
 
-namespace Domain.Entities
+namespace Application.DTOs.Responses
 {
-    public class AccountSubscription
+    public class AccountSubscriptionResponse
     {
         public Guid SubscriptionId { get; set; }
-
         public Guid SubscriptionPackageId { get; set; }
         public Guid AccountId { get; set; }
-
         public int MaxAds { get; set; }
         public int AdsUsed { get; set; }
-
-        public SubStatus Status { get; set; } = SubStatus.Active;
+        public int AdsRemaining => MaxAds - AdsUsed;
+        public SubStatus Status { get; set; }
         public DateTime CreatedAt { get; set; }
-
-        // Navigation
-        public Account Account { get; set; } = null!;
-        public AdSubscriptionPackage SubscriptionPackage { get; set; } = null!;
-        public ICollection<AdPayment> Payments { get; set; } = new List<AdPayment>();
+        public string PackageTitle { get; set; } = string.Empty;
     }
-
 }

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -40,6 +40,17 @@ namespace Application.Mappings
              CreateMap<UserPreference, UserPreferenceResponse>()
                 .ForMember(dest => dest.PreferenceName,
                 opt => opt.MapFrom(src => src.Preference)); ;
+            //AdSubscriptionPackage
+            CreateMap<CreateAdSubscriptionPackageRequest, AdSubscriptionPackage>();
+            CreateMap<AdSubscriptionPackage, AdSubscriptionPackageResponse>();
+
+            //AccountSubscription
+            CreateMap<AccountSubscription, AccountSubscriptionResponse>()
+                .ForMember(dest => dest.PackageTitle, opt => opt.MapFrom(src => src.SubscriptionPackage != null ? src.SubscriptionPackage.Title : string.Empty));
+
+            //Advertisement
+            CreateMap<CreateAdvertisementRequest, Advertisement>();
+            CreateMap<Advertisement, AdvertisementResponse>();
         }
     }
 }
