@@ -4,10 +4,12 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Application.DTOs.Requests
+namespace Application.DTOs.Responses
 {
-    public class UserPreferenceItem
+    public class UserPreferenceResponse
     {
+        public Guid Id { get; set; }
         public Guid PreferenceId { get; set; }
+        public string PreferenceName { get; set; } = string.Empty;
     }
 }

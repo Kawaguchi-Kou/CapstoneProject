@@ -33,6 +33,12 @@ builder.Services.Configure<OpenMeteoOptions>(
 
 builder.Services.AddHttpClient<IOpenMeteoService, OpenMeteoService>();
 
+//=====================
+// GEOCODING - MAPBOX
+//=====================
+builder.Services
+    .AddHttpClient<IGeocodingService, MapboxGeocodingService>();
+
 // Add services 
 //Auth
 builder.Services.AddScoped<IAuthService, AuthServices>();
@@ -64,6 +70,8 @@ builder.Services.AddScoped<IPreferenceRepository, PreferenceRepository>();
 
 //POI
 builder.Services.AddScoped<IPOIRepository, POIRepository>();
+
+
 
 // add CORS
 builder.Services.AddCors(options =>

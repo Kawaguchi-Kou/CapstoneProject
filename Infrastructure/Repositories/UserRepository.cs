@@ -50,62 +50,76 @@ namespace Infrastructure.Repositories
             .ToListAsync();
         }
 
-        public async Task<List<UserPreferenceVector>> GetByAccountIdAsync(Guid accountId)
+        public async Task<List<UserPreference>> GetPreferenceByAccountIdAsync(Guid accountId)
         {
-            return await _context.UserPreferenceVectors
+            return await _context.UserPreferences
                 .Where(x => x.AccountId == accountId)
                 .ToListAsync();
         }
 
-        //public async Task UpsertAsync(Guid accountId, List<UserPreferenceVector> preferences)
+        //public async Task UpsertAsync(Guid accountId, List<UserPreference> preferences)
         //{
-        //    var existing = await _context.UserPreferenceVectors
+        //    var existing = await _context.UserPreferences
         //        .Where(x => x.AccountId == accountId)
         //        .ToListAsync();
 
         //    foreach (var pref in preferences)
         //    {
-        //        var current = existing.FirstOrDefault(x =>
-        //            x.PreferenceCode == pref.PreferenceCode);
+        //        //var current = existing.FirstOrDefault(x =>
+        //        //    x.PreferenceCode == pref.PreferenceCode);
 
-        //        if (current != null)
-        //        {
-        //            // update
-        //            current.Score = pref.Score;
-        //        }
-        //        else
-        //        {
-        //            // insert
-        //            _context.UserPreferenceVectors.Add(pref);
-        //        }
+        //        //if (current != null)
+        //        //{
+        //        //    // update
+        //        //    current.Score = pref.Score;
+        //        //}
+        //        //else
+        //        //{
+        //        //    // insert
+        //        //    _context.UserPreferenceVectors.Add(pref);
+        //        //}
         //    }
 
         //    await _context.SaveChangesAsync();
         //}
 
-        public async Task UpsertAsync(Guid accountId, List<UserPreferenceVector> preferences)
+        //public async Task UpdateUserPreferences(Guid accountId, List<Guid> preferenceIds)
+        //{
+        //    var existing = await _context.UserPreferences
+        //        .Where(x => x.AccountId == accountId)
+        //        .ToListAsync();
+
+        //    _context.UserPreferences.RemoveRange(existing);
+
+        //    var newPreferences = preferenceIds.Select(id => new UserPreference
+        //    {
+        //        Id = Guid.NewGuid(),
+        //        AccountId = accountId,
+        //        PreferenceId = id
+        //    });
+
+        //    await _context.UserPreferences.AddRangeAsync(newPreferences);
+        //    await _context.SaveChangesAsync();
+        //}
+
+        public async Task ReplaceUserPreferences(
+            Guid accountId,
+            List<Guid> preferenceIds)
         {
-            var existing = await _context.UserPreferenceVectors
+            var existing = await _context.UserPreferences
                 .Where(x => x.AccountId == accountId)
                 .ToListAsync();
 
-            foreach (var pref in preferences)
+            _context.UserPreferences.RemoveRange(existing);
+
+            var newPreferences = preferenceIds.Select(id => new UserPreference
             {
-                var current = existing.FirstOrDefault(x =>
-                    x.PreferenceCode == pref.PreferenceCode);
+                Id = Guid.NewGuid(),
+                AccountId = accountId,
+                PreferenceId = id
+            });
 
-                if (current != null)
-                {
-                    current.Score = pref.Score;
-                }
-                else
-                {
-                    pref.Id = Guid.NewGuid();
-                    pref.AccountId = accountId;
-
-                    _context.UserPreferenceVectors.Add(pref);
-                }
-            }
+            await _context.UserPreferences.AddRangeAsync(newPreferences);
             await _context.SaveChangesAsync();
         }
 

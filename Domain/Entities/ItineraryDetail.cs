@@ -20,7 +20,7 @@ namespace Domain.Entities
 
         public Guid? PoiId { get; set; }
 
-        public float WeatherRiskScore { get; set; }
+        public double WeatherRiskScore { get; set; }
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 

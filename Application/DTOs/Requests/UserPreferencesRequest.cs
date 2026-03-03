@@ -8,6 +8,6 @@ namespace Application.DTOs.Requests
 {
     public class UserPreferencesRequest
     {
-        public List<UserPreferenceItem> Preferences { get; set; } = new List<UserPreferenceItem>();
+        public List<Guid> PreferenceIds { get; set; }
     }
 }

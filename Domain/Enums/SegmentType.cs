@@ -4,10 +4,12 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Application.DTOs.Requests
+namespace Domain.Enums
 {
-    public class UserPreferenceItem
+    public enum SegmentType
     {
-        public Guid PreferenceId { get; set; }
+        Waypoint,
+        MajorCity,
+        Destination
     }
 }

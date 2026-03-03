@@ -16,6 +16,6 @@ namespace Application.Interfaces
         Task<Account> CreateProfile(Account user);
         Task<List<Account>> GetByIdsAsync(List<Guid> ids);
         Task UpdateUserPreferencesAsync(Guid accountId, UserPreferencesRequest request);
-        Task<List<UserPreferenceVector>> GetUserPreferencesAsync(Guid accountId);
+        Task<List<UserPreference>> GetUserPreferencesAsync(Guid accountId);
     }
 }

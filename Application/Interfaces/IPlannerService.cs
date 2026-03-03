@@ -7,9 +7,9 @@ using Application.DTOs.Responses;
 
 namespace Application.Interfaces
 {
-    public interface IPOIService
+    public interface IPlannerService
     {
-        //Task<List<POIScoreResult>> CalculateScoresAsync(Guid accountId);
-        Task<List<RecommendedPoiResponse>> GetAllPoisSortedByPreferenceAsync(Guid accountId);
+        Task<PlannerResponse> PlanAsync(Guid tripId);
+        Task<PlannerResponse> ReplanAsync(Guid tripId);
     }
 }

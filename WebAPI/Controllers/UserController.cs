@@ -115,7 +115,7 @@ namespace WebAPI.Controllers
             }
         }
 
-        [HttpPost("update-preference-vector")]
+        [HttpPost("update-preference")]
         [Authorize]
         public async Task<IActionResult> UpdatePreferences(
         [FromBody] UserPreferencesRequest request)
@@ -146,11 +146,9 @@ namespace WebAPI.Controllers
 
                 var result = await _userService.GetUserPreferencesAsync(accountId);
 
-                return Ok(result.Select(x => new
-                {
-                    x.PreferenceCode,
-                    x.Score
-                }));
+                var response = _mapper.Map<List<UserPreferenceResponse>>(result);
+
+                return Ok(response);
             }
             catch (Exception ex)
             {
