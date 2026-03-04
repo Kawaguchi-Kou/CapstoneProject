@@ -62,12 +62,13 @@ public class ToolsController : ControllerBase
     [FromBody] McpRequest<GeocodeRequest> request)
     {
         var placeName = request.Req.PlaceName;
+        var city = request.Req.City;
 
         if (string.IsNullOrWhiteSpace(placeName))
             return BadRequest("placeName is required");
 
         var (latitude, longitude) =
-            await _geocoding.GetCoordinatesAsync(placeName);
+            await _geocoding.GetCoordinatesAsync(placeName, city);
 
         return Ok(new
         {
