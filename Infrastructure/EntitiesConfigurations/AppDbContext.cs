@@ -271,7 +271,7 @@ namespace Infrastructure.EntitiesConfigurations
                 entity.Property(p => p.City)
                       .IsRequired()
                       .HasMaxLength(255);
-                entity.Property(p => p.City)
+                entity.Property(p => p.Address)
                       .IsRequired()
                       .HasMaxLength(255);
             });
