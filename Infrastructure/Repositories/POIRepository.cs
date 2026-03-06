@@ -33,5 +33,39 @@ namespace Infrastructure.Repositories
                 .ToListAsync();
         }
 
+        public async Task<List<POI>> GetAllAsync()
+        {
+            return await _context.POIs.ToListAsync();
+        }
+
+        public async Task AddAsync(POI poi)
+        {
+            await _context.POIs.AddAsync(poi);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task UpdateAsync(POI poi)
+        {
+            _context.POIs.Update(poi);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task DeleteAsync(POI poi)
+        {
+            _context.POIs.Remove(poi);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task<POI?> GetByNameAndCityAsync(string name, string city)
+        {
+            name = name.Trim().ToLower();
+            city = city.Trim().ToLower();
+
+            return await _context.POIs
+                .FirstOrDefaultAsync(p =>
+                    p.Name.ToLower() == name &&
+                    p.City.ToLower() == city);
+        }
+
     }
 }
