@@ -146,5 +146,60 @@ namespace Application.Services
 
             await _subscriptionRepository.UpdateAsync(subscription);
         }
+
+        /// <summary>
+        /// Tạo subscription trực tiếp (chỉ dành cho Admin, không qua thanh toán)
+        /// </summary>
+        public async Task<AccountSubscriptionResponse> CreateSubscriptionDirectlyAsync(Guid accountId, SubscribePackageRequest request)
+        {
+            // 1. Kiểm tra package có tồn tại và active không
+            var package = await _packageRepository.GetByIdAsync(request.PackageId);
+            if (package == null)
+                throw new KeyNotFoundException("Package not found");
+
+            if (package.Status.ToLower() != "active")
+                throw new InvalidOperationException("Package is not active");
+
+            // 2. Kiểm tra account có tồn tại không
+            var account = await _authRepository.GetByIdAsync(accountId);
+            if (account == null)
+                throw new KeyNotFoundException("Account not found");
+
+            // 3. Kiểm tra account đã có subscription active chưa
+            var existingActive = await GetAndRefreshActiveSubscriptionAsync(accountId);
+            if (existingActive != null)
+            {
+                throw new InvalidOperationException("Account already has an active subscription. Please wait for it to expire or contact support.");
+            }
+
+            // 4. Tạo subscription mới với MaxAds từ package
+            var subscription = new AccountSubscription
+            {
+                AccountId = accountId,
+                SubscriptionPackageId = request.PackageId,
+                MaxAds = (int)package.MaxAdsPerPeriod,
+                AdsUsed = 0,
+                Status = SubStatus.Active,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            var created = await _subscriptionRepository.CreateAsync(subscription);
+
+            // 5. Load lại với navigation properties để map response
+            var subscriptionWithNav = await _subscriptionRepository.GetByIdAsync(created.SubscriptionId);
+
+            return new AccountSubscriptionResponse
+            {
+                SubscriptionId = subscriptionWithNav!.SubscriptionId,
+                SubscriptionPackageId = subscriptionWithNav.SubscriptionPackageId,
+                AccountId = subscriptionWithNav.AccountId,
+                MaxAds = subscriptionWithNav.MaxAds,
+                AdsUsed = subscriptionWithNav.AdsUsed,
+                Status = subscriptionWithNav.Status,
+                CreatedAt = subscriptionWithNav.CreatedAt,
+                PackageTitle = subscriptionWithNav.SubscriptionPackage?.Title ?? string.Empty,
+                RequiresPayment = false // Admin tạo trực tiếp không cần thanh toán
+            };
+        }
     }
 }

@@ -1,4 +1,4 @@
-﻿using System.Data;
+using System.Data;
 using Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 
@@ -401,7 +401,23 @@ namespace Infrastructure.EntitiesConfigurations
                       .HasMaxLength(50);
 
                 entity.Property(e => e.PaymentStatus)
+                      .HasConversion<int>() // enum -> int
+                      .IsRequired();
+
+                entity.Property(e => e.TransactionContent)
+                      .HasMaxLength(500);
+
+                entity.Property(e => e.AccountNumber)
                       .HasMaxLength(50);
+
+                entity.Property(e => e.SubAccount)
+                      .HasMaxLength(100);
+
+                entity.Property(e => e.Gateway)
+                      .HasMaxLength(100);
+
+                entity.Property(e => e.Code)
+                      .HasMaxLength(100);
 
                 entity.Property(e => e.PaidAt)
                       .HasDefaultValueSql("NOW()");

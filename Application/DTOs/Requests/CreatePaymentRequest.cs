@@ -6,9 +6,9 @@ using System.Threading.Tasks;
 
 namespace Application.DTOs.Requests
 {
-    public class SubscribePackageRequest
+    public class CreatePaymentRequest
     {
         public Guid PackageId { get; set; }
-        public float? Amount { get; set; } // Optional: nếu không có thì lấy từ package price
+        public float Amount { get; set; }
     }
 }

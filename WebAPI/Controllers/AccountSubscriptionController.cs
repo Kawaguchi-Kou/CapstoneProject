@@ -45,6 +45,11 @@ namespace WebAPI.Controllers
                     return Unauthorized(new { message = "Invalid token: User ID not found" });
                 }
 
+                // ✅ LUỒNG CŨ: Tạo subscription trực tiếp (không qua thanh toán)
+                // TODO: Khi có FE, có thể chuyển sang luồng thanh toán bằng cách:
+                // 1. Gọi PaymentService.CreatePaymentAsync() thay vì SubscribePackageAsync()
+                // 2. Trả về QR code và yêu cầu thanh toán
+                // 3. Subscription sẽ được tạo tự động sau khi webhook SePay xác nhận thanh toán thành công
                 var result = await _subscriptionService.SubscribePackageAsync(accountId, request);
                 return Ok(result);
             }

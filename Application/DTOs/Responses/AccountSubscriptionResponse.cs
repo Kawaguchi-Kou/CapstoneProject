@@ -18,5 +18,12 @@ namespace Application.DTOs.Responses
         public SubStatus Status { get; set; }
         public DateTime CreatedAt { get; set; }
         public string PackageTitle { get; set; } = string.Empty;
+
+        // Payment fields (khi cần thanh toán)
+        public Guid? PaymentId { get; set; }
+        public string? QrCodeUrl { get; set; }
+        public string? BankInfo { get; set; }
+        public string? TransactionContent { get; set; }
+        public bool RequiresPayment { get; set; } = false; // true nếu cần thanh toán trước
     }
 }

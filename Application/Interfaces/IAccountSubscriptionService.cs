@@ -15,5 +15,8 @@ namespace Application.Interfaces
         Task<AccountSubscription?> GetActiveSubscriptionAsync(Guid accountId);
         Task<bool> CanCreateAdvertisementAsync(Guid accountId);
         Task IncrementAdsUsedAsync(Guid accountId);
+        
+        // Method cho Admin tạo subscription trực tiếp (không qua thanh toán)
+        Task<AccountSubscriptionResponse> CreateSubscriptionDirectlyAsync(Guid accountId, SubscribePackageRequest request);
     }
 }
