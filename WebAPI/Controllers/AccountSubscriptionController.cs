@@ -45,6 +45,11 @@ namespace WebAPI.Controllers
                     return Unauthorized(new { message = "Invalid token: User ID not found" });
                 }
 
+                // ✅ LUỒNG CŨ: Tạo subscription trực tiếp (không qua thanh toán)
+                // TODO: Khi có FE, có thể chuyển sang luồng thanh toán bằng cách:
+                // 1. Gọi PaymentService.CreatePaymentAsync() thay vì SubscribePackageAsync()
+                // 2. Trả về QR code và yêu cầu thanh toán
+                // 3. Subscription sẽ được tạo tự động sau khi webhook SePay xác nhận thanh toán thành công
                 var result = await _subscriptionService.SubscribePackageAsync(accountId, request);
                 return Ok(result);
             }
@@ -92,6 +97,44 @@ namespace WebAPI.Controllers
                 };
 
                 return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpGet("my-subscriptions")]
+        public async Task<IActionResult> GetMySubscriptions()
+        {
+            try
+            {
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var accountId))
+                {
+                    return Unauthorized(new { message = "Invalid token: User ID not found" });
+                }
+
+                var subscriptions = await _subscriptionService.GetActiveSubscriptionsAsync(accountId);
+                if (subscriptions == null || !subscriptions.Any())
+                {
+                    return NotFound(new { message = "Bạn chưa có gói đăng ký nào còn active" });
+                }
+
+                var responses = subscriptions.Select(subscription => new
+                {
+                    subscription.SubscriptionId,
+                    subscription.SubscriptionPackageId,
+                    subscription.AccountId,
+                    subscription.MaxAds,
+                    subscription.AdsUsed,
+                    AdsRemaining = subscription.MaxAds - subscription.AdsUsed,
+                    subscription.Status,
+                    subscription.CreatedAt,
+                    PackageTitle = subscription.SubscriptionPackage?.Title ?? string.Empty
+                }).ToList();
+
+                return Ok(responses);
             }
             catch (Exception ex)
             {

@@ -8,6 +8,7 @@ using Domain.Interfaces;
 using DotNetEnv;
 using Infrastructure.EntitiesConfigurations;
 using Infrastructure.ExternalApis.OpenMeteo;
+using Infrastructure.ExternalApis.SePay;
 using Infrastructure.Repositories;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -33,11 +34,21 @@ builder.Services.Configure<OpenMeteoOptions>(
 
 builder.Services.AddHttpClient<IOpenMeteoService, OpenMeteoService>();
 
+
+// =====================
+// SEPAY - PAYMENT
+// =====================
+builder.Services.Configure<SePayOptions>(
+    builder.Configuration.GetSection(SePayOptions.SectionName));
+
+builder.Services.AddScoped<ISePayService, SePayService>();
+
 //=====================
 // GEOCODING - MAPBOX
 //=====================
 builder.Services
     .AddHttpClient<IGeocodingService, MapboxGeocodingService>();
+
 
 // Add services 
 //Auth
@@ -60,6 +71,9 @@ builder.Services.AddScoped<Application.Interfaces.IAdSubscriptionPackageService,
 
 //AccountSubscription
 builder.Services.AddScoped<Application.Interfaces.IAccountSubscriptionService, Application.Services.AccountSubscriptionService>();
+
+//Payment
+builder.Services.AddScoped<Application.Interfaces.IPaymentService, Application.Services.PaymentService>();
 
 //Advertisement
 builder.Services.AddScoped<Application.Interfaces.IAdvertisementService, Application.Services.AdvertisementService>();
@@ -85,6 +99,9 @@ builder.Services.AddScoped<Domain.Interfaces.IAdSubscriptionPackageRepository, I
 
 //AccountSubscription
 builder.Services.AddScoped<Domain.Interfaces.IAccountSubscriptionRepository, Infrastructure.Repositories.AccountSubscriptionRepository>();
+
+//Payment
+builder.Services.AddScoped<Domain.Interfaces.IPaymentRepository, Infrastructure.Repositories.PaymentRepository>();
 
 //Advertisement
 builder.Services.AddScoped<Domain.Interfaces.IAdvertisementRepository, Infrastructure.Repositories.AdvertisementRepository>();
