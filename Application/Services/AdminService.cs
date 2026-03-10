@@ -27,5 +27,28 @@ namespace Application.Services
 
             return accounts;
         }
+        public async Task ActivateAccount(Guid id)
+        {
+            var account = await _authRepository.GetByIdAsync(id);
+
+            if (account == null)
+                throw new Exception("Account not found");
+
+            account.IsActive = true;
+
+            await _authRepository.SaveChangesAsync();
+        }
+
+        public async Task DeactivateAccount(Guid id)
+        {
+            var account = await _authRepository.GetByIdAsync(id);
+
+            if (account == null)
+                throw new Exception("Account not found");
+
+            account.IsActive = false;
+
+            await _authRepository.SaveChangesAsync();
+        }
     }
 }

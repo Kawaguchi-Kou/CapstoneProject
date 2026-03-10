@@ -12,6 +12,8 @@ namespace Application.Interfaces
     public interface IAdminService
     {
         Task<List<Account>> GetAll();
+        Task ActivateAccount(Guid id);
+        Task DeactivateAccount(Guid id);
     }
 
 }

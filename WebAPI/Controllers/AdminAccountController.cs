@@ -20,5 +20,18 @@ namespace WebAPI.Controllers
             var accounts = await _adminService.GetAll();
             return Ok(accounts);
         }
+        [HttpPut("{id}/activate")]
+        public async Task<IActionResult> ActivateAccount(Guid id)
+        {
+            await _adminService.ActivateAccount(id);
+            return Ok("Account activated");
+        }
+
+        [HttpPut("{id}/deactivate")]
+        public async Task<IActionResult> DeactivateAccount(Guid id)
+        {
+            await _adminService.DeactivateAccount(id);
+            return Ok("Account deactivated");
+        }
     }
 }
