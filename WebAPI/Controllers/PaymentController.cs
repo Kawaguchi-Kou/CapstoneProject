@@ -181,7 +181,7 @@ namespace WebAPI.Controllers
                     Status = payment.PaymentStatus,
                     TransactionContent = payment.TransactionContent,
                     QrCodeUrl = _sePayService.GenerateQrCodeUrl(payment.Amount, payment.TransactionContent),
-                    BankInfo = "MBBank - 0984147052 - SEPAY COMPANY",
+                    BankInfo = "MBBank - 0984147052 - NGUYEN HAI QUAN",
                     CreatedAt = payment.PaidAt
                 };
 

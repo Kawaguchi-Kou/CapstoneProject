@@ -1,4 +1,5 @@
 using Application.Interfaces;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
@@ -11,10 +12,12 @@ namespace Infrastructure.ExternalApis.SePay
     public class SePayService : ISePayService
     {
         private readonly SePayOptions _options;
+        private readonly IConfiguration _config;
 
-        public SePayService(IOptions<SePayOptions> options)
+        public SePayService(IOptions<SePayOptions> options, IConfiguration configuration)
         {
             _options = options.Value;
+            _config = configuration;
         }
 
         /// <summary>
@@ -35,8 +38,20 @@ namespace Infrastructure.ExternalApis.SePay
         /// </summary>
         public bool VerifyApiKey(string apiKeyHeader)
         {
-            var expectedApiKey = $"Apikey {_options.ApiKey}";
-            return apiKeyHeader == expectedApiKey;
+            var apiKeySepay = _config["API_KEY_SEPAY"];
+            if (string.IsNullOrWhiteSpace(apiKeySepay))
+            {
+                return false;
+            }
+
+            // Bỏ prefix "Apikey " nếu có
+            var normalized = apiKeyHeader?.Trim() ?? string.Empty;
+            if (normalized.StartsWith("Apikey ", StringComparison.OrdinalIgnoreCase))
+            {
+                normalized = normalized.Substring("Apikey ".Length).Trim();
+            }
+
+            return normalized == apiKeySepay;
         }
     }
 }
