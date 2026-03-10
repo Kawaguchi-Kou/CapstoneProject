@@ -113,6 +113,31 @@ namespace Application.Services
             return await GetAndRefreshActiveSubscriptionAsync(accountId);
         }
 
+        public async Task<List<AccountSubscription>> GetActiveSubscriptionsAsync(Guid accountId)
+        {
+            var subscriptions = await _subscriptionRepository.GetByAccountIdAsync(accountId);
+
+            // Lọc những subscription còn active và chưa expired theo DurationDays
+            var activeSubscriptions = new List<AccountSubscription>();
+
+            foreach (var subscription in subscriptions)
+            {
+                if (subscription.Status != SubStatus.Active)
+                    continue;
+
+                if (IsExpiredByDuration(subscription))
+                {
+                    subscription.Status = SubStatus.Expired;
+                    await _subscriptionRepository.UpdateAsync(subscription);
+                    continue;
+                }
+
+                activeSubscriptions.Add(subscription);
+            }
+
+            return activeSubscriptions;
+        }
+
         public async Task<bool> CanCreateAdvertisementAsync(Guid accountId)
         {
             var subscription = await GetAndRefreshActiveSubscriptionAsync(accountId);

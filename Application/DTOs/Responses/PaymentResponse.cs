@@ -10,7 +10,7 @@ namespace Application.DTOs.Responses
     public class PaymentResponse
     {
         public Guid PaymentId { get; set; }
-        public Guid SubscriptionId { get; set; }
+        public Guid? SubscriptionId { get; set; }
         public float Amount { get; set; }
         public string Currency { get; set; } = string.Empty;
         public PaymentStatus Status { get; set; }

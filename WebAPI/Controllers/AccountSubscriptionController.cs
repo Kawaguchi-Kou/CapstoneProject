@@ -103,5 +103,43 @@ namespace WebAPI.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
+
+        [HttpGet("my-subscriptions")]
+        public async Task<IActionResult> GetMySubscriptions()
+        {
+            try
+            {
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var accountId))
+                {
+                    return Unauthorized(new { message = "Invalid token: User ID not found" });
+                }
+
+                var subscriptions = await _subscriptionService.GetActiveSubscriptionsAsync(accountId);
+                if (subscriptions == null || !subscriptions.Any())
+                {
+                    return NotFound(new { message = "Bạn chưa có gói đăng ký nào còn active" });
+                }
+
+                var responses = subscriptions.Select(subscription => new
+                {
+                    subscription.SubscriptionId,
+                    subscription.SubscriptionPackageId,
+                    subscription.AccountId,
+                    subscription.MaxAds,
+                    subscription.AdsUsed,
+                    AdsRemaining = subscription.MaxAds - subscription.AdsUsed,
+                    subscription.Status,
+                    subscription.CreatedAt,
+                    PackageTitle = subscription.SubscriptionPackage?.Title ?? string.Empty
+                }).ToList();
+
+                return Ok(responses);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
     }
 }

@@ -40,7 +40,7 @@ builder.Services.AddHttpClient<IOpenMeteoService, OpenMeteoService>();
 builder.Services.Configure<SePayOptions>(
     builder.Configuration.GetSection(SePayOptions.SectionName));
 
-builder.Services.AddScoped<Application.Interfaces.ISePayService, Infrastructure.ExternalApis.SePay.SePayService>();
+builder.Services.AddScoped<ISePayService, SePayService>();
 
 // Add services 
 //Auth

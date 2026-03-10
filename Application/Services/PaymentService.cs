@@ -4,7 +4,7 @@ using Application.Interfaces;
 using Domain.Entities;
 using Domain.Enums;
 using Domain.Interfaces;
-// Removed: using Infrastructure.ExternalApis.SePay;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -20,19 +20,22 @@ namespace Application.Services
         private readonly IAdSubscriptionPackageRepository _packageRepository;
         private readonly IAuthRepository _authRepository;
         private readonly ISePayService _sePayService;
+        private readonly ILogger<PaymentService> _logger;
 
         public PaymentService(
             IPaymentRepository paymentRepository,
             IAccountSubscriptionRepository subscriptionRepository,
             IAdSubscriptionPackageRepository packageRepository,
             IAuthRepository authRepository,
-            ISePayService sePayService)
+            ISePayService sePayService,
+            ILogger<PaymentService> logger)
         {
             _paymentRepository = paymentRepository;
             _subscriptionRepository = subscriptionRepository;
             _packageRepository = packageRepository;
             _authRepository = authRepository;
             _sePayService = sePayService;
+            _logger = logger;
         }
 
         public async Task<PaymentResponse> CreatePaymentAsync(Guid accountId, CreatePaymentRequest request)
@@ -61,7 +64,7 @@ namespace Application.Services
             var payment = new AdPayment
             {
                 PaymentId = paymentId,
-                SubscriptionId = Guid.Empty, // Sẽ được cập nhật sau khi payment thành công
+                SubscriptionId = null, // Pending: chưa có subscription, webhook sẽ gắn sau
                 PackageId = request.PackageId,
                 AccountId = accountId,
                 Amount = amount,
@@ -94,34 +97,71 @@ namespace Application.Services
 
         public async Task<AdPayment?> ProcessSePayWebhookAsync(SePayWebhookRequest webhookRequest)
         {
+            _logger.LogInformation("🔔 SePay Webhook received - TransferType: {TransferType}, Content: {Content}", 
+                webhookRequest.TransferType, webhookRequest.Content);
+
             // 1. Chỉ xử lý giao dịch vào (incoming)
             if (webhookRequest.TransferType != "in")
+            {
+                _logger.LogInformation("⏭️ Skipping outgoing transaction (TransferType: {TransferType})", webhookRequest.TransferType);
                 return null;
+            }
 
             // 2. Parse transaction content để lấy PaymentId
             if (string.IsNullOrEmpty(webhookRequest.Content))
+            {
+                _logger.LogWarning("⚠️ Webhook Content is null or empty");
                 return null;
+            }
 
             var content = webhookRequest.Content;
             int startIndex = content.IndexOf("Pay") + "Pay".Length;
             int endIndex = content.IndexOf("ment");
 
             if (startIndex < 0 || endIndex <= startIndex)
+            {
+                _logger.LogWarning("⚠️ Invalid transaction content format: {Content}", content);
                 return null;
+            }
 
             string guidString = content.Substring(startIndex, endIndex - startIndex).Trim();
             if (!Guid.TryParse(guidString, out Guid paymentId))
+            {
+                _logger.LogWarning("⚠️ Failed to parse PaymentId from content: {Content}, extracted: {GuidString}", content, guidString);
                 return null;
+            }
+
+            _logger.LogInformation("🔍 Parsed PaymentId: {PaymentId}", paymentId);
 
             // 3. Tìm payment record
             var payment = await _paymentRepository.GetByIdAsync(paymentId);
-            if (payment == null || payment.PaymentStatus != PaymentStatus.Pending)
+            if (payment == null)
+            {
+                _logger.LogWarning("⚠️ Payment not found: {PaymentId}", paymentId);
                 return null;
+            }
+
+            if (payment.PaymentStatus != PaymentStatus.Pending)
+            {
+                _logger.LogWarning("⚠️ Payment already processed: {PaymentId}, Status: {Status}", paymentId, payment.PaymentStatus);
+                return null;
+            }
+
+            _logger.LogInformation("✅ Found pending payment: {PaymentId}", paymentId);
 
             // 4. Cập nhật payment với thông tin từ webhook
+            _logger.LogInformation("💳 Updating payment status to Completed: {PaymentId}", paymentId);
             payment.PaymentStatus = PaymentStatus.Completed;
             if (DateTime.TryParse(webhookRequest.TransactionDate, out DateTime transactionDate))
-                payment.TransactionDate = transactionDate;
+            {
+                // PostgreSQL timestamp with time zone yêu cầu UTC
+                payment.TransactionDate = transactionDate.Kind switch
+                {
+                    DateTimeKind.Utc => transactionDate,
+                    DateTimeKind.Local => transactionDate.ToUniversalTime(),
+                    _ => DateTime.SpecifyKind(transactionDate, DateTimeKind.Utc)
+                };
+            }
             payment.AccountNumber = webhookRequest.AccountNumber;
             payment.SubAccount = webhookRequest.SubAccount;
             payment.AmountIn = webhookRequest.TransferAmount;
@@ -130,33 +170,47 @@ namespace Application.Services
             payment.Code = webhookRequest.Code;
             payment.PaidAt = DateTime.UtcNow;
 
-            await _paymentRepository.UpdateAsync(payment);
+            await _paymentRepository.SaveChangesAsync();
+            _logger.LogInformation("✅ Payment updated successfully: {PaymentId}", paymentId);
 
             // 5. Nếu payment thành công và chưa có subscription, tạo subscription
-            if (payment.PaymentStatus == PaymentStatus.Completed && payment.SubscriptionId == Guid.Empty)
+            if (payment.PaymentStatus == PaymentStatus.Completed && payment.SubscriptionId == null)
             {
+                _logger.LogInformation("📦 Creating subscription for payment: {PaymentId}, AccountId: {AccountId}, PackageId: {PackageId}", 
+                    paymentId, payment.AccountId, payment.PackageId);
+
                 try
                 {
                     // Kiểm tra package
                     var package = await _packageRepository.GetByIdAsync(payment.PackageId);
                     if (package == null)
-                        throw new KeyNotFoundException("Package not found");
+                    {
+                        _logger.LogError("❌ Package not found: {PackageId}", payment.PackageId);
+                        throw new KeyNotFoundException($"Package not found: {payment.PackageId}");
+                    }
+                    _logger.LogInformation("✅ Package found: {PackageId}, Title: {Title}", package.PackageId, package.Title);
 
                     // Kiểm tra account
                     var account = await _authRepository.GetByIdAsync(payment.AccountId);
                     if (account == null)
-                        throw new KeyNotFoundException("Account not found");
+                    {
+                        _logger.LogError("❌ Account not found: {AccountId}", payment.AccountId);
+                        throw new KeyNotFoundException($"Account not found: {payment.AccountId}");
+                    }
+                    _logger.LogInformation("✅ Account found: {AccountId}, Email: {Email}", account.Id, account.Email);
 
                     // Kiểm tra account đã có subscription active chưa
                     var existingActive = await _subscriptionRepository.GetActiveByAccountIdAsync(payment.AccountId);
                     if (existingActive != null)
                     {
+                        _logger.LogInformation("🔗 Linking payment to existing subscription: {SubscriptionId}", existingActive.SubscriptionId);
                         // Nếu đã có subscription active, link payment với subscription đó
                         payment.SubscriptionId = existingActive.SubscriptionId;
-                        await _paymentRepository.UpdateAsync(payment);
+                        await _paymentRepository.SaveChangesAsync();
                     }
                     else
                     {
+                        _logger.LogInformation("🆕 Creating new subscription for AccountId: {AccountId}", payment.AccountId);
                         // Tạo subscription mới
                         var subscription = new Domain.Entities.AccountSubscription
                         {
@@ -169,20 +223,31 @@ namespace Application.Services
                         };
 
                         var createdSubscription = await _subscriptionRepository.CreateAsync(subscription);
+                        _logger.LogInformation("✅ Subscription created successfully: {SubscriptionId}", createdSubscription.SubscriptionId);
                         
                         // Cập nhật payment với subscriptionId
                         payment.SubscriptionId = createdSubscription.SubscriptionId;
-                        await _paymentRepository.UpdateAsync(payment);
+                        await _paymentRepository.SaveChangesAsync();
+                        _logger.LogInformation("✅ Payment linked to subscription: {PaymentId} -> {SubscriptionId}", paymentId, createdSubscription.SubscriptionId);
                     }
                 }
                 catch (Exception ex)
                 {
-                    // Log error nhưng không throw để webhook vẫn trả về success
+                    // Log error chi tiết nhưng không throw để webhook vẫn trả về success
                     // Payment đã được đánh dấu Completed, subscription sẽ được tạo thủ công sau
-                    Console.WriteLine($"Error creating subscription after payment: {ex.Message}");
+                    _logger.LogError(ex, "❌ Error creating subscription after payment: {PaymentId}. Error: {Message}", paymentId, ex.Message);
+                    _logger.LogError("Stack trace: {StackTrace}", ex.StackTrace);
+                }
+            }
+            else
+            {
+                if (payment.SubscriptionId != null)
+                {
+                    _logger.LogInformation("ℹ️ Payment already has subscription: {PaymentId} -> {SubscriptionId}", paymentId, payment.SubscriptionId);
                 }
             }
 
+            _logger.LogInformation("✅ Webhook processing completed for payment: {PaymentId}", paymentId);
             return payment;
         }
 

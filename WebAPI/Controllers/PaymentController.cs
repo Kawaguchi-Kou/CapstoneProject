@@ -4,6 +4,7 @@ using Application.Interfaces;
 using Domain.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -77,6 +78,15 @@ namespace WebAPI.Controllers
             {
                 return BadRequest(new { message = ex.Message });
             }
+            catch (DbUpdateException ex)
+            {
+                // Tạm thời expose inner exception để debug lỗi DB
+                return BadRequest(new
+                {
+                    message = ex.Message,
+                    inner = ex.InnerException?.Message
+                });
+            }
             catch (Exception ex)
             {
                 return BadRequest(new { message = ex.Message });
@@ -88,38 +98,56 @@ namespace WebAPI.Controllers
             [FromBody] SePayWebhookRequest request,
             [FromHeader(Name = "Authorization")] string? apiKey)
         {
+            // Log webhook received
+            Console.WriteLine($"[WEBHOOK] Received at {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss} UTC");
+            Console.WriteLine($"[WEBHOOK] TransferType: {request?.TransferType}");
+            Console.WriteLine($"[WEBHOOK] Content: {request?.Content}");
+            Console.WriteLine($"[WEBHOOK] API Key present: {!string.IsNullOrEmpty(apiKey)}");
+
             try
             {
                 // Verify API Key
                 if (string.IsNullOrEmpty(apiKey) || !_sePayService.VerifyApiKey(apiKey))
                 {
+                    Console.WriteLine("[WEBHOOK] ❌ Invalid API Key");
                     return Unauthorized(new { message = "Invalid API Key" });
                 }
+
+                Console.WriteLine("[WEBHOOK] ✅ API Key verified");
 
                 // Chỉ xử lý giao dịch vào (incoming)
                 if (request.TransferType != "in")
                 {
+                    Console.WriteLine($"[WEBHOOK] ⏭️ Ignoring outgoing transaction: {request.TransferType}");
                     return Ok(new { message = "Ignore: outgoing transaction" });
                 }
+
+                Console.WriteLine("[WEBHOOK] 🔄 Processing webhook...");
 
                 // Process webhook
                 var payment = await _paymentService.ProcessSePayWebhookAsync(request);
 
                 if (payment == null)
                 {
+                    Console.WriteLine("[WEBHOOK] ⚠️ Payment not found or already processed");
                     return Ok(new { message = "Payment not found or already processed" });
                 }
+
+                Console.WriteLine($"[WEBHOOK] ✅ Successfully processed payment: {payment.PaymentId}, Status: {payment.PaymentStatus}");
 
                 return Ok(new
                 {
                     message = "Webhook processed successfully",
                     paymentId = payment.PaymentId,
-                    status = payment.PaymentStatus.ToString()
+                    status = payment.PaymentStatus.ToString(),
+                    subscriptionId = payment.SubscriptionId
                 });
             }
             catch (Exception ex)
             {
-                return BadRequest(new { message = ex.Message });
+                Console.WriteLine($"[WEBHOOK] ❌ Exception: {ex.Message}");
+                Console.WriteLine($"[WEBHOOK] StackTrace: {ex.StackTrace}");
+                return BadRequest(new { message = ex.Message, inner = ex.InnerException?.Message });
             }
         }
 
@@ -153,7 +181,7 @@ namespace WebAPI.Controllers
                     Status = payment.PaymentStatus,
                     TransactionContent = payment.TransactionContent,
                     QrCodeUrl = _sePayService.GenerateQrCodeUrl(payment.Amount, payment.TransactionContent),
-                    BankInfo = "VP Bank - 0888294028 - SEPAY COMPANY",
+                    BankInfo = "MBBank - 0984147052 - SEPAY COMPANY",
                     CreatedAt = payment.PaidAt
                 };
 

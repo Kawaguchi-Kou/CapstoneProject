@@ -425,7 +425,8 @@ namespace Infrastructure.EntitiesConfigurations
                 entity.HasOne(e => e.Subscription)
                       .WithMany(s => s.Payments)
                       .HasForeignKey(e => e.SubscriptionId)
-                      .OnDelete(DeleteBehavior.Cascade);
+                      .IsRequired(false)
+                      .OnDelete(DeleteBehavior.SetNull);
             });
 
             modelBuilder.Entity<Feedback>(entity =>

@@ -13,6 +13,7 @@ namespace Application.Interfaces
     {
         Task<AccountSubscriptionResponse> SubscribePackageAsync(Guid accountId, SubscribePackageRequest request);
         Task<AccountSubscription?> GetActiveSubscriptionAsync(Guid accountId);
+        Task<List<AccountSubscription>> GetActiveSubscriptionsAsync(Guid accountId);
         Task<bool> CanCreateAdvertisementAsync(Guid accountId);
         Task IncrementAdsUsedAsync(Guid accountId);
         

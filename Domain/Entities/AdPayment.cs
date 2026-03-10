@@ -11,7 +11,8 @@ namespace Domain.Entities
     {
         public Guid PaymentId { get; set; }
 
-        public Guid SubscriptionId { get; set; }
+        // SubscriptionId phải nullable vì lúc tạo payment Pending thì chưa có subscription
+        public Guid? SubscriptionId { get; set; }
         public Guid PackageId { get; set; } // PackageId để tạo subscription sau khi payment thành công
         public Guid AccountId { get; set; } // AccountId để tạo subscription
 
@@ -33,7 +34,7 @@ namespace Domain.Entities
         public string? Code { get; set; } // Mã giao dịch từ SePay
 
         // Navigation
-        public AccountSubscription Subscription { get; set; } = null!;
+        public AccountSubscription? Subscription { get; set; }
     }
 
 }
