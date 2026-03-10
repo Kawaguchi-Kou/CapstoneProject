@@ -24,6 +24,20 @@ namespace Infrastructure.ExternalApis.OpenMeteo
             DateOnly from,
             DateOnly to)
         {
+
+            if (to < from)
+                throw new ArgumentException("End date must be after start date.");
+
+            var days = to.DayNumber - from.DayNumber + 1;
+
+            if (days > 7)
+                throw new ArgumentException("Forecast period cannot exceed 7 days.");
+
+            var today = DateOnly.FromDateTime(DateTime.UtcNow);
+
+            if (from < today)
+                throw new ArgumentException("Cannot forecast past dates.");
+
             var url =
                 $"{_options.BaseUrl}" +
                 $"?latitude={latitude}" +

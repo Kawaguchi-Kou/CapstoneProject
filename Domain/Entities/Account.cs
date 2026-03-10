@@ -36,11 +36,8 @@ namespace Domain.Entities
 
         public ICollection<RefreshToken>? RefreshTokens { get; set; }
         public ICollection<NotificationRecipient>? Recipients { get; set; }
-        public ICollection<UserPreferenceVector>? UserPreferenceVectors { get; set; }
+        public ICollection<UserPreference>? UserPreferenceVectors { get; set; }
         public ICollection<Advertisement> Advertisements { get; set; } = new List<Advertisement>();
         public ICollection<AccountSubscription> AccountSubscriptions { get; set; } = new List<AccountSubscription>();
-        public ICollection<Feedback> Feedbacks { get; set; } = new List<Feedback>();
-
-
     }
 }

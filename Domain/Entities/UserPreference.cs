@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Domain.Entities
 {
-    public class UserPreferenceVector
+    public class UserPreference
     {
         [Key]
         public Guid Id { get; set; }
@@ -17,12 +17,9 @@ namespace Domain.Entities
 
         // dimension / feature
         [Required]
-        [MaxLength(50)]
-        public string PreferenceCode { get; set; } = string.Empty;
-        // ví dụ: nature, food, budget, luxury, adventure
+        public Guid PreferenceId { get; set; }
 
-        // giá trị vector
-        [Range(0, 1)]
-        public double Score { get; set; }
+        [ForeignKey(nameof(PreferenceId))]
+        public Preference Preference { get; set; } = null!;
     }
 }

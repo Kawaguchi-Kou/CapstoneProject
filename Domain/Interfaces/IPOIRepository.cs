@@ -11,5 +11,10 @@ namespace Domain.Interfaces
     {
         Task<POI?> GetByIdAsync(Guid poiId);
         Task<List<POI>> GetAllWithPreferencesAsync();
+        Task<List<POI>> GetAllAsync();
+        Task AddAsync(POI poi);
+        Task UpdateAsync(POI poi);
+        Task DeleteAsync(POI poi);
+        Task<POI?> GetByNameAndCityAsync(string name, string city);
     }
 }

@@ -34,6 +34,7 @@ builder.Services.Configure<OpenMeteoOptions>(
 
 builder.Services.AddHttpClient<IOpenMeteoService, OpenMeteoService>();
 
+
 // =====================
 // SEPAY - PAYMENT
 // =====================
@@ -41,6 +42,13 @@ builder.Services.Configure<SePayOptions>(
     builder.Configuration.GetSection(SePayOptions.SectionName));
 
 builder.Services.AddScoped<ISePayService, SePayService>();
+
+//=====================
+// GEOCODING - MAPBOX
+//=====================
+builder.Services
+    .AddHttpClient<IGeocodingService, MapboxGeocodingService>();
+
 
 // Add services 
 //Auth
@@ -84,6 +92,7 @@ builder.Services.AddScoped<IPreferenceRepository, PreferenceRepository>();
 
 //POI
 builder.Services.AddScoped<IPOIRepository, POIRepository>();
+
 
 //AdSubscriptionPackage
 builder.Services.AddScoped<Domain.Interfaces.IAdSubscriptionPackageRepository, Infrastructure.Repositories.AdSubscriptionPackageRepository>();
