@@ -1,10 +1,10 @@
-﻿using Application.DTOs.Tools;
+﻿using Application.DTOs.Geocode;
+using Application.DTOs.Tools;
 using Application.DTOs.Weather;
 using Application.Interfaces;
 using Application.Tools;
 using Infrastructure.ExternalApis.OpenMeteo;
 using Microsoft.AspNetCore.Mvc;
-//using Infrastructure.ExternalApis.GoogleMaps;
 
 namespace WebAPI.Controllers;
 
@@ -13,10 +13,12 @@ namespace WebAPI.Controllers;
 public class ToolsController : ControllerBase
 {
     private readonly IOpenMeteoService _weather;
+    private readonly IGeocodingService _geocoding;
 
-    public ToolsController(IOpenMeteoService weather)
+    public ToolsController(IOpenMeteoService weather, IGeocodingService geocoding)
     {
         _weather = weather;
+        _geocoding = geocoding;
     }
 
     public class McpRequest<T>
@@ -33,12 +35,12 @@ public class ToolsController : ControllerBase
         {
             tools = new[]
             {
-                McpToolSchemas.GetWeather
+                McpToolSchemas.GetWeather,
+                McpToolSchemas.GetCoordinates
             }
         });
     }
 
-    // MCP: weather (daily)
     [HttpPost("get_weather")]
     public async Task<IActionResult> GetWeather(
     [FromBody] WeatherRequest request)
@@ -53,6 +55,29 @@ public class ToolsController : ControllerBase
         );
 
         return Ok(new { content = result });
+    }
+
+    [HttpPost("get_coordinates")]
+    public async Task<IActionResult> GetCoordinates(
+    [FromBody] McpRequest<GeocodeRequest> request)
+    {
+        var placeName = request.Req.PlaceName;
+        var city = request.Req.City;
+
+        if (string.IsNullOrWhiteSpace(placeName))
+            return BadRequest("placeName is required");
+
+        var (latitude, longitude) =
+            await _geocoding.GetCoordinatesAsync(placeName, city);
+
+        return Ok(new
+        {
+            content = new
+            {
+                latitude,
+                longitude
+            }
+        });
     }
 }
 

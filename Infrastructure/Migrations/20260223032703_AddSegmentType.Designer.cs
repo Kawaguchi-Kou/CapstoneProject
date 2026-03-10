@@ -3,6 +3,7 @@ using System;
 using Infrastructure.EntitiesConfigurations;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260223032703_AddSegmentType")]
+    partial class AddSegmentType
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -89,16 +92,16 @@ namespace Infrastructure.Migrations
                     b.Property<Guid>("AccountId")
                         .HasColumnType("uuid");
 
-                    b.Property<int>("AdsUsed")
-                        .HasColumnType("integer");
+                    b.Property<float>("AdsUsed")
+                        .HasColumnType("real");
 
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("timestamp with time zone")
                         .HasDefaultValueSql("NOW()");
 
-                    b.Property<int>("MaxAds")
-                        .HasColumnType("integer");
+                    b.Property<float>("MaxAds")
+                        .HasColumnType("real");
 
                     b.Property<int>("Status")
                         .HasMaxLength(50)
@@ -122,37 +125,13 @@ namespace Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<Guid>("AccountId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("AccountNumber")
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
-                    b.Property<float?>("Accumulated")
-                        .HasColumnType("real");
-
                     b.Property<float>("Amount")
                         .HasColumnType("real");
-
-                    b.Property<float?>("AmountIn")
-                        .HasColumnType("real");
-
-                    b.Property<string>("Code")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
 
                     b.Property<string>("Currency")
                         .IsRequired()
                         .HasMaxLength(10)
                         .HasColumnType("character varying(10)");
-
-                    b.Property<string>("Gateway")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.Property<Guid>("PackageId")
-                        .HasColumnType("uuid");
 
                     b.Property<DateTime>("PaidAt")
                         .ValueGeneratedOnAdd()
@@ -165,22 +144,11 @@ namespace Infrastructure.Migrations
                         .HasColumnType("character varying(50)");
 
                     b.Property<int>("PaymentStatus")
+                        .HasMaxLength(50)
                         .HasColumnType("integer");
 
-                    b.Property<string>("SubAccount")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.Property<Guid?>("SubscriptionId")
+                    b.Property<Guid>("SubscriptionId")
                         .HasColumnType("uuid");
-
-                    b.Property<string>("TransactionContent")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
-
-                    b.Property<DateTime?>("TransactionDate")
-                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("PaymentId");
 
@@ -213,11 +181,12 @@ namespace Infrastructure.Migrations
                     b.Property<int>("DurationDays")
                         .HasColumnType("integer");
 
-                    b.Property<double>("MaxAdsPerPeriod")
-                        .HasColumnType("double precision");
+                    b.Property<string>("MaxAdsPerPeriod")
+                        .IsRequired()
+                        .HasColumnType("text");
 
-                    b.Property<decimal>("Price")
-                        .HasColumnType("numeric");
+                    b.Property<float>("Price")
+                        .HasColumnType("real");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -291,6 +260,37 @@ namespace Infrastructure.Migrations
                     b.ToTable("advertisements", (string)null);
                 });
 
+            modelBuilder.Entity("Domain.Entities.Feedback", b =>
+                {
+                    b.Property<Guid>("FeedbackId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("AdId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<string>("FeedbackType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("FeedbackId");
+
+                    b.HasIndex("AdId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("feedbacks", (string)null);
+                });
+
             modelBuilder.Entity("Domain.Entities.Itinerary", b =>
                 {
                     b.Property<Guid>("ItineraryId")
@@ -343,10 +343,10 @@ namespace Infrastructure.Migrations
                     b.Property<Guid?>("SegmentId")
                         .HasColumnType("uuid");
 
-                    b.Property<double>("WeatherRiskScore")
+                    b.Property<float>("WeatherRiskScore")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("double precision")
-                        .HasDefaultValue(0.0);
+                        .HasColumnType("real")
+                        .HasDefaultValue(0f);
 
                     b.HasKey("DetailId");
 
@@ -485,11 +485,6 @@ namespace Infrastructure.Migrations
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
-
-                    b.Property<string>("Address")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("character varying(255)");
 
                     b.Property<string>("ApproxCost")
                         .IsRequired()
@@ -692,7 +687,7 @@ namespace Infrastructure.Migrations
                     b.ToTable("trip_segments", (string)null);
                 });
 
-            modelBuilder.Entity("Domain.Entities.UserPreference", b =>
+            modelBuilder.Entity("Domain.Entities.UserPreferenceVector", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -701,16 +696,20 @@ namespace Infrastructure.Migrations
                     b.Property<Guid>("AccountId")
                         .HasColumnType("uuid");
 
-                    b.Property<Guid>("PreferenceId")
-                        .HasColumnType("uuid");
+                    b.Property<string>("PreferenceCode")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<double>("Score")
+                        .HasColumnType("double precision");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("AccountId");
+                    b.HasIndex("AccountId", "PreferenceCode")
+                        .IsUnique();
 
-                    b.HasIndex("PreferenceId");
-
-                    b.ToTable("UserPreferences");
+                    b.ToTable("UserPreferenceVectors");
                 });
 
             modelBuilder.Entity("Domain.Entities.WeatherForecast", b =>
@@ -778,7 +777,8 @@ namespace Infrastructure.Migrations
                     b.HasOne("Domain.Entities.AccountSubscription", "Subscription")
                         .WithMany("Payments")
                         .HasForeignKey("SubscriptionId")
-                        .OnDelete(DeleteBehavior.SetNull);
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Subscription");
                 });
@@ -808,6 +808,24 @@ namespace Infrastructure.Migrations
                     b.Navigation("POI");
 
                     b.Navigation("Package");
+                });
+
+            modelBuilder.Entity("Domain.Entities.Feedback", b =>
+                {
+                    b.HasOne("Domain.Entities.Advertisement", "Advertisement")
+                        .WithMany()
+                        .HasForeignKey("AdId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Domain.Entities.Account", "User")
+                        .WithMany("Feedbacks")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Advertisement");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Domain.Entities.Itinerary", b =>
@@ -938,7 +956,7 @@ namespace Infrastructure.Migrations
                     b.Navigation("Trip");
                 });
 
-            modelBuilder.Entity("Domain.Entities.UserPreference", b =>
+            modelBuilder.Entity("Domain.Entities.UserPreferenceVector", b =>
                 {
                     b.HasOne("Domain.Entities.Account", "Account")
                         .WithMany("UserPreferenceVectors")
@@ -946,15 +964,7 @@ namespace Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Domain.Entities.Preference", "Preference")
-                        .WithMany()
-                        .HasForeignKey("PreferenceId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.Navigation("Account");
-
-                    b.Navigation("Preference");
                 });
 
             modelBuilder.Entity("Domain.Entities.Account", b =>
@@ -962,6 +972,8 @@ namespace Infrastructure.Migrations
                     b.Navigation("AccountSubscriptions");
 
                     b.Navigation("Advertisements");
+
+                    b.Navigation("Feedbacks");
 
                     b.Navigation("Recipients");
 

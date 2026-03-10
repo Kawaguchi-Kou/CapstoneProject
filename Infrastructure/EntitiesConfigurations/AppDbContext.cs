@@ -29,16 +29,18 @@ namespace Infrastructure.EntitiesConfigurations
 
         //POI&Preference Vector
         public DbSet<POI> POIs { get; set; }
-        public DbSet<UserPreferenceVector> UserPreferenceVectors { get; set; }
+        public DbSet<UserPreference> UserPreferences { get; set; }
         public DbSet<POIPreference> POIPreferences { get; set; }
         public DbSet<Preference> Preferences { get; set; }
 
         //Advertisement
         public DbSet<Advertisement> Advertisements { get; set; }
         public DbSet<AdSubscriptionPackage> adSubscriptionPackages { get; set; }
-        public DbSet<Feedback> Feedbacks { get; set; }
         public DbSet<AdPayment> adPayments { get; set; }
         public DbSet<AccountSubscription> accountSubscriptions { get; set; }
+
+        //Weather Forecast
+        public DbSet<WeatherForecast> WeatherForecasts { get; set; }
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -269,7 +271,7 @@ namespace Infrastructure.EntitiesConfigurations
                 entity.Property(p => p.City)
                       .IsRequired()
                       .HasMaxLength(255);
-                entity.Property(p => p.City)
+                entity.Property(p => p.Address)
                       .IsRequired()
                       .HasMaxLength(255);
             });
@@ -293,7 +295,7 @@ namespace Infrastructure.EntitiesConfigurations
                 //      .IsRequired();
             });
 
-            modelBuilder.Entity<UserPreferenceVector>(entity =>
+            modelBuilder.Entity<UserPreference>(entity =>
             {
                 entity.HasKey(upv => upv.Id);
 
@@ -301,14 +303,6 @@ namespace Infrastructure.EntitiesConfigurations
                       .WithMany(a => a.UserPreferenceVectors)
                       .HasForeignKey(upv => upv.AccountId)
                       .OnDelete(DeleteBehavior.Cascade);
-
-                entity.Property(upv => upv.PreferenceCode)
-                      .IsRequired()
-                      .HasMaxLength(50);
-
-                // 1 user chỉ có 1 score cho 1 preference
-                entity.HasIndex(upv => new { upv.AccountId, upv.PreferenceCode })
-                      .IsUnique();
             });
 
             // =========================
@@ -429,28 +423,16 @@ namespace Infrastructure.EntitiesConfigurations
                       .OnDelete(DeleteBehavior.SetNull);
             });
 
-            modelBuilder.Entity<Feedback>(entity =>
-            {
-                entity.ToTable("feedbacks");
+            //==========================
+            //WEATHER_FORECAST
+            //==========================
+            modelBuilder.Entity<WeatherForecast>(entity =>
+                {
+                    entity.ToTable("WeatherForecast");
 
-                entity.HasKey(e => e.FeedbackId);
-
-                entity.Property(e => e.FeedbackType)
-                      .HasMaxLength(50);
-
-                entity.Property(e => e.CreatedAt)
-                      .HasDefaultValueSql("NOW()");
-
-                entity.HasOne(e => e.User)
-                      .WithMany(a => a.Feedbacks)
-                      .HasForeignKey(e => e.UserId)
-                      .OnDelete(DeleteBehavior.Cascade);
-
-                entity.HasOne(e => e.Advertisement)
-                      .WithMany()
-                      .HasForeignKey(e => e.AdId)
-                      .OnDelete(DeleteBehavior.SetNull);
-            });
+                    entity.HasIndex(x => x.City)
+                            .IsUnique();
+                });
         }
     }
 }

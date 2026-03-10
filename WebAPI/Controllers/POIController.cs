@@ -1,4 +1,5 @@
 ﻿using System.Security.Claims;
+using Application.DTOs.Requests;
 using Application.Interfaces;
 using Domain.Entities;
 using Microsoft.AspNetCore.Authorization;
@@ -26,14 +27,20 @@ namespace WebAPI.Controllers
         {
             //var accountId = Guid.Parse(
             //    User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            try
+            {
+                var account = _authService.GetCurrentAccount();
+                var accountId = account.Result.Id;
 
-            var account = _authService.GetCurrentAccount();
-            var accountId = account.Result.Id;
+                var result = await _poiService
+                    .GetAllPoisSortedByPreferenceAsync(accountId);
 
-            var result = await _poiService
-                .GetAllPoisSortedByPreferenceAsync(accountId);
-
-            return Ok(result);
+                return Ok(result);
+            }
+            catch(Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
     }
 
