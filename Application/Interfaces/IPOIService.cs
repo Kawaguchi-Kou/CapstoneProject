@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Application.DTOs.Requests;
 using Application.DTOs.Responses;
+using Domain.Entities;
 
 namespace Application.Interfaces
 {
@@ -12,10 +13,10 @@ namespace Application.Interfaces
     {
         //Task<List<POIScoreResult>> CalculateScoresAsync(Guid accountId);
         Task<List<RecommendedPoiResponse>> GetAllPoisSortedByPreferenceAsync(Guid accountId);
-        Task<List<PoiResponse>> GetAllAsync();
-        Task<PoiResponse?> GetByIdAsync(Guid id);
-        Task<Guid> CreateAsync(CreatePoiRequest request);
-        Task UpdateAsync(Guid id, UpdatePoiRequest request);
+        Task<List<POI>> GetAllAsync();
+        Task<POI?> GetByIdAsync(Guid id);
+        Task<POI> CreateAsync(CreatePoiRequest request);
+        Task<POI> UpdateAsync(Guid id, UpdatePoiRequest request);
         Task DeleteAsync(Guid id);
     }
 }

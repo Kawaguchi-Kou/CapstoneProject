@@ -18,28 +18,23 @@ namespace Domain.Entities
         public Guid TripId { get; set; }
 
         [Required]
-        public int SequenceNo { get; set; }   // Thứ tự chặng
+        public Guid LocationId { get; set; }  
 
         [Required]
-        [MaxLength(255)]
-        public string FromLocation { get; set; }
+        public int OrderIndex { get; set; }   // Thứ tự chặng
 
-        [Required]
-        [MaxLength(255)]
-        public string ToLocation { get; set; }
-
-        public DateTime? TravelDate { get; set; }
+        public int StayDays { get; set; }  // Số ngày ở lại tại chặng này, mặc định là 0 (chỉ đi qua)
 
         public float? DistanceKm { get; set; }
-
-        public int? EstimatedMinutes { get; set; }
-
-        public SegmentType SegmentType { get; set; } = SegmentType.Waypoint;
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         // Navigation
         [ForeignKey(nameof(TripId))]
         public Trip Trip { get; set; }
+
+        [ForeignKey(nameof(LocationId))]
+        public Location Location { get; set; }
+        public ICollection<Itinerary>? Itineraries { get; set; }
     }
 }

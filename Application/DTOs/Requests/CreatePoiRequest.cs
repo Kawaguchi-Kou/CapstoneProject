@@ -8,11 +8,18 @@ namespace Application.DTOs.Requests
 {
     public class CreatePoiRequest
     {
-        public string Name { get; set; }
+        public string Name { get; set; } = string.Empty;
 
-        public string City { get; set; }
-        public string Address { get; set; }
+        public string Address { get; set; } = string.Empty;
 
-        public string Description { get; set; }
+        public string City { get; set; } = string.Empty;
+
+        public string ApproxCost { get; set; } = string.Empty;
+
+        public string OpeningHours { get; set; } = string.Empty;
+
+        public string GoogleMapLink { get; set; } = string.Empty;
+
+        public bool IsIndoor { get; set; }
     }
 }

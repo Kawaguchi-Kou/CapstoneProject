@@ -1,5 +1,8 @@
 ﻿using Application.DTOs.Requests;
+using Application.DTOs.Responses;
 using Application.Interfaces;
+using AutoMapper;
+using Domain.Entities;
 using Microsoft.AspNetCore.Mvc;
 
 namespace WebAPI.Controllers
@@ -10,11 +13,13 @@ namespace WebAPI.Controllers
     {
         private readonly IPOIService _poiService;
         private readonly IAuthService _authService;
+        private readonly IMapper _mapper;
 
-        public AdminController(IPOIService poiService, IAuthService authService)
+        public AdminController(IPOIService poiService, IAuthService authService, IMapper mapper)
         {
             _poiService = poiService;
             _authService = authService;
+            _mapper = mapper;
         }
 
         [HttpGet]
@@ -23,7 +28,10 @@ namespace WebAPI.Controllers
             try
             {
                 var pois = await _poiService.GetAllAsync();
-                return Ok(pois);
+
+                var result = _mapper.Map<List<PoiResponse>>(pois);
+
+                return Ok(result);
             }
             catch (Exception ex)
             {
@@ -42,7 +50,9 @@ namespace WebAPI.Controllers
                 if (poi == null)
                     return NotFound();
 
-                return Ok(poi);
+                var result = _mapper.Map<PoiResponse>(poi);
+
+                return Ok(result);
             }
             catch (Exception ex)
             {
@@ -55,9 +65,11 @@ namespace WebAPI.Controllers
         {
             try
             {
-                var id = await _poiService.CreateAsync(request);
+                var poi = await _poiService.CreateAsync(request);
 
-                return Ok(id);
+                var response = _mapper.Map<PoiResponse>(poi);
+
+                return Ok(response);
             }
             catch (Exception ex)
             {
@@ -70,8 +82,10 @@ namespace WebAPI.Controllers
         {
             try
             {
-                await _poiService.UpdateAsync(id, request);
-                return NoContent();
+                var updatedPOI = await _poiService.UpdateAsync(id, request);
+                var response = _mapper.Map<PoiResponse>(updatedPOI);
+
+                return Ok(response);
             }
             catch (Exception ex)
             {

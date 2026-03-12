@@ -44,6 +44,12 @@ namespace Infrastructure.Repositories
             await _context.SaveChangesAsync();
         }
 
+        public async Task<Location?> GetLocationByIdAsync(Guid locationId)
+        {
+            return await _context.Locations
+                .FirstOrDefaultAsync(x => x.LocationId == locationId);
+        }
+
         public async Task UpdateAsync(POI poi)
         {
             _context.POIs.Update(poi);

@@ -3,6 +3,7 @@ using System;
 using Infrastructure.EntitiesConfigurations;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260312033753_AddLocation")]
+    partial class AddLocation
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -360,7 +363,7 @@ namespace Infrastructure.Migrations
 
                     b.HasKey("LocationId");
 
-                    b.ToTable("locations", (string)null);
+                    b.ToTable("Locations");
                 });
 
             modelBuilder.Entity("Domain.Entities.Notification", b =>
@@ -422,7 +425,7 @@ namespace Infrastructure.Migrations
 
                     b.HasIndex("RecipientId");
 
-                    b.ToTable("recipients", (string)null);
+                    b.ToTable("Recipients");
                 });
 
             modelBuilder.Entity("Domain.Entities.OtpVerification", b =>
@@ -524,7 +527,7 @@ namespace Infrastructure.Migrations
 
                     b.HasIndex("PreferenceId");
 
-                    b.ToTable("poi_preferences", (string)null);
+                    b.ToTable("POIPreferences");
                 });
 
             modelBuilder.Entity("Domain.Entities.Preference", b =>
@@ -682,7 +685,7 @@ namespace Infrastructure.Migrations
 
                     b.HasIndex("PreferenceId");
 
-                    b.ToTable("user_preferences", (string)null);
+                    b.ToTable("UserPreferences");
                 });
 
             modelBuilder.Entity("Domain.Entities.WeatherForecast", b =>
@@ -717,7 +720,7 @@ namespace Infrastructure.Migrations
 
                     b.HasIndex("LocationId");
 
-                    b.ToTable("weather_forecast", (string)null);
+                    b.ToTable("WeatherForecast", (string)null);
                 });
 
             modelBuilder.Entity("Domain.Entities.Account", b =>
