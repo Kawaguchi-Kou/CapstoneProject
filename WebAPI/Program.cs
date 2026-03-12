@@ -67,16 +67,16 @@ builder.Services.AddScoped<IPreferenceService, PreferenceService>();
 builder.Services.AddScoped<IPOIService, POIService>();
 
 //AdSubscriptionPackage
-builder.Services.AddScoped<Application.Interfaces.IAdSubscriptionPackageService, Application.Services.AdSubscriptionPackageService>();
+builder.Services.AddScoped<IAdSubscriptionPackageService, AdSubscriptionPackageService>();
 
 //AccountSubscription
-builder.Services.AddScoped<Application.Interfaces.IAccountSubscriptionService, Application.Services.AccountSubscriptionService>();
+builder.Services.AddScoped<IAccountSubscriptionService, AccountSubscriptionService>();
 
 //Payment
 builder.Services.AddScoped<Application.Interfaces.IPaymentService, Application.Services.PaymentService>();
 
 //Advertisement
-builder.Services.AddScoped<Application.Interfaces.IAdvertisementService, Application.Services.AdvertisementService>();
+builder.Services.AddScoped<IAdvertisementService, AdvertisementService>();
 
 //Add repositories
 //Auth
@@ -95,16 +95,16 @@ builder.Services.AddScoped<IPOIRepository, POIRepository>();
 
 
 //AdSubscriptionPackage
-builder.Services.AddScoped<Domain.Interfaces.IAdSubscriptionPackageRepository, Infrastructure.Repositories.AdSubscriptionPackageRepository>();
+builder.Services.AddScoped<IAdSubscriptionPackageRepository, AdSubscriptionPackageRepository>();
 
 //AccountSubscription
-builder.Services.AddScoped<Domain.Interfaces.IAccountSubscriptionRepository, Infrastructure.Repositories.AccountSubscriptionRepository>();
+builder.Services.AddScoped<IAccountSubscriptionRepository, AccountSubscriptionRepository>();
 
 //Payment
 builder.Services.AddScoped<Domain.Interfaces.IPaymentRepository, Infrastructure.Repositories.PaymentRepository>();
 
 //Advertisement
-builder.Services.AddScoped<Domain.Interfaces.IAdvertisementRepository, Infrastructure.Repositories.AdvertisementRepository>();
+builder.Services.AddScoped<IAdvertisementRepository, AdvertisementRepository>();
 
 // add CORS
 builder.Services.AddCors(options =>

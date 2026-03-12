@@ -12,28 +12,23 @@ namespace Domain.Entities
     {
         [Key]
         public Guid DetailId { get; set; }
-
         [Required]
         public Guid ItineraryId { get; set; }
-
-        public DateTime Date { get; set; }
-
+        public DateTime VisitDate { get; set; }
         public Guid? PoiId { get; set; }
-
         public double WeatherRiskScore { get; set; }
-
+        public TimeOnly StartTime { get; set; }
+        public TimeOnly EndTime { get; set; }
+        public int DurationMinutes { get; set; }
+        public DateTime RiskCalculatedAt { get; set; }
+        public bool IsManualOverride { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-
-        // Optional: nếu muốn gắn chi tiết theo chặng
-        public Guid? SegmentId { get; set; }
-
         // Navigation
         [ForeignKey(nameof(ItineraryId))]
         public Itinerary Itinerary { get; set; }
 
-        [ForeignKey(nameof(SegmentId))]
-        public TripSegment TripSegment { get; set; }
+        [ForeignKey(nameof(PoiId))]
+        public POI? POI { get; set; }
 
-        public ICollection<ManualOverride> Overrides { get; set; }
     }
 }

@@ -16,13 +16,9 @@ namespace Domain.Entities
         [Required]
         public Guid OwnerId { get; set; }
 
-        [Required]
+        
         [MaxLength(255)]
-        public string StartLocation { get; set; }
-
-        [Required]
-        [MaxLength(255)]
-        public string EndLocation { get; set; }
+        public string Title { get; set; }
 
         public DateTime StartDate { get; set; }
 
@@ -31,6 +27,8 @@ namespace Domain.Entities
         public int? PreferencesId { get; set; }
 
         public TripStatus Status { get; set; }
+
+        public TripType TripType { get; set; }
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 

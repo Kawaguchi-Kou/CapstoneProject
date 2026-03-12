@@ -71,99 +71,78 @@ namespace Application.Services
                 .ToHashSet();
 
             var result = pois
-                .Select(poi => new
+                .Select(poi =>
                 {
-                    Poi = poi,
-                    Score = poi.PoiPreferences.Count(pp =>
+                    var score = poi.PoiPreferences.Count(pp =>
                         pp.Preference != null &&
-                        userPrefSet.Contains(pp.Preference.Name))
+                        userPrefSet.Contains(pp.Preference.Name));
+
+                    return new RecommendedPoiResponse
+                    {
+                        Id = poi.Id,
+                        Name = poi.Name,
+                        Address = poi.Address,
+                        City = poi.City,
+                        ApproxCost = poi.ApproxCost,
+                        OpeningHours = poi.OpeningHours,
+                        GoogleMapLink = poi.GoogleMapLink,
+                        IsIndoor = poi.IsIndoor,
+                        LocationName = poi.Location?.LocationName ?? "",
+                        Score = score,
+                        POIPreferences = poi.PoiPreferences
+                            .Where(pp => pp.Preference != null)
+                            .Select(pp => pp.Preference.Name)
+                            .ToList()
+                    };
                 })
                 .OrderByDescending(x => x.Score)
-                .Select(x => new RecommendedPoiResponse
-                {
-                    Id = x.Poi.Id,
-                    Name = x.Poi.Name,
-                    City = x.Poi.City,
-                    Description = x.Poi.Description,
-                    ApproxCost = x.Poi.ApproxCost,
-                    Latitude = x.Poi.Latitude,
-                    Longitude = x.Poi.Longitude,
-                    Score = x.Score
-                })
                 .ToList();
 
-            return result;
-        }
+                        return result;
+                    }
 
-        public async Task<List<PoiResponse>> GetAllAsync()
+        public async Task<List<POI>> GetAllAsync()
         {
             var pois = await _poiRepository.GetAllAsync();
 
-            return pois.Select(p => new PoiResponse
-            {
-                Id = p.Id,
-                Name = p.Name,
-                City = p.City,
-                Address = p.Address,
-                Latitude = p.Latitude,
-                Longitude = p.Longitude,
-                Description = p.Description
-            }).ToList();
+            return pois;
         }
 
-        public async Task<PoiResponse?> GetByIdAsync(Guid id)
+        public async Task<POI> GetByIdAsync(Guid id)
         {
             var poi = await _poiRepository.GetByIdAsync(id);
 
             if (poi == null)
                 return null;
 
-            return new PoiResponse
-            {
-                Id = poi.Id,
-                Name = poi.Name,
-                City = poi.City,
-                Address = poi.Address,
-                Latitude = poi.Latitude,
-                Longitude = poi.Longitude,
-                Description = poi.Description
-            };
+            return poi;
         }
 
-        public async Task<Guid> CreateAsync(CreatePoiRequest request)
+        public async Task<POI> CreateAsync(CreatePoiRequest request)
         {
-            ValidateCreateRequest(request);
-
-            var existing = await _poiRepository.GetByNameAndCityAsync(
-                request.Name,
-                request.City);
-
-            if (existing != null)
-                throw new Exception("POI already exists in this city");
-
-
-            var (latitude, longitude) =
-                await _geocodingService.GetCoordinatesAsync(
-                    request.Name,
-                    request.City);
+            var (lat, lon) = await _geocodingService
+                .GetCoordinatesAsync(request.Name, request.City);
 
             var poi = new POI
             {
                 Id = Guid.NewGuid(),
                 Name = request.Name,
-                City = request.City,
                 Address = request.Address,
-                Latitude = latitude,
-                Longitude = longitude,
-                Description = request.Description
+                City = request.City,
+                ApproxCost = request.ApproxCost,
+                OpeningHours = request.OpeningHours,
+                GoogleMapLink = request.GoogleMapLink,
+                IsIndoor = request.IsIndoor,
+                Latitude = lat,
+                Longitude = lon
             };
 
             await _poiRepository.AddAsync(poi);
 
-            return poi.Id;
+            return poi;
         }
 
-        public async Task UpdateAsync(Guid id, UpdatePoiRequest request)
+        public async Task<POI> UpdateAsync(Guid id, UpdatePoiRequest request)
         {
 
             var poi = await _poiRepository.GetByIdAsync(id);
@@ -171,23 +150,30 @@ namespace Application.Services
             if (poi == null)
                 throw new Exception("POI not found");
 
-            if (string.IsNullOrWhiteSpace(request.Name))
-                throw new ArgumentException("POI name is required");
+            if (request.Address != null)
+                poi.Address = request.Address;
 
-            if (string.IsNullOrWhiteSpace(request.City))
-                throw new ArgumentException("City is required");
+            if (request.ApproxCost != null)
+                poi.ApproxCost = request.ApproxCost;
 
-            if (poi == null)
-                throw new Exception("POI not found");
+            if (request.OpeningHours != null)
+                poi.OpeningHours = request.OpeningHours;
 
-            poi.Name = request.Name;
-            poi.City = request.City;
-            poi.Address = request.Address;
-            poi.Latitude = request.Latitude;
-            poi.Longitude = request.Longitude;
-            poi.Description = request.Description;
+            if (request.GoogleMapLink != null)
+                poi.GoogleMapLink = request.GoogleMapLink;
 
-            await _poiRepository.UpdateAsync(poi);
+            if (request.IsIndoor.HasValue)
+                poi.IsIndoor = request.IsIndoor.Value;
+
+            if (request.Latitude.HasValue)
+                poi.Latitude = request.Latitude.Value;
+
+            if (request.Longitude.HasValue)
+                poi.Longitude = request.Longitude.Value;
+
+            var updatedPOI = await _poiRepository.GetByIdAsync(id);
+
+            return updatedPOI!;
         }
 
         public async Task DeleteAsync(Guid id)
@@ -199,25 +185,5 @@ namespace Application.Services
 
             await _poiRepository.DeleteAsync(poi);
         }
-
-        private void ValidateCreateRequest(CreatePoiRequest request)
-        {
-            if (request == null)
-                throw new ArgumentNullException(nameof(request));
-
-            if (string.IsNullOrWhiteSpace(request.Name))
-                throw new ArgumentException("POI name is required");
-
-            if (string.IsNullOrWhiteSpace(request.City))
-                throw new ArgumentException("City is required");
-
-            if (string.IsNullOrWhiteSpace(request.Address))
-                throw new ArgumentException("Address is required");
-
-            if (request.Description?.Length > 1000)
-                throw new ArgumentException("Description cannot exceed 1000 characters");
-        }
-
     }
-
 }
