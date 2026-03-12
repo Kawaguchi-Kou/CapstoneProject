@@ -51,6 +51,19 @@ namespace Application.Mappings
             //Advertisement
             CreateMap<CreateAdvertisementRequest, Advertisement>();
             CreateMap<Advertisement, AdvertisementResponse>();
+
+            //POI
+            CreateMap<POI, PoiResponse>()
+                .ForMember(dest => dest.LocationName,
+                opt => opt.MapFrom(src => src.Location.LocationName));
+
+            CreateMap<POI, RecommendedPoiResponse>()
+                .ForMember(dest => dest.POIPreferences,
+                    opt => opt.MapFrom(src =>
+                        src.PoiPreferences
+                            .Where(x => x.Preference != null)
+                            .Select(x => x.Preference.Name)
+                            .ToList()));
         }
     }
 }

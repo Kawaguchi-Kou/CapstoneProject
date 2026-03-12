@@ -1,4 +1,4 @@
-﻿using System.Data;
+using System.Data;
 using Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 
@@ -21,7 +21,7 @@ namespace Infrastructure.EntitiesConfigurations
         public DbSet<TripSegment> TripSegments { get; set; }
         public DbSet<Itinerary> Itineraries { get; set; }
         public DbSet<ItineraryDetail> ItineraryDetails { get; set; }
-        public DbSet<ManualOverride> ManualOverrides { get; set; }
+        public DbSet<Location> Locations { get; set; }
 
         //Notification
         public DbSet<Notification> Notifications { get; set; }
@@ -50,6 +50,7 @@ namespace Infrastructure.EntitiesConfigurations
             // =========================
             modelBuilder.Entity<Account>(entity =>
             {
+                entity.ToTable("accounts");
                 entity.HasKey(u => u.Id);
                 //entity.Property(u => u.Id).HasDefaultValueSql("gen_random_uuid()");
                 entity.Property(u => u.Email).IsRequired().HasMaxLength(255);
@@ -72,15 +73,11 @@ namespace Infrastructure.EntitiesConfigurations
                       .WithMany(r => r.Accounts)
                       .HasForeignKey(u => u.RoleId)
                       .OnDelete(DeleteBehavior.Restrict); // tránh xóa Role thì xóa luôn Account
-                entity.HasMany(u => u.Recipients)
-                      .WithOne(r => r.Recipient)
-                      .HasForeignKey(r => r.RecipientId)
-                      .OnDelete(DeleteBehavior.Cascade);
-
             });
 
             modelBuilder.Entity<OtpVerification>(entity =>
             {
+                entity.ToTable("otp_verifications");
                 entity.HasKey(o => o.Id);
                 entity.Property(o => o.Id).ValueGeneratedOnAdd();
                 entity.Property(o => o.Email).IsRequired().HasMaxLength(255);
@@ -92,12 +89,14 @@ namespace Infrastructure.EntitiesConfigurations
 
             modelBuilder.Entity<Role>(entity =>
             {
+                entity.ToTable("roles");
                 entity.HasKey(r => r.Id);
                 entity.Property(r => r.Name).IsRequired().HasMaxLength(100);
             });
 
             modelBuilder.Entity<RefreshToken>(entity =>
             {
+                entity.ToTable("refresh_tokens");
                 entity.HasKey(rt => rt.Id);
                 //entity.Property(rt => rt.Id).HasDefaultValueSql("gen_random_uuid()");
                 entity.Property(rt => rt.Token).IsRequired().HasMaxLength(500);
@@ -120,16 +119,14 @@ namespace Infrastructure.EntitiesConfigurations
 
                 entity.HasKey(t => t.TripId);
 
-                entity.Property(t => t.StartLocation)
-                      .IsRequired()
-                      .HasMaxLength(255);
-
-                entity.Property(t => t.EndLocation)
-                      .IsRequired()
-                      .HasMaxLength(255);
-
                 entity.Property(t => t.Status)
                       .IsRequired();
+
+                entity.Property(t => t.Title)
+                      .HasMaxLength(255);
+
+                entity.Property(t => t.TripType)
+                    .IsRequired();
 
                 entity.Property(t => t.CreatedAt)
                       .HasDefaultValueSql("NOW()");
@@ -139,11 +136,19 @@ namespace Infrastructure.EntitiesConfigurations
                       .WithOne(s => s.Trip)
                       .HasForeignKey(s => s.TripId)
                       .OnDelete(DeleteBehavior.Cascade);
+            });
 
-                entity.HasMany(t => t.Itineraries)
-                      .WithOne(i => i.Trip)
-                      .HasForeignKey(i => i.TripId)
-                      .OnDelete(DeleteBehavior.Cascade);
+            // =========================
+            // LOCATIONS
+            // =========================
+            modelBuilder.Entity<Location>(entity =>
+            {
+                entity.ToTable("locations");
+
+                entity.HasKey(l => l.LocationId);
+
+                entity.Property(l => l.LocationName)
+                .HasMaxLength(150);
             });
 
             // =========================
@@ -155,23 +160,20 @@ namespace Infrastructure.EntitiesConfigurations
 
                 entity.HasKey(s => s.SegmentId);
 
-                entity.Property(s => s.SequenceNo)
+                entity.Property(s => s.OrderIndex)
                       .IsRequired();
-
-                entity.Property(s => s.FromLocation)
-                      .IsRequired()
-                      .HasMaxLength(255);
-
-                entity.Property(s => s.ToLocation)
-                      .IsRequired()
-                      .HasMaxLength(255);
 
                 entity.Property(s => s.CreatedAt)
                       .HasDefaultValueSql("NOW()");
 
-                // Ensure sequence is unique per trip
-                entity.HasIndex(s => new { s.TripId, s.SequenceNo })
-                      .IsUnique();
+                // relationship
+                entity.HasOne(s => s.Location)
+                      .WithMany(l => l.Segments)
+                      .HasForeignKey(s => s.LocationId);
+
+                entity.HasMany(s => s.Itineraries)
+                      .WithOne(i => i.Segment)
+                      .HasForeignKey(i => i.SegmentId);
             });
 
             // =========================
@@ -183,15 +185,10 @@ namespace Infrastructure.EntitiesConfigurations
 
                 entity.HasKey(i => i.ItineraryId);
 
-                entity.Property(i => i.Version)
-                      .IsRequired();
-
-                entity.Property(i => i.IsActive)
-                      .HasDefaultValue(false);
-
                 entity.Property(i => i.GeneratedAt)
                       .HasDefaultValueSql("NOW()");
 
+                //relationship  
                 entity.HasMany(i => i.ItineraryDetails)
                       .WithOne(d => d.Itinerary)
                       .HasForeignKey(d => d.ItineraryId)
@@ -213,27 +210,26 @@ namespace Infrastructure.EntitiesConfigurations
                 entity.Property(d => d.CreatedAt)
                       .HasDefaultValueSql("NOW()");
 
-                // Optional relationship to TripSegment
-                entity.HasOne(d => d.TripSegment)
-                      .WithMany()
-                      .HasForeignKey(d => d.SegmentId)
+                entity.HasOne(id => id.POI)
+                      .WithMany(p => p.ItineraryDetails)
+                      .HasForeignKey(d => d.PoiId)
                       .OnDelete(DeleteBehavior.SetNull);
             });
 
             // =========================
             // MANUAL_OVERRIDES
             // =========================
-            modelBuilder.Entity<ManualOverride>(entity =>
-            {
-                entity.ToTable("manual_overrides");
-                entity.HasKey(o => o.Id);
-                entity.Property(o => o.CreatedAt)
-                      .HasDefaultValueSql("NOW()");
-                entity.HasOne(o => o.Detail)
-                      .WithMany(d => d.Overrides)
-                      .HasForeignKey(o => o.DetailId)
-                      .OnDelete(DeleteBehavior.Cascade);
-            });
+            //modelBuilder.Entity<ManualOverride>(entity =>
+            //{
+            //    entity.ToTable("manual_overrides");
+            //    entity.HasKey(o => o.Id);
+            //    entity.Property(o => o.CreatedAt)
+            //          .HasDefaultValueSql("NOW()");
+            //    entity.HasOne(o => o.Detail)
+            //          .WithMany(d => d.Overrides)
+            //          .HasForeignKey(o => o.DetailId)
+            //          .OnDelete(DeleteBehavior.Cascade);
+            //});
 
             // =========================
             // NOTIFICATIONS
@@ -249,9 +245,25 @@ namespace Infrastructure.EntitiesConfigurations
                       .IsRequired();
                 entity.Property(n => n.CreatedAt)
                       .HasDefaultValueSql("NOW()");
-                entity.HasMany(n => n.Recipients)
-                      .WithOne(r => r.Notification)
+            });
+
+            // =========================
+            // NOTIFICATION RECIPIENTS
+            // =========================
+            modelBuilder.Entity<NotificationRecipient>(entity =>
+            {
+                entity.ToTable("recipients");
+
+                entity.HasKey(r => r.Id);
+
+                entity.HasOne(r => r.Notification)
+                      .WithMany(n => n.Recipients)
                       .HasForeignKey(r => r.NotificationId)
+                      .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(r => r.Recipient)
+                      .WithMany(a => a.Recipients)
+                      .HasForeignKey(r => r.RecipientId)
                       .OnDelete(DeleteBehavior.Cascade);
             });
 
@@ -278,6 +290,8 @@ namespace Infrastructure.EntitiesConfigurations
 
             modelBuilder.Entity<POIPreference>(entity =>
             {
+                entity.ToTable("poi_preferences");
+
                 // composite key
                 entity.HasKey(pp => new { pp.PoiId, pp.PreferenceId });
 
@@ -297,6 +311,8 @@ namespace Infrastructure.EntitiesConfigurations
 
             modelBuilder.Entity<UserPreference>(entity =>
             {
+                entity.ToTable("user_preferences");
+
                 entity.HasKey(upv => upv.Id);
 
                 entity.HasOne(upv => upv.Account)
@@ -395,7 +411,23 @@ namespace Infrastructure.EntitiesConfigurations
                       .HasMaxLength(50);
 
                 entity.Property(e => e.PaymentStatus)
+                      .HasConversion<int>() // enum -> int
+                      .IsRequired();
+
+                entity.Property(e => e.TransactionContent)
+                      .HasMaxLength(500);
+
+                entity.Property(e => e.AccountNumber)
                       .HasMaxLength(50);
+
+                entity.Property(e => e.SubAccount)
+                      .HasMaxLength(100);
+
+                entity.Property(e => e.Gateway)
+                      .HasMaxLength(100);
+
+                entity.Property(e => e.Code)
+                      .HasMaxLength(100);
 
                 entity.Property(e => e.PaidAt)
                       .HasDefaultValueSql("NOW()");
@@ -403,7 +435,8 @@ namespace Infrastructure.EntitiesConfigurations
                 entity.HasOne(e => e.Subscription)
                       .WithMany(s => s.Payments)
                       .HasForeignKey(e => e.SubscriptionId)
-                      .OnDelete(DeleteBehavior.Cascade);
+                      .IsRequired(false)
+                      .OnDelete(DeleteBehavior.SetNull);
             });
 
             //==========================
@@ -411,7 +444,7 @@ namespace Infrastructure.EntitiesConfigurations
             //==========================
             modelBuilder.Entity<WeatherForecast>(entity =>
                 {
-                    entity.ToTable("WeatherForecast");
+                    entity.ToTable("weather_forecast");
 
                     entity.HasIndex(x => x.City)
                             .IsUnique();

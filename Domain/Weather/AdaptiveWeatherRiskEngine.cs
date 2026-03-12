@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Domain.Enums;
-using static Domain.Weather.RiskProfileFactory;
+//using static Domain.Weather.RiskProfileFactory;
 
 namespace Domain.Weather
 {

@@ -3,6 +3,7 @@ using System;
 using Infrastructure.EntitiesConfigurations;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260309025831_SepayPaymentPendingSubscription")]
+    partial class SepayPaymentPendingSubscription
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -77,7 +80,7 @@ namespace Infrastructure.Migrations
 
                     b.HasIndex("RoleId");
 
-                    b.ToTable("accounts", (string)null);
+                    b.ToTable("Accounts");
                 });
 
             modelBuilder.Entity("Domain.Entities.AccountSubscription", b =>
@@ -291,6 +294,37 @@ namespace Infrastructure.Migrations
                     b.ToTable("advertisements", (string)null);
                 });
 
+            modelBuilder.Entity("Domain.Entities.Feedback", b =>
+                {
+                    b.Property<Guid>("FeedbackId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("AdId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<string>("FeedbackType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("FeedbackId");
+
+                    b.HasIndex("AdId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("feedbacks", (string)null);
+                });
+
             modelBuilder.Entity("Domain.Entities.Itinerary", b =>
                 {
                     b.Property<Guid>("ItineraryId")
@@ -302,25 +336,18 @@ namespace Infrastructure.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasDefaultValueSql("NOW()");
 
-                    b.Property<bool>("GeneratedByAI")
-                        .HasColumnType("boolean");
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
 
-                    b.Property<Guid>("SegmentId")
+                    b.Property<Guid>("TripId")
                         .HasColumnType("uuid");
 
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<Guid?>("TripId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<int>("Version")
+                        .HasColumnType("integer");
 
                     b.HasKey("ItineraryId");
-
-                    b.HasIndex("SegmentId");
 
                     b.HasIndex("TripId");
 
@@ -338,14 +365,8 @@ namespace Infrastructure.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasDefaultValueSql("NOW()");
 
-                    b.Property<int>("DurationMinutes")
-                        .HasColumnType("integer");
-
-                    b.Property<TimeOnly>("EndTime")
-                        .HasColumnType("time without time zone");
-
-                    b.Property<bool>("IsManualOverride")
-                        .HasColumnType("boolean");
+                    b.Property<DateTime>("Date")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<Guid>("ItineraryId")
                         .HasColumnType("uuid");
@@ -353,49 +374,48 @@ namespace Infrastructure.Migrations
                     b.Property<Guid?>("PoiId")
                         .HasColumnType("uuid");
 
-                    b.Property<DateTime>("RiskCalculatedAt")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<Guid?>("SegmentId")
+                        .HasColumnType("uuid");
 
-                    b.Property<TimeOnly>("StartTime")
-                        .HasColumnType("time without time zone");
-
-                    b.Property<DateTime>("VisitDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<double>("WeatherRiskScore")
+                    b.Property<float>("WeatherRiskScore")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("double precision")
-                        .HasDefaultValue(0.0);
+                        .HasColumnType("real")
+                        .HasDefaultValue(0f);
 
                     b.HasKey("DetailId");
 
                     b.HasIndex("ItineraryId");
 
-                    b.HasIndex("PoiId");
+                    b.HasIndex("SegmentId");
 
                     b.ToTable("itinerary_details", (string)null);
                 });
 
-            modelBuilder.Entity("Domain.Entities.Location", b =>
+            modelBuilder.Entity("Domain.Entities.ManualOverride", b =>
                 {
-                    b.Property<Guid>("LocationId")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<decimal>("Latitude")
-                        .HasColumnType("numeric");
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("NOW()");
 
-                    b.Property<string>("LocationName")
-                        .IsRequired()
-                        .HasMaxLength(150)
-                        .HasColumnType("character varying(150)");
+                    b.Property<Guid>("DetailId")
+                        .HasColumnType("uuid");
 
-                    b.Property<decimal>("Longitude")
-                        .HasColumnType("numeric");
+                    b.Property<bool>("UserConfirmed")
+                        .HasColumnType("boolean");
 
-                    b.HasKey("LocationId");
+                    b.Property<bool>("WarningShown")
+                        .HasColumnType("boolean");
 
-                    b.ToTable("locations", (string)null);
+                    b.HasKey("Id");
+
+                    b.HasIndex("DetailId");
+
+                    b.ToTable("manual_overrides", (string)null);
                 });
 
             modelBuilder.Entity("Domain.Entities.Notification", b =>
@@ -457,7 +477,7 @@ namespace Infrastructure.Migrations
 
                     b.HasIndex("RecipientId");
 
-                    b.ToTable("recipients", (string)null);
+                    b.ToTable("Recipients");
                 });
 
             modelBuilder.Entity("Domain.Entities.OtpVerification", b =>
@@ -491,7 +511,7 @@ namespace Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("otp_verifications", (string)null);
+                    b.ToTable("OtpVerifications");
                 });
 
             modelBuilder.Entity("Domain.Entities.POI", b =>
@@ -499,11 +519,6 @@ namespace Infrastructure.Migrations
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
-
-                    b.Property<string>("Address")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("character varying(255)");
 
                     b.Property<string>("ApproxCost")
                         .IsRequired()
@@ -515,18 +530,15 @@ namespace Infrastructure.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)");
 
-                    b.Property<string>("GoogleMapLink")
+                    b.Property<string>("Description")
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<bool>("IsIndoor")
-                        .HasColumnType("boolean");
+                    b.Property<Guid?>("ForecastId")
+                        .HasColumnType("uuid");
 
                     b.Property<double>("Latitude")
                         .HasColumnType("double precision");
-
-                    b.Property<Guid>("LocationId")
-                        .HasColumnType("uuid");
 
                     b.Property<double>("Longitude")
                         .HasColumnType("double precision");
@@ -536,13 +548,9 @@ namespace Infrastructure.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)");
 
-                    b.Property<string>("OpeningHours")
-                        .IsRequired()
-                        .HasColumnType("text");
-
                     b.HasKey("Id");
 
-                    b.HasIndex("LocationId");
+                    b.HasIndex("ForecastId");
 
                     b.ToTable("pois", (string)null);
                 });
@@ -559,7 +567,7 @@ namespace Infrastructure.Migrations
 
                     b.HasIndex("PreferenceId");
 
-                    b.ToTable("poi_preferences", (string)null);
+                    b.ToTable("POIPreferences");
                 });
 
             modelBuilder.Entity("Domain.Entities.Preference", b =>
@@ -604,7 +612,7 @@ namespace Infrastructure.Migrations
 
                     b.HasIndex("AccountId");
 
-                    b.ToTable("refresh_tokens", (string)null);
+                    b.ToTable("RefreshTokens");
                 });
 
             modelBuilder.Entity("Domain.Entities.Role", b =>
@@ -622,7 +630,7 @@ namespace Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("roles", (string)null);
+                    b.ToTable("Roles");
                 });
 
             modelBuilder.Entity("Domain.Entities.Trip", b =>
@@ -639,6 +647,11 @@ namespace Infrastructure.Migrations
                     b.Property<DateTime>("EndDate")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("EndLocation")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
                     b.Property<Guid>("OwnerId")
                         .HasColumnType("uuid");
 
@@ -648,15 +661,12 @@ namespace Infrastructure.Migrations
                     b.Property<DateTime>("StartDate")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<int>("Status")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Title")
+                    b.Property<string>("StartLocation")
                         .IsRequired()
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)");
 
-                    b.Property<int>("TripType")
+                    b.Property<int>("Status")
                         .HasColumnType("integer");
 
                     b.HasKey("TripId");
@@ -678,28 +688,37 @@ namespace Infrastructure.Migrations
                     b.Property<float?>("DistanceKm")
                         .HasColumnType("real");
 
-                    b.Property<Guid>("LocationId")
-                        .HasColumnType("uuid");
-
-                    b.Property<int>("OrderIndex")
+                    b.Property<int?>("EstimatedMinutes")
                         .HasColumnType("integer");
 
-                    b.Property<int>("StayDays")
+                    b.Property<string>("FromLocation")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<int>("SequenceNo")
                         .HasColumnType("integer");
+
+                    b.Property<string>("ToLocation")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<DateTime?>("TravelDate")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<Guid>("TripId")
                         .HasColumnType("uuid");
 
                     b.HasKey("SegmentId");
 
-                    b.HasIndex("LocationId");
-
-                    b.HasIndex("TripId");
+                    b.HasIndex("TripId", "SequenceNo")
+                        .IsUnique();
 
                     b.ToTable("trip_segments", (string)null);
                 });
 
-            modelBuilder.Entity("Domain.Entities.UserPreference", b =>
+            modelBuilder.Entity("Domain.Entities.UserPreferenceVector", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -708,16 +727,20 @@ namespace Infrastructure.Migrations
                     b.Property<Guid>("AccountId")
                         .HasColumnType("uuid");
 
-                    b.Property<Guid>("PreferenceId")
-                        .HasColumnType("uuid");
+                    b.Property<string>("PreferenceCode")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<double>("Score")
+                        .HasColumnType("double precision");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("AccountId");
+                    b.HasIndex("AccountId", "PreferenceCode")
+                        .IsUnique();
 
-                    b.HasIndex("PreferenceId");
-
-                    b.ToTable("user_preferences", (string)null);
+                    b.ToTable("UserPreferenceVectors");
                 });
 
             modelBuilder.Entity("Domain.Entities.WeatherForecast", b =>
@@ -733,9 +756,6 @@ namespace Infrastructure.Migrations
                     b.Property<DateTime>("ForecastDate")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<Guid>("LocationId")
-                        .HasColumnType("uuid");
-
                     b.Property<double>("PrecipitationProbability")
                         .HasColumnType("double precision");
 
@@ -747,12 +767,7 @@ namespace Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("City")
-                        .IsUnique();
-
-                    b.HasIndex("LocationId");
-
-                    b.ToTable("weather_forecast", (string)null);
+                    b.ToTable("WeatherForecast");
                 });
 
             modelBuilder.Entity("Domain.Entities.Account", b =>
@@ -822,19 +837,33 @@ namespace Infrastructure.Migrations
                     b.Navigation("Package");
                 });
 
-            modelBuilder.Entity("Domain.Entities.Itinerary", b =>
+            modelBuilder.Entity("Domain.Entities.Feedback", b =>
                 {
-                    b.HasOne("Domain.Entities.TripSegment", "Segment")
-                        .WithMany("Itineraries")
-                        .HasForeignKey("SegmentId")
+                    b.HasOne("Domain.Entities.Advertisement", "Advertisement")
+                        .WithMany()
+                        .HasForeignKey("AdId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Domain.Entities.Account", "User")
+                        .WithMany("Feedbacks")
+                        .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Domain.Entities.Trip", null)
-                        .WithMany("Itineraries")
-                        .HasForeignKey("TripId");
+                    b.Navigation("Advertisement");
 
-                    b.Navigation("Segment");
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Domain.Entities.Itinerary", b =>
+                {
+                    b.HasOne("Domain.Entities.Trip", "Trip")
+                        .WithMany("Itineraries")
+                        .HasForeignKey("TripId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Trip");
                 });
 
             modelBuilder.Entity("Domain.Entities.ItineraryDetail", b =>
@@ -845,14 +874,25 @@ namespace Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Domain.Entities.POI", "POI")
-                        .WithMany("ItineraryDetails")
-                        .HasForeignKey("PoiId")
+                    b.HasOne("Domain.Entities.TripSegment", "TripSegment")
+                        .WithMany()
+                        .HasForeignKey("SegmentId")
                         .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("Itinerary");
 
-                    b.Navigation("POI");
+                    b.Navigation("TripSegment");
+                });
+
+            modelBuilder.Entity("Domain.Entities.ManualOverride", b =>
+                {
+                    b.HasOne("Domain.Entities.ItineraryDetail", "Detail")
+                        .WithMany("Overrides")
+                        .HasForeignKey("DetailId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Detail");
                 });
 
             modelBuilder.Entity("Domain.Entities.Notification", b =>
@@ -895,13 +935,11 @@ namespace Infrastructure.Migrations
 
             modelBuilder.Entity("Domain.Entities.POI", b =>
                 {
-                    b.HasOne("Domain.Entities.Location", "Location")
+                    b.HasOne("Domain.Entities.WeatherForecast", "Forecast")
                         .WithMany()
-                        .HasForeignKey("LocationId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("ForecastId");
 
-                    b.Navigation("Location");
+                    b.Navigation("Forecast");
                 });
 
             modelBuilder.Entity("Domain.Entities.POIPreference", b =>
@@ -936,24 +974,16 @@ namespace Infrastructure.Migrations
 
             modelBuilder.Entity("Domain.Entities.TripSegment", b =>
                 {
-                    b.HasOne("Domain.Entities.Location", "Location")
-                        .WithMany("Segments")
-                        .HasForeignKey("LocationId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.HasOne("Domain.Entities.Trip", "Trip")
                         .WithMany("TripSegments")
                         .HasForeignKey("TripId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Location");
-
                     b.Navigation("Trip");
                 });
 
-            modelBuilder.Entity("Domain.Entities.UserPreference", b =>
+            modelBuilder.Entity("Domain.Entities.UserPreferenceVector", b =>
                 {
                     b.HasOne("Domain.Entities.Account", "Account")
                         .WithMany("UserPreferenceVectors")
@@ -961,26 +991,7 @@ namespace Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Domain.Entities.Preference", "Preference")
-                        .WithMany()
-                        .HasForeignKey("PreferenceId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.Navigation("Account");
-
-                    b.Navigation("Preference");
-                });
-
-            modelBuilder.Entity("Domain.Entities.WeatherForecast", b =>
-                {
-                    b.HasOne("Domain.Entities.Location", "Location")
-                        .WithMany("WeatherForecast")
-                        .HasForeignKey("LocationId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Location");
                 });
 
             modelBuilder.Entity("Domain.Entities.Account", b =>
@@ -988,6 +999,8 @@ namespace Infrastructure.Migrations
                     b.Navigation("AccountSubscriptions");
 
                     b.Navigation("Advertisements");
+
+                    b.Navigation("Feedbacks");
 
                     b.Navigation("Recipients");
 
@@ -1011,11 +1024,9 @@ namespace Infrastructure.Migrations
                     b.Navigation("ItineraryDetails");
                 });
 
-            modelBuilder.Entity("Domain.Entities.Location", b =>
+            modelBuilder.Entity("Domain.Entities.ItineraryDetail", b =>
                 {
-                    b.Navigation("Segments");
-
-                    b.Navigation("WeatherForecast");
+                    b.Navigation("Overrides");
                 });
 
             modelBuilder.Entity("Domain.Entities.Notification", b =>
@@ -1025,8 +1036,6 @@ namespace Infrastructure.Migrations
 
             modelBuilder.Entity("Domain.Entities.POI", b =>
                 {
-                    b.Navigation("ItineraryDetails");
-
                     b.Navigation("PoiPreferences");
                 });
 
@@ -1047,11 +1056,6 @@ namespace Infrastructure.Migrations
                     b.Navigation("Notifications");
 
                     b.Navigation("TripSegments");
-                });
-
-            modelBuilder.Entity("Domain.Entities.TripSegment", b =>
-                {
-                    b.Navigation("Itineraries");
                 });
 #pragma warning restore 612, 618
         }

@@ -1,6 +1,8 @@
 ﻿using System.Security.Claims;
 using Application.DTOs.Requests;
+using Application.DTOs.Responses;
 using Application.Interfaces;
+using AutoMapper;
 using Domain.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -13,11 +15,13 @@ namespace WebAPI.Controllers
     {
         private readonly IPOIService _poiService;
         private readonly IAuthService _authService;
+        private readonly IMapper _mapper;
 
-        public POIController(IPOIService poiService, IAuthService authService)
+        public POIController(IPOIService poiService, IAuthService authService, IMapper mapper)
         {
             _poiService = poiService;
             _authService = authService;
+            _mapper = mapper;
         }
 
         [HttpGet("recommended")]
@@ -29,13 +33,15 @@ namespace WebAPI.Controllers
             //    User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
             try
             {
-                var account = _authService.GetCurrentAccount();
-                var accountId = account.Result.Id;
+                var account = await _authService.GetCurrentAccount();
+                var accountId = account.Id;
 
-                var result = await _poiService
+                var pois = await _poiService
                     .GetAllPoisSortedByPreferenceAsync(accountId);
 
-                return Ok(result);
+                var result = _mapper.Map<List<RecommendedPoiResponse>>(pois);
+
+                return Ok(result.Take(limit));
             }
             catch(Exception ex)
             {
