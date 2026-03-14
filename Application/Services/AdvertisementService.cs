@@ -185,5 +185,32 @@ namespace Application.Services
                 TotalPages = totalItems == 0 ? 0 : (int)Math.Ceiling(totalItems / (double)pageSize)
             };
         }
+        public async Task<List<Advertisement>> GetAllAsync()
+        {
+            return await _advertisementRepository.GetAllAsync();
+        }
+
+        public async Task<List<Advertisement>> GetPendingAsync()
+        {
+            return await _advertisementRepository.GetPendingAsync();
+        }
+
+        public async Task<Advertisement> ApproveAdAsync(Guid adId)
+        {
+            var advertisement = await _advertisementRepository.GetByIdAsync(adId);
+
+            if (advertisement == null)
+                throw new KeyNotFoundException("Advertisement not found");
+
+            if (advertisement.Status != AdStatus.PendingApproval)
+            {
+                throw new InvalidOperationException(
+                    $"Cannot approve advertisement with status: {advertisement.Status}");
+            }
+
+            advertisement.Status = AdStatus.Active;
+
+            return await _advertisementRepository.UpdateAsync(advertisement);
+        }
     }
 }

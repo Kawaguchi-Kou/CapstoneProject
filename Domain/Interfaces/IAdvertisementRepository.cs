@@ -24,5 +24,9 @@ namespace Domain.Interfaces
         Task<int> CountPendingByAccountIdAsync(Guid accountId, string? keyword = null);
 
         Task SaveChangesAsync();
+
+        Task<List<Advertisement>> GetAllAsync();
+
+        Task<List<Advertisement>> GetPendingAsync();
     }
 }

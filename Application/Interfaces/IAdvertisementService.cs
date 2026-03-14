@@ -22,5 +22,10 @@ namespace Application.Interfaces
             int page,
             int pageSize,
             string? keyword = null);
+        Task<List<Advertisement>> GetAllAsync();
+
+        Task<List<Advertisement>> GetPendingAsync();
+
+        Task<Advertisement> ApproveAdAsync(Guid adId);
     }
 }
