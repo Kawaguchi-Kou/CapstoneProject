@@ -188,26 +188,7 @@ namespace WebAPI.Controllers
             }
         }
 
-        [HttpPost("{id}/approve-staff")]
-        [Authorize(Roles = "Staff")]
-        public async Task<IActionResult> ApproveAd(Guid id)
-        {
-            try
-            {
-                var advertisement = await _advertisementService.ApproveAdAsync(id);
-                var response = _mapper.Map<AdvertisementResponse>(advertisement);
-
-                return Ok(response);
-            }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(new { message = ex.Message });
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
-        }
+        
 
 
     }

@@ -195,22 +195,6 @@ namespace Application.Services
             return await _advertisementRepository.GetPendingAsync();
         }
 
-        public async Task<Advertisement> ApproveAdAsync(Guid adId)
-        {
-            var advertisement = await _advertisementRepository.GetByIdAsync(adId);
 
-            if (advertisement == null)
-                throw new KeyNotFoundException("Advertisement not found");
-
-            if (advertisement.Status != AdStatus.PendingApproval)
-            {
-                throw new InvalidOperationException(
-                    $"Cannot approve advertisement with status: {advertisement.Status}");
-            }
-
-            advertisement.Status = AdStatus.Active;
-
-            return await _advertisementRepository.UpdateAsync(advertisement);
-        }
     }
 }

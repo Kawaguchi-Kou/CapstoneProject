@@ -26,6 +26,6 @@ namespace Application.Interfaces
 
         Task<List<Advertisement>> GetPendingAsync();
 
-        Task<Advertisement> ApproveAdAsync(Guid adId);
+
     }
 }
