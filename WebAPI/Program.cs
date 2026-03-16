@@ -78,6 +78,9 @@ builder.Services.AddScoped<Application.Interfaces.IPaymentService, Application.S
 //Advertisement
 builder.Services.AddScoped<IAdvertisementService, AdvertisementService>();
 
+//Location
+builder.Services.AddScoped<ILocationService, LocationService>();
+
 //Add repositories
 //Auth
 builder.Services.AddScoped<IAuthRepository, AuthRepository>();
@@ -107,6 +110,10 @@ builder.Services.AddScoped<Domain.Interfaces.IPaymentRepository, Infrastructure.
 
 //Advertisement
 builder.Services.AddScoped<IAdvertisementRepository, AdvertisementRepository>();
+
+
+//Location
+builder.Services.AddScoped<ILocationRepository, LocationRepository>();
 
 // add CORS
 builder.Services.AddCors(options =>
