@@ -93,8 +93,6 @@ builder.Services.AddScoped<IPreferenceRepository, PreferenceRepository>();
 //POI
 builder.Services.AddScoped<IPOIRepository, POIRepository>();
 
-//AccountAdmin
-builder.Services.AddScoped<IAdminService, AdminService>();
 
 //AdSubscriptionPackage
 builder.Services.AddScoped<IAdSubscriptionPackageRepository, AdSubscriptionPackageRepository>();
