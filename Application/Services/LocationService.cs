@@ -17,14 +17,33 @@ namespace Application.Services
             _locationRepository = locationRepository;
         }
 
-        public async Task<List<Location>> GetAllAsync()
+        public async Task<List<LocationResponse>> GetAllAsync()
         {
-            return await _locationRepository.GetAllAsync();
+            var locations = await _locationRepository.GetAllAsync();
+
+            return locations.Select(x => new LocationResponse
+            {
+                LocationId = x.LocationId,
+                LocationName = x.LocationName,
+                Latitude = x.Latitude,
+                Longitude = x.Longitude
+            }).ToList();
         }
 
-        public async Task<Location?> GetByIdAsync(Guid id)
+        public async Task<LocationResponse?> GetByIdAsync(Guid id)
         {
-            return await _locationRepository.GetByIdAsync(id);
+            var location = await _locationRepository.GetByIdAsync(id);
+
+            if (location == null)
+                return null;
+
+            return new LocationResponse
+            {
+                LocationId = location.LocationId,
+                LocationName = location.LocationName,
+                Latitude = location.Latitude,
+                Longitude = location.Longitude
+            };
         }
 
         public async Task<Location> CreateAsync(CreateLocationRequest request)

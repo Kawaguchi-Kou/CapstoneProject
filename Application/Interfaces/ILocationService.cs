@@ -11,8 +11,8 @@ namespace Application.Interfaces
 {
     public interface ILocationService
     {
-        Task<List<Location>> GetAllAsync();
-        Task<Location?> GetByIdAsync(Guid id);
+        Task<List<LocationResponse>> GetAllAsync();
+        Task<LocationResponse?> GetByIdAsync(Guid id);
         Task<Location> CreateAsync(CreateLocationRequest request);
         Task<Location> UpdateAsync(Guid id, UpdateLocationRequest request);
         Task DeleteAsync(Guid id);
