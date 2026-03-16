@@ -105,21 +105,47 @@ namespace Application.Services
                         return result;
                     }
 
-        public async Task<List<POI>> GetAllAsync()
+        public async Task<List<POIResponse>> GetAllAsync()
         {
             var pois = await _poiRepository.GetAllAsync();
 
-            return pois;
+            return pois.Select(p => new POIResponse
+            {
+                Id = p.Id,
+                Name = p.Name,
+                Address = p.Address,
+                City = p.City,
+                ApproxCost = p.ApproxCost,
+                OpeningHours = p.OpeningHours,
+                GoogleMapLink = p.GoogleMapLink,
+                IsIndoor = p.IsIndoor,
+                Latitude = p.Latitude,
+                Longitude = p.Longitude,
+                LocationId = p.LocationId
+            }).ToList();
         }
 
-        public async Task<POI> GetByIdAsync(Guid id)
+        public async Task<POIResponse?> GetByIdAsync(Guid id)
         {
             var poi = await _poiRepository.GetByIdAsync(id);
 
             if (poi == null)
                 return null;
 
-            return poi;
+            return new POIResponse
+            {
+                Id = poi.Id,
+                Name = poi.Name,
+                Address = poi.Address,
+                City = poi.City,
+                ApproxCost = poi.ApproxCost,
+                OpeningHours = poi.OpeningHours,
+                GoogleMapLink = poi.GoogleMapLink,
+                IsIndoor = poi.IsIndoor,
+                Latitude = poi.Latitude,
+                Longitude = poi.Longitude,
+                LocationId = poi.LocationId
+            };
         }
 
         public async Task<POI> CreateAsync(CreatePoiRequest request)
