@@ -171,9 +171,9 @@ namespace Application.Services
             if (request.Longitude.HasValue)
                 poi.Longitude = request.Longitude.Value;
 
-            var updatedPOI = await _poiRepository.GetByIdAsync(id);
+            await _poiRepository.UpdateAsync(poi);
 
-            return updatedPOI!;
+            return poi;
         }
 
         public async Task DeleteAsync(Guid id)
