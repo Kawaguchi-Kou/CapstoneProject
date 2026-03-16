@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Application.DTOs.Requests;
 using Application.DTOs.Responses;
 using Domain.Entities;
+using Microsoft.AspNetCore.Http;
 
 namespace Application.Interfaces
 {
@@ -18,5 +19,7 @@ namespace Application.Interfaces
         Task<POI> CreateAsync(CreatePoiRequest request);
         Task<POI> UpdateAsync(Guid id, UpdatePoiRequest request);
         Task DeleteAsync(Guid id);
+
+        Task ImportExcelAsync(IFormFile file);
     }
 }

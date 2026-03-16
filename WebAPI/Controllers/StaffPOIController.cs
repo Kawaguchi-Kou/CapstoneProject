@@ -1,7 +1,9 @@
 ﻿using Application.DTOs.Requests;
 using Application.Interfaces;
+using Domain.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using OfficeOpenXml;
 
 namespace WebAPI.Controllers
 {
@@ -54,6 +56,18 @@ namespace WebAPI.Controllers
         {
             await _poiService.DeleteAsync(id);
             return Ok("Deleted successfully");
+        }
+
+        [HttpPost("import")]
+        [Authorize(Roles = "Staff")]
+        public async Task<IActionResult> ImportExcel(IFormFile file)
+        {
+            if (file == null || file.Length == 0)
+                return BadRequest("File is empty");
+
+            await _poiService.ImportExcelAsync(file);
+
+            return Ok("Import POI success");
         }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -8,6 +9,9 @@ using Application.DTOs.Responses;
 using Application.Interfaces;
 using Domain.Entities;
 using Domain.Interfaces;
+using Microsoft.AspNetCore.Http;
+using OfficeOpenXml;
+
 
 namespace Application.Services
 {
@@ -185,5 +189,47 @@ namespace Application.Services
 
             await _poiRepository.DeleteAsync(poi);
         }
+
+        public async Task ImportExcelAsync(IFormFile file)
+        {
+            ExcelPackage.LicenseContext = OfficeOpenXml.LicenseContext.NonCommercial;
+
+            using var stream = new MemoryStream();
+            await file.CopyToAsync(stream);
+
+            using var package = new ExcelPackage(stream);
+
+            var worksheet = package.Workbook.Worksheets[0];
+
+            int rowCount = worksheet.Dimension.Rows;
+
+            List<POI> pois = new();
+
+            for (int row = 2; row <= rowCount; row++)
+            {
+                var poi = new POI
+                {
+                    Id = Guid.NewGuid(),
+                    Name = worksheet.Cells[row, 1].Text,
+                    Address = worksheet.Cells[row, 2].Text,
+                    City = worksheet.Cells[row, 3].Text,
+                    ApproxCost = worksheet.Cells[row, 4].Text,
+                    OpeningHours = worksheet.Cells[row, 5].Text,
+                    GoogleMapLink = worksheet.Cells[row, 6].Text,
+                    IsIndoor = bool.Parse(worksheet.Cells[row, 7].Text),
+                    Latitude = double.Parse(worksheet.Cells[row, 8].Text),
+                    Longitude = double.Parse(worksheet.Cells[row, 9].Text),
+                    LocationId = Guid.Parse(worksheet.Cells[row, 10].Text)
+                };
+
+                pois.Add(poi);
+            }
+
+            foreach (var poi in pois)
+            {
+                await _poiRepository.AddAsync(poi);
+            }
+        }
+
     }
 }

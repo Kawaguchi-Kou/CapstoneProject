@@ -1,5 +1,6 @@
 ﻿using Application.DTOs.Requests;
 using Domain.Entities;
+using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,5 +16,7 @@ namespace Application.Interfaces
         Task<Location> CreateAsync(CreateLocationRequest request);
         Task<Location> UpdateAsync(Guid id, UpdateLocationRequest request);
         Task DeleteAsync(Guid id);
+
+        Task ImportExcelAsync(IFormFile file);
     }
 }

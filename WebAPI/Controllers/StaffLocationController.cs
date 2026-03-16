@@ -55,5 +55,16 @@ namespace WebAPI.Controllers
             await _locationService.DeleteAsync(id);
             return Ok("Deleted successfully");
         }
+
+        [HttpPost("import")]
+        public async Task<IActionResult> ImportExcel(IFormFile file)
+        {
+            if (file == null || file.Length == 0)
+                return BadRequest("File is empty");
+
+            await _locationService.ImportExcelAsync(file);
+
+            return Ok("Import location success");
+        }
     }
 }

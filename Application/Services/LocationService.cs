@@ -2,11 +2,9 @@
 using Application.Interfaces;
 using Domain.Entities;
 using Domain.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
+using OfficeOpenXml;
+using System.ComponentModel;
 
 namespace Application.Services
 {
@@ -68,6 +66,40 @@ namespace Application.Services
                 throw new Exception("Location not found");
 
             await _locationRepository.DeleteAsync(location);
+        }
+
+        public async Task ImportExcelAsync(IFormFile file)
+        {
+            ExcelPackage.LicenseContext = OfficeOpenXml.LicenseContext.NonCommercial;
+
+            using var stream = new MemoryStream();
+            await file.CopyToAsync(stream);
+
+            using var package = new ExcelPackage(stream);
+
+            var worksheet = package.Workbook.Worksheets[0];
+
+            int rowCount = worksheet.Dimension.Rows;
+
+            List<Location> locations = new();
+
+            for (int row = 2; row <= rowCount; row++)
+            {
+                var location = new Location
+                {
+                    LocationId = Guid.NewGuid(),
+                    LocationName = worksheet.Cells[row, 1].Text,
+                    Latitude = double.Parse(worksheet.Cells[row, 2].Text),
+                    Longitude = double.Parse(worksheet.Cells[row, 3].Text)
+                };
+
+                locations.Add(location);
+            }
+
+            foreach (var location in locations)
+            {
+                await _locationRepository.AddAsync(location);
+            }
         }
     }
 }
