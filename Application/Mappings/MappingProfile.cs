@@ -24,7 +24,8 @@ namespace Application.Mappings
                 .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id))
                 .ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.Email))
                 .ForMember(dest => dest.RoleName, opt => opt.MapFrom(src => src.Role!.Name))
-                .ForMember(dest => dest.IsActive, opt => opt.MapFrom(src => src.IsActive));
+                .ForMember(dest => dest.IsActive, opt => opt.MapFrom(src => src.IsActive))
+                .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Name));
 
             //User
             //CreateMap<UpdateUserRequest, User>();

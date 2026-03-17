@@ -15,6 +15,7 @@ namespace Domain.Interfaces
         Task SaveChangesAsync();
         Task ChangePasswordAsync(Account account);
         Task<List<Account>> GetAllAccountsAsync();
+        Task<List<Account>> GetFilteredAccountsAsync(int? roleId, bool? isActive, string? name);
 
     }
 }

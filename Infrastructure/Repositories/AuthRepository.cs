@@ -53,5 +53,30 @@ namespace Infrastructure.Repositories
             return await _context.Accounts.Include(a => a.Role).ToListAsync();
         }
 
+        public async Task<List<Account>> GetFilteredAccountsAsync(int? roleId, bool? isActive, string? name)
+        {
+            var query = _context.Accounts
+                .Include(a => a.Role)
+                .AsQueryable();
+
+            if (roleId.HasValue)
+            {
+                query = query.Where(a => a.RoleId == roleId.Value);
+            }
+
+            if (isActive.HasValue)
+            {
+                query = query.Where(a => a.IsActive == isActive.Value);
+            }
+
+            if (!string.IsNullOrWhiteSpace(name))
+            {
+                var normalizedName = name.Trim().ToLower();
+                query = query.Where(a => a.Name.ToLower().Contains(normalizedName));
+            }
+
+            return await query.ToListAsync();
+        }
+
     }
 }
