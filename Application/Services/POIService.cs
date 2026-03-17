@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
+using System.Security.Cryptography.Xml;
 using System.Text;
 using System.Threading.Tasks;
 using Application.DTOs.Requests;
@@ -218,43 +219,59 @@ namespace Application.Services
 
         public async Task ImportExcelAsync(IFormFile file)
         {
-            ExcelPackage.LicenseContext = OfficeOpenXml.LicenseContext.NonCommercial;
-
             using var stream = new MemoryStream();
             await file.CopyToAsync(stream);
 
             using var package = new ExcelPackage(stream);
-
             var worksheet = package.Workbook.Worksheets[0];
-
             int rowCount = worksheet.Dimension.Rows;
+
+            // 🔥 Load toàn bộ Location 1 lần (tránh gọi DB trong loop)
+            var locations = (await _poiRepository.GetAllLocationsAsync())
+                .ToDictionary(x => x.LocationName.ToLower(), x => x);
 
             List<POI> pois = new();
 
             for (int row = 2; row <= rowCount; row++)
             {
+                string name = worksheet.Cells[row, 1].Text.Trim();
+                string address = worksheet.Cells[row, 2].Text.Trim();
+                string cityRaw = worksheet.Cells[row, 3].Text.Trim();
+                string cityKey = cityRaw.ToLower();
+
+                // ❌ không có location thì bỏ
+                if (!locations.ContainsKey(cityKey))
+                    continue;
+
+                var location = locations[cityKey];
+
+                decimal.TryParse(worksheet.Cells[row, 4].Text, out var cost);
+                bool.TryParse(worksheet.Cells[row, 7].Text, out var isIndoor);
+
                 var poi = new POI
                 {
                     Id = Guid.NewGuid(),
-                    Name = worksheet.Cells[row, 1].Text,
-                    Address = worksheet.Cells[row, 2].Text,
-                    City = worksheet.Cells[row, 3].Text,
-                    ApproxCost = worksheet.Cells[row, 4].Text,
+
+                    Name = name,
+                    Address = address,
+                    City = cityRaw, // giữ nguyên format đẹp
+
+                    ApproxCost = cost.ToString(),
                     OpeningHours = worksheet.Cells[row, 5].Text,
                     GoogleMapLink = worksheet.Cells[row, 6].Text,
-                    IsIndoor = bool.Parse(worksheet.Cells[row, 7].Text),
-                    Latitude = double.Parse(worksheet.Cells[row, 8].Text),
-                    Longitude = double.Parse(worksheet.Cells[row, 9].Text),
-                    LocationId = Guid.Parse(worksheet.Cells[row, 10].Text)
+                    IsIndoor = isIndoor,
+
+                    // 🔥 mapping từ Location
+                    LocationId = location.LocationId,
+                    Latitude = location.Latitude,
+                    Longitude = location.Longitude
                 };
 
                 pois.Add(poi);
             }
 
-            foreach (var poi in pois)
-            {
-                await _poiRepository.AddAsync(poi);
-            }
+            // 🔥 Save 1 lần (chuẩn clean + performance tốt)
+            await _poiRepository.AddRangeAsync(pois);
         }
 
     }

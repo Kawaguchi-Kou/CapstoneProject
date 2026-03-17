@@ -43,6 +43,12 @@ namespace Infrastructure.Repositories
             await _context.POIs.AddAsync(poi);
             await _context.SaveChangesAsync();
         }
+        public async Task AddRangeAsync(List<POI> pois)
+        {
+            await _context.POIs.AddRangeAsync(pois);
+            await _context.SaveChangesAsync();
+        }
+
 
         public async Task<Location?> GetLocationByIdAsync(Guid locationId)
         {
@@ -71,6 +77,10 @@ namespace Infrastructure.Repositories
                 .FirstOrDefaultAsync(p =>
                     p.Name.ToLower() == name &&
                     p.City.ToLower() == city);
+        }
+        public async Task<List<Location>> GetAllLocationsAsync()
+        {
+            return await _context.Locations.ToListAsync();
         }
 
     }

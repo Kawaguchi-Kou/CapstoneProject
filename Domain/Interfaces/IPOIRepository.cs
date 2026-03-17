@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 using Domain.Entities;
 
 namespace Domain.Interfaces
@@ -13,9 +14,12 @@ namespace Domain.Interfaces
         Task<List<POI>> GetAllWithPreferencesAsync();
         Task<List<POI>> GetAllAsync();
         Task AddAsync(POI poi);
+        Task AddRangeAsync(List<POI> pois);
+
         Task<Location?> GetLocationByIdAsync(Guid locationId);
         Task UpdateAsync(POI poi);
         Task DeleteAsync(POI poi);
         Task<POI?> GetByNameAndCityAsync(string name, string city);
+        Task<List<Location>> GetAllLocationsAsync();
     }
 }
