@@ -6,6 +6,8 @@ using Application.Mappings;
 using Application.Services;
 using Domain.Interfaces;
 using DotNetEnv;
+using Hangfire;
+using Infrastructure.BackgroundJobs;
 using Infrastructure.EntitiesConfigurations;
 using Infrastructure.ExternalApis.OpenMeteo;
 using Infrastructure.ExternalApis.SePay;
@@ -25,6 +27,9 @@ var builder = WebApplication.CreateBuilder(args);
 // Add DbContext
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("Supabase")));
+
+//Hangfire configuration 
+//builder.Services.AddHangfireServer();
 
 // =====================
 // WEATHER - OPEN METEO
@@ -218,5 +223,16 @@ app.UseAuthorization();
 app.UseSwagger();
 app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "ProjectName API v1"));
 
+//app.UseHangfireDashboard("/hangfire");
+
 app.MapControllers();
+
+// ============================
+// HANGFIRE RECURRING JOB
+// ============================
+//RecurringJob.AddOrUpdate<WeatherMonitorJob>(
+//    "weather-hourly-scan",
+//    x => x.ScanUpcomingTripsAsync(),
+//    Cron.Hourly);
+
 app.Run();

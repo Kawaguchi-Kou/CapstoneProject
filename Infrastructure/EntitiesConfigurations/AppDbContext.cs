@@ -26,6 +26,7 @@ namespace Infrastructure.EntitiesConfigurations
         //Notification
         public DbSet<Notification> Notifications { get; set; }
         public DbSet<NotificationRecipient> Recipients { get; set; }
+        public DbSet<Participant> Participants {  get; set; }
 
         //POI&Preference Vector
         public DbSet<POI> POIs { get; set; }
@@ -449,6 +450,23 @@ namespace Infrastructure.EntitiesConfigurations
                     entity.HasIndex(x => x.City)
                             .IsUnique();
                 });
+
+            //==========================
+            //PARTICIPANTS
+            //==========================
+            modelBuilder.Entity<Participant>(entity =>
+            {
+                entity.ToTable("participants");
+                entity.HasKey(p => p.Id);
+                entity.HasOne(p => p.User)
+                      .WithMany(a => a.Participants)
+                      .HasForeignKey(p => p.UserId)
+                      .OnDelete(DeleteBehavior.Cascade);
+                entity.HasOne(p => p.Trip)
+                      .WithMany(t => t.Participants)
+                      .HasForeignKey(p => p.TripId)
+                      .OnDelete(DeleteBehavior.Cascade);
+            });
         }
     }
 }

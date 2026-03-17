@@ -3,12 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Domain.Entities;
 using Domain.Enums;
 //using static Domain.Weather.RiskProfileFactory;
 
 namespace Domain.Weather
 {
-    public class AdaptiveWeatherRiskEngine
+    public class AdaptiveWeatherRiskEngine : IAdaptiveWeatherRiskEngine
     {
         //public double CalculateRisk(
         //        double temperature,
@@ -32,16 +33,32 @@ namespace Domain.Weather
         //    return Math.Min(baseRisk * routeMultiplier, 1.0);
         //}
 
-        public double CalculateRisk(
-        double temperature,
-        double windSpeed,
-        double precipitation)
-        {
-            var T = NormalizeTemperature(temperature);
-            var W = NormalizeWind(windSpeed);
-            var P = NormalizePrecipitation(precipitation);
+        //public double CalculateRisk(
+        //double temperature,
+        //double windSpeed,
+        //double precipitation)
+        //{
+        //    var T = NormalizeTemperature(temperature);
+        //    var W = NormalizeWind(windSpeed);
+        //    var P = NormalizePrecipitation(precipitation);
 
-            return 0.5 * P + 0.3 * W + 0.2 * T;
+        //    return 0.5 * P + 0.3 * W + 0.2 * T;
+        //}
+
+        public double CalculateRisk(
+            WeatherForecast forecast,
+            bool isIndoor)
+        {
+            var T = NormalizeTemperature(forecast.TemperatureCelsius);
+            var W = NormalizeWind(forecast.WindSpeed);
+            var P = NormalizePrecipitation(forecast.PrecipitationProbability);
+
+            var risk = 0.5 * P + 0.3 * W + 0.2 * T;
+
+            if (isIndoor)
+                risk *= 0.6;   // indoor exposure reduction
+
+            return Math.Clamp(risk, 0, 1);
         }
 
         private static double NormalizeTemperature(double temperature)
@@ -71,5 +88,7 @@ namespace Domain.Weather
         //        _ => 1.0
         //    };
         //}
+
+
     }
 }

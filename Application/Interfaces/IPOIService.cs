@@ -15,8 +15,8 @@ namespace Application.Interfaces
         Task<List<RecommendedPoiResponse>> GetAllPoisSortedByPreferenceAsync(Guid accountId);
         Task<List<POI>> GetAllAsync();
         Task<POI?> GetByIdAsync(Guid id);
-        Task<POI> CreateAsync(CreatePoiRequest request);
-        Task<POI> UpdateAsync(Guid id, UpdatePoiRequest request);
+        Task<POI> CreateAsync(POI request);
+        Task<POI> UpdateAsync(Guid id, POI request);
         Task DeleteAsync(Guid id);
     }
 }
