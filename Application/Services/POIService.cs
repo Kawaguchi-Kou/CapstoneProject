@@ -228,7 +228,8 @@ namespace Application.Services
 
             // 🔥 Load toàn bộ Location 1 lần (tránh gọi DB trong loop)
             var locations = (await _poiRepository.GetAllLocationsAsync())
-                .ToDictionary(x => x.LocationName.ToLower(), x => x);
+              .GroupBy(x => x.LocationName.ToLower())
+              .ToDictionary(g => g.Key, g => g.First());
 
             List<POI> pois = new();
 
