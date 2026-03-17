@@ -88,6 +88,7 @@ namespace Application.Services
                         GoogleMapLink = poi.GoogleMapLink,
                         IsIndoor = poi.IsIndoor,
                         LocationName = poi.Location?.LocationName ?? "",
+                        POIImgUrl = poi.POIImgUrl,
                         Score = score,
                         POIPreferences = poi.PoiPreferences
                             .Where(pp => pp.Preference != null)
