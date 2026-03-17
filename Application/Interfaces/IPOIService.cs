@@ -21,5 +21,7 @@ namespace Application.Interfaces
         Task DeleteAsync(Guid id);
 
         Task ImportExcelAsync(IFormFile file);
+        void AddImageMapping(string fileName, string url);
+
     }
 }

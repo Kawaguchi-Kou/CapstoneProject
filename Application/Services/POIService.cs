@@ -240,7 +240,6 @@ namespace Application.Services
                 string cityRaw = worksheet.Cells[row, 3].Text.Trim();
                 string cityKey = cityRaw.ToLower();
 
-                // ❌ không có location thì bỏ
                 if (!locations.ContainsKey(cityKey))
                     continue;
 
@@ -249,23 +248,32 @@ namespace Application.Services
                 decimal.TryParse(worksheet.Cells[row, 4].Text, out var cost);
                 bool.TryParse(worksheet.Cells[row, 7].Text, out var isIndoor);
 
+                // 🔥 LẤY IMAGE TỪ MAP
+                var normalizedName = name.Trim().ToLower();
+
+                string? imageUrl = _imageMap.ContainsKey(normalizedName)
+                    ? _imageMap[normalizedName]
+                    : null;
+
                 var poi = new POI
                 {
                     Id = Guid.NewGuid(),
 
                     Name = name,
                     Address = address,
-                    City = cityRaw, // giữ nguyên format đẹp
+                    City = cityRaw,
 
                     ApproxCost = cost.ToString(),
                     OpeningHours = worksheet.Cells[row, 5].Text,
                     GoogleMapLink = worksheet.Cells[row, 6].Text,
                     IsIndoor = isIndoor,
 
-                    // 🔥 mapping từ Location
                     LocationId = location.LocationId,
                     Latitude = location.Latitude,
-                    Longitude = location.Longitude
+                    Longitude = location.Longitude,
+
+                    // 🔥 QUAN TRỌNG NHẤT
+                    POIImgUrl = imageUrl
                 };
 
                 pois.Add(poi);
@@ -273,6 +281,17 @@ namespace Application.Services
 
             // 🔥 Save 1 lần (chuẩn clean + performance tốt)
             await _poiRepository.AddRangeAsync(pois);
+        }
+
+        private static Dictionary<string, string> _imageMap = new();
+
+        public void AddImageMapping(string fileName, string url)
+        {
+            var key = Path.GetFileNameWithoutExtension(fileName)
+                .Trim()
+                .ToLower();
+
+            _imageMap[key] = url;
         }
 
     }

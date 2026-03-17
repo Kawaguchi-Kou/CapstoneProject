@@ -1,5 +1,6 @@
 ﻿using Application.DTOs.Requests;
 using Application.Interfaces;
+using Application.Services;
 using Domain.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -13,9 +14,11 @@ namespace WebAPI.Controllers
     public class StaffPOIController : ControllerBase
     {
         private readonly IPOIService _poiService;
+        private readonly ICloudinaryService cloudinaryService,;
 
         public StaffPOIController(IPOIService poiService)
         {
+            _cloudinaryService = cloudinaryService;
             _poiService = poiService;
         }
 
@@ -68,6 +71,19 @@ namespace WebAPI.Controllers
             await _poiService.ImportExcelAsync(file);
 
             return Ok("Import POI success");
+        }
+
+        [HttpPost("upload-image")]
+        public async Task<IActionResult> UploadImage(IFormFile file)
+        {
+            using var stream = file.OpenReadStream();
+
+            var url = await _cloudinaryService.UploadImageAsync(stream, file.FileName);
+
+            // 🔥 key = tên file (trùng với Name POI)
+            _poiService.AddImageMapping(file.FileName, url);
+
+            return Ok(new { url });
         }
     }
 }
