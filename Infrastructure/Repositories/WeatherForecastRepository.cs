@@ -19,28 +19,71 @@ namespace Infrastructure.Repositories
             _context = context;
         }
 
-        public async Task UpsertCityForecastAsync(string city, IEnumerable<WeatherForecast> newForecasts)
+        //public async Task UpsertCityForecastAsync(string city, IEnumerable<WeatherForecast> newForecasts)
+        //{
+        //    var existing = await _context.WeatherForecasts
+        //.Where(x => x.City == city)
+        //.ToListAsync();
+
+        //    foreach (var newItem in newForecasts)
+        //    {
+        //        var match = existing.FirstOrDefault(x =>
+        //            x.ForecastDate.Date == newItem.ForecastDate.Date);
+
+        //        if (match != null)
+        //        {
+        //            // UPDATE
+        //            match.TemperatureCelsius = newItem.TemperatureCelsius;
+        //            match.WindSpeed = newItem.WindSpeed;
+        //            match.PrecipitationProbability = newItem.PrecipitationProbability;
+        //        }
+        //        else
+        //        {
+        //            // INSERT
+        //            await _context.WeatherForecasts.AddAsync(newItem);
+        //        }
+        //    }
+
+        //    await _context.SaveChangesAsync();
+        //}
+
+        public async Task<WeatherForecast?> GetAsync(
+        Guid locationId,
+        DateOnly date)
         {
-            var existing = await _context.WeatherForecasts
-        .Where(x => x.City == city)
-        .ToListAsync();
+            return await _context.WeatherForecasts
+                .FirstOrDefaultAsync(x =>
+                    x.LocationId == locationId &&
+                    x.ForecastDate == date);
+        }
 
-            foreach (var newItem in newForecasts)
+        public async Task<List<WeatherForecast>> GetRangeAsync(
+            Guid locationId,
+            DateOnly from,
+            DateOnly to)
+        {
+            return await _context.WeatherForecasts
+                .Where(x =>
+                    x.LocationId == locationId &&
+                    x.ForecastDate >= from &&
+                    x.ForecastDate <= to)
+                .ToListAsync();
+        }
+
+        public async Task UpsertAsync(List<WeatherForecast> forecasts)
+        {
+            foreach (var f in forecasts)
             {
-                var match = existing.FirstOrDefault(x =>
-                    x.ForecastDate.Date == newItem.ForecastDate.Date);
+                var existing = await GetAsync(f.LocationId, f.ForecastDate);
 
-                if (match != null)
-                {
-                    // UPDATE
-                    match.TemperatureCelsius = newItem.TemperatureCelsius;
-                    match.WindSpeed = newItem.WindSpeed;
-                    match.PrecipitationProbability = newItem.PrecipitationProbability;
-                }
+                if (existing == null)
+                    _context.WeatherForecasts.Add(f);
                 else
                 {
-                    // INSERT
-                    await _context.WeatherForecasts.AddAsync(newItem);
+                    existing.TemperatureCelsius = f.TemperatureCelsius;
+                    existing.PrecipitationProbability = f.PrecipitationProbability;
+                    existing.WindSpeed = f.WindSpeed;
+                    existing.FetchedAt = DateTime.UtcNow;
                 }
             }
 

@@ -54,6 +54,7 @@ namespace Infrastructure.Repositories
         {
             return await _context.UserPreferences
                 .Where(x => x.AccountId == accountId)
+                .Include(x => x.Preference) // Include the related Preference entity
                 .ToListAsync();
         }
 

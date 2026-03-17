@@ -20,11 +20,9 @@ namespace Domain.Entities
         [MaxLength(255)]
         public string Title { get; set; }
 
-        public DateTime StartDate { get; set; }
+        public DateOnly StartDate { get; set; }
 
-        public DateTime EndDate { get; set; }
-
-        public int? PreferencesId { get; set; }
+        public DateOnly EndDate { get; set; }
 
         public TripStatus Status { get; set; }
 
@@ -34,7 +32,8 @@ namespace Domain.Entities
 
         // Navigation
         public ICollection<TripSegment> TripSegments { get; set; }
-        public ICollection<Itinerary> Itineraries { get; set; }
         public ICollection<Notification> Notifications { get; set; }
-        }
+        public ICollection<Participant> Participants { get; set; }
+
+    }
 }

@@ -1,6 +1,7 @@
 ﻿using Application.DTOs.Requests;
 using Application.DTOs.Responses;
 using Application.Interfaces;
+using Application.Services;
 using AutoMapper;
 using Domain.Entities;
 using Microsoft.AspNetCore.Mvc;
@@ -14,12 +15,13 @@ namespace WebAPI.Controllers
         private readonly IPOIService _poiService;
         private readonly IAuthService _authService;
         private readonly IMapper _mapper;
-
-        public AdminController(IPOIService poiService, IAuthService authService, IMapper mapper)
+        private readonly ICloudinaryService _cloudinaryService;
+        public AdminController(IPOIService poiService, IAuthService authService, IMapper mapper, ICloudinaryService cloudinaryService)
         {
             _poiService = poiService;
             _authService = authService;
             _mapper = mapper;
+            _cloudinaryService = cloudinaryService;
         }
 
         [HttpGet]
@@ -61,11 +63,28 @@ namespace WebAPI.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create(CreatePoiRequest request)
+        public async Task<IActionResult> Create([FromForm] CreatePoiRequest request)
         {
             try
             {
-                var poi = await _poiService.CreateAsync(request);
+                string? POIImgUrl = null;
+
+                try
+                {
+                    if (request.POIImgUrl != null && request.POIImgUrl.Length > 0)
+                    {
+                        using var stream = request.POIImgUrl.OpenReadStream();
+                        POIImgUrl = await _cloudinaryService.UploadImageAsync(stream, request.POIImgUrl.FileName);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    return BadRequest($"File upload failed: {ex.Message}");
+                }
+
+                var poi = _mapper.Map<POI>(request);
+                poi.POIImgUrl = POIImgUrl!;
+                var newPoi = await _poiService.CreateAsync(poi);
 
                 var response = _mapper.Map<PoiResponse>(poi);
 
@@ -78,11 +97,27 @@ namespace WebAPI.Controllers
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(Guid id, UpdatePoiRequest request)
+        public async Task<IActionResult> Update(Guid id, [FromForm] UpdatePoiRequest request)
         {
             try
             {
-                var updatedPOI = await _poiService.UpdateAsync(id, request);
+                string? POIImgUrl = null;
+
+                try
+                {
+                    if (request.POIImgUrl != null && request.POIImgUrl.Length > 0)
+                    {
+                        using var stream = request.POIImgUrl.OpenReadStream();
+                        POIImgUrl = await _cloudinaryService.UploadImageAsync(stream, request.POIImgUrl.FileName);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    return BadRequest($"File upload failed: {ex.Message}");
+                }
+                var poi = _mapper.Map<POI>(request);
+                poi.POIImgUrl = POIImgUrl!;
+                var updatedPOI = await _poiService.UpdateAsync(id, poi);
                 var response = _mapper.Map<PoiResponse>(updatedPOI);
 
                 return Ok(response);

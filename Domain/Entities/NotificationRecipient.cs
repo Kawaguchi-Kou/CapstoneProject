@@ -15,13 +15,11 @@ namespace Domain.Entities
         [Required]
         public Guid NotificationId { get; set; }
         public Guid RecipientId { get; set; }
+        public DateTime? ReadAt { get; set; }
         public bool IsRead { get; set; } = false;
         [ForeignKey("NotificationId")]
         public Notification? Notification { get; set; }
         [ForeignKey("RecipientId")]
         public Account? Recipient { get; set; }
-
-
-
     }
 }

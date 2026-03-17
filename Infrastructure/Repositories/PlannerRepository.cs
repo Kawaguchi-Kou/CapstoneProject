@@ -21,10 +21,10 @@ namespace Infrastructure.Repositories
 
         public async Task<Trip?> GetTripWithSegmentsAndItinerary(Guid tripId)
         {
-            return await _context.Trips
-                .Include(t => t.TripSegments)
-                .Include(t => t.Itineraries)
-                    .ThenInclude(i => i.ItineraryDetails)
+            return await _context.Trips!
+                .Include(t => t.TripSegments!)
+                    .ThenInclude(t => t.Itineraries!)
+                        .ThenInclude(i => i.ItineraryDetails)
                 .FirstOrDefaultAsync(t => t.TripId == tripId);
         }
 

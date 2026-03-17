@@ -39,5 +39,6 @@ namespace Domain.Entities
         public ICollection<UserPreference>? UserPreferenceVectors { get; set; }
         public ICollection<Advertisement> Advertisements { get; set; } = new List<Advertisement>();
         public ICollection<AccountSubscription> AccountSubscriptions { get; set; } = new List<AccountSubscription>();
+        public ICollection<Participant> Participants { get; set; }
     }
 }

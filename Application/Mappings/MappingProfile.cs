@@ -64,6 +64,15 @@ namespace Application.Mappings
                             .Where(x => x.Preference != null)
                             .Select(x => x.Preference.Name)
                             .ToList()));
+
+            //Trip Risk Profile
+            CreateMap<Trip, TripRiskContextResponse>();
+
+            CreateMap<TripSegment, SegmentRiskContextResponse>();
+
+            CreateMap<ItineraryDetail, ItineraryRiskContextResponse>()
+                .ForMember(d => d.StoredRiskScore,
+                    opt => opt.MapFrom(s => s.WeatherRiskScore));
         }
     }
 }
