@@ -28,9 +28,9 @@ namespace Application.Services
             return accounts;
         }
 
-        public async Task<List<Account>> GetFilteredAccountsAsync(int? roleId, bool? isActive, string? name)
+        public async Task<List<Account>> GetFilteredAccountsAsync(string? roleName, bool? isActive, string? name)
         {
-            var accounts = await _authRepository.GetFilteredAccountsAsync(roleId, isActive, name);
+            var accounts = await _authRepository.GetFilteredAccountsAsync(roleName, isActive, name);
 
             return accounts;
         }

@@ -53,15 +53,16 @@ namespace Infrastructure.Repositories
             return await _context.Accounts.Include(a => a.Role).ToListAsync();
         }
 
-        public async Task<List<Account>> GetFilteredAccountsAsync(int? roleId, bool? isActive, string? name)
+        public async Task<List<Account>> GetFilteredAccountsAsync(string? roleName, bool? isActive, string? name)
         {
             var query = _context.Accounts
                 .Include(a => a.Role)
                 .AsQueryable();
 
-            if (roleId.HasValue)
+            if (!string.IsNullOrWhiteSpace(roleName))
             {
-                query = query.Where(a => a.RoleId == roleId.Value);
+                var normalizedRole = roleName.Trim().ToLower();
+                query = query.Where(a => a.Role != null && a.Role.Name != null && a.Role.Name.ToLower().Contains(normalizedRole));
             }
 
             if (isActive.HasValue)

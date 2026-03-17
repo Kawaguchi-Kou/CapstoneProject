@@ -35,13 +35,26 @@ namespace WebAPI.Controllers
 
         [HttpGet("filter")]
         public async Task<IActionResult> FilterAccounts(
-            [FromQuery] int? roleId,
-            [FromQuery] bool? isActive,
+            [FromQuery] string? roleName,
+            [FromQuery] string? status,
             [FromQuery] string? name)
         {
             try
             {
-                var accounts = await _adminService.GetFilteredAccountsAsync(roleId, isActive, name);
+                bool? isActive = null;
+                if (!string.IsNullOrWhiteSpace(status) && !status.Equals("Status", StringComparison.OrdinalIgnoreCase))
+                {
+                    if (status.Equals("Active", StringComparison.OrdinalIgnoreCase))
+                    {
+                        isActive = true;
+                    }
+                    else if (status.Equals("Inactive", StringComparison.OrdinalIgnoreCase))
+                    {
+                        isActive = false;
+                    }
+                }
+
+                var accounts = await _adminService.GetFilteredAccountsAsync(roleName, isActive, name);
                 var responses = _mapper.Map<List<AccountResponse>>(accounts);
                 return Ok(responses);
             }
