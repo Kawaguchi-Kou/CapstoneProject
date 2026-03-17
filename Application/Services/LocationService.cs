@@ -99,6 +99,9 @@ namespace Application.Services
 
             List<Location> locations = new();
 
+            // lấy số lượng record hiện tại
+            var currentCount = (await _locationRepository.GetAllAsync()).Count;
+
             for (int row = 2; row <= rowCount; row++)
             {
                 string name = worksheet.Cells[row, 1].Text;
