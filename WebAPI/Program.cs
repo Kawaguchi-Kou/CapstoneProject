@@ -15,12 +15,16 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using WebAPI.Converters;
+using OfficeOpenXml;
 
 
 //load .env
 Env.Load();
 
 var builder = WebApplication.CreateBuilder(args);
+
+ExcelPackage.License.SetNonCommercialPersonal("CapstoneProject");
+
 
 // Add DbContext
 builder.Services.AddDbContext<AppDbContext>(options =>

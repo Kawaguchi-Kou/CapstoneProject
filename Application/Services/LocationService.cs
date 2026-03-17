@@ -89,27 +89,36 @@ namespace Application.Services
 
         public async Task ImportExcelAsync(IFormFile file)
         {
-            ExcelPackage.LicenseContext = OfficeOpenXml.LicenseContext.NonCommercial;
-
             using var stream = new MemoryStream();
             await file.CopyToAsync(stream);
 
             using var package = new ExcelPackage(stream);
 
             var worksheet = package.Workbook.Worksheets[0];
-
             int rowCount = worksheet.Dimension.Rows;
 
             List<Location> locations = new();
 
             for (int row = 2; row <= rowCount; row++)
             {
+                string name = worksheet.Cells[row, 1].Text;
+
+                if (!double.TryParse(worksheet.Cells[row, 2].Text, out double latitude))
+                    continue;
+
+                if (!double.TryParse(worksheet.Cells[row, 3].Text, out double longitude))
+                    continue;
+
+                var count = (await _locationRepository.GetAllAsync()).Count + locations.Count + 1;
+
+                string customGuid = $"10000000-0000-0000-0000-{count.ToString().PadLeft(12, '0')}";
+
                 var location = new Location
                 {
-                    LocationId = Guid.NewGuid(),
-                    LocationName = worksheet.Cells[row, 1].Text,
-                    Latitude = double.Parse(worksheet.Cells[row, 2].Text),
-                    Longitude = double.Parse(worksheet.Cells[row, 3].Text)
+                    LocationId = Guid.Parse(customGuid),
+                    LocationName = name,
+                    Latitude = latitude,
+                    Longitude = longitude
                 };
 
                 locations.Add(location);
