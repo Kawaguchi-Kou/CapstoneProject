@@ -1,4 +1,5 @@
-﻿using Domain.Entities;
+
+using Domain.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,10 +10,14 @@ namespace Domain.Interfaces
 {
     public interface ILocationRepository
     {
-        Task<List<Location>> GetAllAsync();
-        Task<Location?> GetByIdAsync(Guid id);
+
+
         Task AddAsync(Location location);
         Task UpdateAsync(Location location);
         Task DeleteAsync(Location location);
+
+        Task<Location> GetByIdAsync(Guid locationId);
+        Task<List<Location>> GetAllAsync();
+
     }
 }

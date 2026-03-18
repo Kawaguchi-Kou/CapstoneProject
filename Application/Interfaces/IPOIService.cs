@@ -14,10 +14,12 @@ namespace Application.Interfaces
     {
         //Task<List<POIScoreResult>> CalculateScoresAsync(Guid accountId);
         Task<List<RecommendedPoiResponse>> GetAllPoisSortedByPreferenceAsync(Guid accountId);
-        Task<List<POIResponse>> GetAllAsync();
-        Task<POIResponse?> GetByIdAsync(Guid id);
-        Task<POI> CreateAsync(CreatePoiRequest request);
-        Task<POI> UpdateAsync(Guid id, UpdatePoiRequest request);
+
+        Task<List<POI>> GetAllAsync();
+        Task<POI?> GetByIdAsync(Guid id);
+        Task<POI> CreateAsync(POI request);
+        Task<POI> UpdateAsync(Guid id, POI request);
+
         Task DeleteAsync(Guid id);
 
         Task ImportExcelAsync(IFormFile file);

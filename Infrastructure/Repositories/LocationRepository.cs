@@ -1,12 +1,16 @@
-﻿using Domain.Entities;
-using Domain.Interfaces;
-using Infrastructure.EntitiesConfigurations;
-using Microsoft.EntityFrameworkCore;
+
 using System;
+
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+
+using Domain.Entities;
+using Domain.Interfaces;
+using Infrastructure.EntitiesConfigurations;
+using Microsoft.EntityFrameworkCore;
+
 
 namespace Infrastructure.Repositories
 {
@@ -17,17 +21,6 @@ namespace Infrastructure.Repositories
         public LocationRepository(AppDbContext context)
         {
             _context = context;
-        }
-
-        public async Task<List<Location>> GetAllAsync()
-        {
-            return await _context.Locations.ToListAsync();
-        }
-
-        public async Task<Location?> GetByIdAsync(Guid id)
-        {
-            return await _context.Locations
-                .FirstOrDefaultAsync(x => x.LocationId == id);
         }
 
         public async Task AddAsync(Location location)
@@ -46,6 +39,21 @@ namespace Infrastructure.Repositories
         {
             _context.Locations.Remove(location);
             await _context.SaveChangesAsync();
+        }
+        public async Task<Location> GetByIdAsync(Guid locationId)
+        {
+            var location = await _context.Locations.FindAsync(locationId);
+
+            if (location == null) {
+                throw new KeyNotFoundException($"Location not found.");
+            }
+
+            return location;
+        }
+
+        public async Task<List<Location>> GetAllAsync()
+        {
+            return await _context.Locations.ToListAsync();
         }
     }
 }

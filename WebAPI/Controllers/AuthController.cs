@@ -258,19 +258,29 @@ namespace WebAPI.Controllers
 
         [HttpGet("all")]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> GetAllAsync()
+        public async Task<IActionResult> GetAllAsync([FromQuery] int page = 1)
         {
             try
             {
+                if (page < 1) page = 1;
+
+                const int pageSize = 15;
+
                 var accounts = await _authService.GetAllAccountsAsync();
+                var total = accounts.Count;
+                var pagedAccounts = accounts
+                    .Skip((page - 1) * pageSize)
+                    .Take(pageSize)
+                    .ToList();
+
                 var profile = new ProfileResponse();
-                var responses = _mapper.Map<List<AccountResponse>>(accounts);
+                var responses = _mapper.Map<List<AccountResponse>>(pagedAccounts);
                 foreach (var response in responses)
                 {
                     profile = _mapper.Map<ProfileResponse>(await _userService.GetById(response.Id));
                     response.Profile = profile;
                 }
-                return Ok(responses);
+                return Ok(new { total, page, pageSize, items = responses });
             }
             catch (Exception ex)
             {

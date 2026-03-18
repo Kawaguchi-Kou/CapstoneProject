@@ -9,6 +9,15 @@ namespace Domain.Interfaces
 {
     public interface IWeatherForecastRepository
     {
-        Task UpsertCityForecastAsync(string city, IEnumerable<WeatherForecast> newForecasts);
+        //Task UpsertCityForecastAsync(string city, IEnumerable<WeatherForecast> newForecasts);
+
+        Task<WeatherForecast?> GetAsync(Guid locationId, DateOnly date);
+
+        Task<List<WeatherForecast>> GetRangeAsync(
+            Guid locationId,
+            DateOnly from,
+            DateOnly to);
+
+        Task UpsertAsync(List<WeatherForecast> forecasts);
     }
 }

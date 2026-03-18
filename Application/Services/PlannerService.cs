@@ -1,70 +1,40 @@
-﻿//using Application.DTOs.Responses;
-//using Application.Interfaces;
-//using Domain.Entities;
-//using Domain.Interfaces;
-//using Domain.Weather;
+﻿using Application.DTOs.Responses;
+using Application.Interfaces;
+using Domain.Entities;
+using Domain.Interfaces;
+using Domain.Weather;
 
-//public class PlannerService : IPlannerService
-//{
-//    private readonly IPlannerRepository _plannerRepository;
-//    private readonly IOpenMeteoService _weatherService;
-//    private readonly AdaptiveWeatherRiskEngine _riskEngine;
+public class PlannerService : IPlannerService
+{
+    private readonly IPlannerRepository _plannerRepository;
+    private readonly IOpenMeteoService _weatherService;
+    private readonly AdaptiveWeatherRiskEngine _riskEngine;
 
-//    public PlannerService(
-//        IPlannerRepository plannerRepository,
-//        IOpenMeteoService weatherService,
-//        AdaptiveWeatherRiskEngine riskEngine)
-//    {
-//        _plannerRepository = plannerRepository;
-//        _weatherService = weatherService;
-//        _riskEngine = riskEngine;
-//    }
+    public PlannerService(
+        IPlannerRepository plannerRepository,
+        IOpenMeteoService weatherService,
+        AdaptiveWeatherRiskEngine riskEngine)
+    {
+        _plannerRepository = plannerRepository;
+        _weatherService = weatherService;
+        _riskEngine = riskEngine;
+    }
 
-//    public async Task<PlannerResponse> PlanTripAsync(Guid tripId)
-//    {
-//        var trip = await _plannerRepository.GetTripWithSegmentsAndItinerary(tripId);
-//        if (trip == null)
-//            throw new Exception("Trip not found");
+    //public async Task UpdateItineraryDetail(Guid detailId, UpdateDetailRequest dto)
+    //{
+    //    var detail = await _repo.GetDetail(detailId);
 
-//        foreach (var segment in trip.TripSegments.OrderBy(s => s.SequenceNo))
-//        {
-//            if (!segment.TravelDate.HasValue)
-//                continue;
+    //    detail.PoiId = dto.NewPoiId;
+    //    detail.VisitDate = dto.NewDate;
+    //    detail.IsManualOverride = true;
 
-//            // Lấy forecast theo lat/lng của segment
-//            var forecast = await _weatherService.GetDailyAsync(
-//                segment.FromLatitude,
-//                segment.FromLongitude,
-//                DateOnly.FromDateTime(segment.TravelDate.Value),
-//                DateOnly.FromDateTime(segment.TravelDate.Value)
-//            );
+    //    var weather = await _weatherService.GetForecast(
+    //        detail.LocationId,
+    //        detail.VisitDate);
 
-//            var weather = forecast.FirstOrDefault();
-//            if (weather == null)
-//                continue;
+    //    detail.WeatherRiskScore =
+    //        _riskEngine.CalculateRisk(weather);
 
-//            var risk = _riskEngine.CalculateRisk(
-//                weather.PrecipitationProbability,
-//                weather.MaxWindSpeed,
-//                weather.MaxTemperature
-//            );
-
-//            // Update itinerary details thuộc segment đó
-//            foreach (var itinerary in trip.Itineraries)
-//            {
-//                var details = itinerary.ItineraryDetails
-//                    .Where(d => d.Date == segment.TravelDate.Value.Date)
-//                    .ToList();
-
-//                foreach (var detail in details)
-//                {
-//                    detail.WeatherRiskScore = risk;
-//                }
-//            }
-//        }
-
-//        await _plannerRepository.SaveChangesAsync();
-
-        
-//    }
-//}
+    //    await _repo.SaveChanges();
+    //}
+}

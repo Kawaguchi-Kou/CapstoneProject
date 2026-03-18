@@ -83,5 +83,11 @@ namespace Infrastructure.Repositories
             return await _context.Locations.ToListAsync();
         }
 
+        public async Task<List<POI>> GetByLocationAsync(Guid locationId)
+        {
+            return await _context.POIs
+                .Where(x => x.LocationId == locationId)
+                .ToListAsync();
+        }
     }
 }

@@ -93,6 +93,7 @@ namespace Application.Services
                         GoogleMapLink = poi.GoogleMapLink,
                         IsIndoor = poi.IsIndoor,
                         LocationName = poi.Location?.LocationName ?? "",
+                        POIImgUrl = poi.POIImgUrl,
                         Score = score,
                         POIPreferences = poi.PoiPreferences
                             .Where(pp => pp.Preference != null)
@@ -149,7 +150,7 @@ namespace Application.Services
             };
         }
 
-        public async Task<POI> CreateAsync(CreatePoiRequest request)
+        public async Task<POI> CreateAsync(POI request)
         {
             var (lat, lon) = await _geocodingService
                 .GetCoordinatesAsync(request.Name, request.City);
@@ -173,7 +174,7 @@ namespace Application.Services
             return poi;
         }
 
-        public async Task<POI> UpdateAsync(Guid id, UpdatePoiRequest request)
+        public async Task<POI> UpdateAsync(Guid id, POI request)
         {
 
             var poi = await _poiRepository.GetByIdAsync(id);
@@ -193,14 +194,7 @@ namespace Application.Services
             if (request.GoogleMapLink != null)
                 poi.GoogleMapLink = request.GoogleMapLink;
 
-            if (request.IsIndoor.HasValue)
-                poi.IsIndoor = request.IsIndoor.Value;
-
-            if (request.Latitude.HasValue)
-                poi.Latitude = request.Latitude.Value;
-
-            if (request.Longitude.HasValue)
-                poi.Longitude = request.Longitude.Value;
+                poi.IsIndoor = request.IsIndoor;
 
             await _poiRepository.UpdateAsync(poi);
 

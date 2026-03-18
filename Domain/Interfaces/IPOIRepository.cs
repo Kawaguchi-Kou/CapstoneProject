@@ -20,6 +20,8 @@ namespace Domain.Interfaces
         Task UpdateAsync(POI poi);
         Task DeleteAsync(POI poi);
         Task<POI?> GetByNameAndCityAsync(string name, string city);
-        Task<List<Location>> GetAllLocationsAsync();
+
+        Task<List<POI>> GetByLocationAsync(Guid locationId);
+
     }
 }

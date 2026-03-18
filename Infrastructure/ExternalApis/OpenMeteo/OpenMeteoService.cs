@@ -1,6 +1,9 @@
 ﻿using System.Text.Json;
 using Application.DTOs.Weather;
 using Application.Interfaces;
+using CloudinaryDotNet;
+using Domain.Entities;
+using Domain.Interfaces;
 using Microsoft.Extensions.Options;
 
 namespace Infrastructure.ExternalApis.OpenMeteo
@@ -9,13 +12,17 @@ namespace Infrastructure.ExternalApis.OpenMeteo
     {
         private readonly HttpClient _http;
         private readonly OpenMeteoOptions _options;
+        private readonly IWeatherForecastRepository _repo;
+        private readonly ILocationRepository _locationRepo;
 
         public OpenMeteoService(
             HttpClient http,
-            IOptions<OpenMeteoOptions> options)
+            IOptions<OpenMeteoOptions> options, IWeatherForecastRepository weatherForecastRepository, ILocationRepository locationRepo)
         {
             _http = http;
             _options = options.Value;
+            _repo = weatherForecastRepository;
+            _locationRepo = locationRepo;
         }
 
         public async Task<IReadOnlyList<DailyWeatherDto>> GetDailyAsync(
@@ -74,6 +81,55 @@ namespace Infrastructure.ExternalApis.OpenMeteo
             }
 
             return result;
+        }
+
+        public async Task<DailyWeatherDto?> GetSingleDayAsync(
+            double latitude,
+            double longtitude,
+            DateOnly date)
+        {
+            var list = await GetDailyAsync(
+                latitude,
+                longtitude,
+                date,
+                date);
+
+            return list.FirstOrDefault();
+        }
+
+        public async Task<WeatherForecast> GetAsync(
+        Guid locationId,
+        DateOnly date)
+        {
+            var cached = await _repo.GetAsync(locationId, date);
+
+            if (cached != null)
+                return cached;
+
+            var loc = await _locationRepo.GetByIdAsync(locationId);
+
+            var apiData = await GetDailyAsync(
+                loc.Latitude,
+                loc.Longitude,
+                date,
+                date);
+
+            var dto = apiData.FirstOrDefault();
+
+            var entity = new WeatherForecast
+            {
+                Id = Guid.NewGuid(),
+                LocationId = locationId,
+                ForecastDate = date,
+                TemperatureCelsius = dto.MaxTemperature,
+                PrecipitationProbability = dto.PrecipitationProbability,
+                WindSpeed = dto.MaxWindSpeed,
+                FetchedAt = DateTime.UtcNow
+            };
+
+            await _repo.UpsertAsync(new List<WeatherForecast> { entity });
+
+            return entity;
         }
     }
 }
