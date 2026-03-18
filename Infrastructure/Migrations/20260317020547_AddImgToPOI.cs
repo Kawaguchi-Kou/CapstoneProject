@@ -14,7 +14,7 @@ namespace Infrastructure.Migrations
                 name: "POIImgUrl",
                 table: "pois",
                 type: "text",
-                nullable: false,
+                nullable: true,
                 defaultValue: "");
         }
 
