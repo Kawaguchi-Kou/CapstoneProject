@@ -1,4 +1,4 @@
-﻿using Application.DTOs.Requests;
+using Application.DTOs.Requests;
 using Application.DTOs.Responses;
 using Application.Interfaces;
 using Domain.Entities;
@@ -112,7 +112,8 @@ namespace Application.Services
             {
                 new Claim(ClaimTypes.NameIdentifier, account.Id.ToString()),
                 new Claim(ClaimTypes.Email, email),
-                new Claim(ClaimTypes.Role, account.Role.Name?.Trim() ?? string.Empty)
+                new Claim(ClaimTypes.Role, account.Role.Name?.Trim() ?? string.Empty),
+                new Claim(ClaimTypes.Name, account.Name ?? string.Empty)
             };
 
             int expiryMinutes = int.Parse(_configuration["JwtSettings:ExpiryInMinutes"]!);

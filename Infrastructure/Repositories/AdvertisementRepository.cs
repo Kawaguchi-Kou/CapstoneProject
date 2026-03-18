@@ -160,5 +160,27 @@ namespace Infrastructure.Repositories
         {
             await _context.SaveChangesAsync();
         }
+        public async Task<List<Advertisement>> GetAllAsync()
+        {
+            return await _context.Advertisements
+                .Include(a => a.Account)
+                .Include(a => a.Package)
+                .Include(a => a.POI)
+                .OrderByDescending(a => a.CreatedAt)
+                .ToListAsync();
+        }
+
+        public async Task<List<Advertisement>> GetPendingAsync()
+        {
+            return await _context.Advertisements
+                .Include(a => a.Account)
+                .Include(a => a.Package)
+                .Include(a => a.POI)
+                .Where(a => a.Status == AdStatus.PendingApproval)
+                .OrderByDescending(a => a.CreatedAt)
+                .ToListAsync();
+        }
+
+       
     }
 }

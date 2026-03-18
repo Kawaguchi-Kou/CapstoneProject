@@ -153,5 +153,43 @@ namespace WebAPI.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
+
+        [HttpGet]
+        [Authorize(Roles = "Staff")]
+        public async Task<IActionResult> GetAllAdvertisements()
+        {
+            try
+            {
+                var advertisements = await _advertisementService.GetAllAsync();
+                var response = _mapper.Map<List<AdvertisementResponse>>(advertisements);
+
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpGet("pending")]
+        [Authorize(Roles = "Staff")]
+        public async Task<IActionResult> GetPendingAdvertisements()
+        {
+            try
+            {
+                var advertisements = await _advertisementService.GetPendingAsync();
+                var response = _mapper.Map<List<AdvertisementResponse>>(advertisements);
+
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        
+
+
     }
 }
