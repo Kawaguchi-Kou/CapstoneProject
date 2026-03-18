@@ -112,13 +112,9 @@ namespace Application.Services
                 if (!double.TryParse(worksheet.Cells[row, 3].Text, out double longitude))
                     continue;
 
-                var count = (await _locationRepository.GetAllAsync()).Count + locations.Count + 1;
-
-                string customGuid = $"10000000-0000-0000-0000-{count.ToString().PadLeft(12, '0')}";
-
                 var location = new Location
                 {
-                    LocationId = Guid.Parse(customGuid),
+                    LocationId = Guid.NewGuid(), 
                     LocationName = name,
                     Latitude = latitude,
                     Longitude = longitude
