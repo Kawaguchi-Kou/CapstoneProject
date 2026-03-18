@@ -25,8 +25,6 @@ namespace Domain.Entities
         [Required]
         public Guid LocationId { get; set; }
 
-        public string? POIImgUrl { get; set; }
-
         //Navigation
         [ForeignKey(nameof(LocationId))]
         public Location Location { get; set; }
