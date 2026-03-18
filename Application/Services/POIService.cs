@@ -92,7 +92,8 @@ namespace Application.Services
                         Address = poi.Address,
                         City = poi.City,
                         ApproxCost = poi.ApproxCost,
-                        OpeningHours = poi.OpeningHours,
+                        OpenHour = poi.OpenHour,
+                        CloseHour = poi.CloseHour,
                         GoogleMapLink = poi.GoogleMapLink,
                         IsIndoor = poi.IsIndoor,
                         LocationName = poi.Location?.LocationName ?? "",
@@ -139,7 +140,8 @@ namespace Application.Services
                 Address = request.Address,
                 City = request.City,
                 ApproxCost = request.ApproxCost,
-                OpeningHours = request.OpeningHours,
+                OpenHour = request.OpenHour,
+                CloseHour = request.CloseHour,
                 GoogleMapLink = request.GoogleMapLink,
                 IsIndoor = request.IsIndoor,
                 Latitude = lat,
@@ -165,8 +167,9 @@ namespace Application.Services
             if (request.ApproxCost != null)
                 poi.ApproxCost = request.ApproxCost;
 
-            if (request.OpeningHours != null)
-                poi.OpeningHours = request.OpeningHours;
+            
+                poi.OpenHour = request.OpenHour;
+                poi.CloseHour = request.CloseHour;
 
             if (request.GoogleMapLink != null)
                 poi.GoogleMapLink = request.GoogleMapLink;
@@ -219,7 +222,42 @@ namespace Application.Services
                 decimal.TryParse(worksheet.Cells[row, 4].Text, out var cost);
                 bool.TryParse(worksheet.Cells[row, 7].Text, out var isIndoor);
 
-                // 🔥 LẤY IMAGE TỪ MAP
+                //Opening Hours Parsing
+                var openingRaw = worksheet.Cells[row, 5].Text.Trim();
+
+                TimeOnly? openHour = null;
+                TimeOnly? closeHour = null;
+                bool is24Hours = false;
+
+                if (!string.IsNullOrWhiteSpace(openingRaw) && openingRaw.Contains("~"))
+                {
+                    var parts = openingRaw.Split('~', StringSplitOptions.TrimEntries);
+
+                    if (parts.Length == 2)
+                    {
+                        if (TimeOnly.TryParse(parts[0], out var open))
+                            openHour = open;
+
+                        if (TimeOnly.TryParse(parts[1], out var close))
+                            closeHour = close;
+
+                        // 24h case
+                        if (openHour == TimeOnly.MinValue && closeHour == TimeOnly.MinValue)
+                        {
+                            is24Hours = true;
+                        }
+                    }
+                }
+
+                // Visit Recommendation
+                string visitRecommendation = GetVisitRecommendation(
+                    openHour,
+                    closeHour,
+                    is24Hours,
+                    isIndoor
+                );
+
+                // LẤY IMAGE TỪ MAP
                 var normalizedName = name.Trim().ToLower();
 
                 string? imageUrl = _imageMap.ContainsKey(normalizedName)
@@ -235,7 +273,10 @@ namespace Application.Services
                     City = cityRaw,
 
                     ApproxCost = cost.ToString(),
-                    OpeningHours = worksheet.Cells[row, 5].Text,
+                    OpenHour = openHour,
+                    CloseHour = closeHour,
+                    Is24Hours = is24Hours,
+                    VisitRecommendation = visitRecommendation,
                     GoogleMapLink = worksheet.Cells[row, 6].Text,
                     IsIndoor = isIndoor,
 
@@ -243,14 +284,14 @@ namespace Application.Services
                     Latitude = location.Latitude,
                     Longitude = location.Longitude,
 
-                    // 🔥 QUAN TRỌNG NHẤT
+
                     POIImgUrl = imageUrl
                 };
 
                 pois.Add(poi);
             }
 
-            // 🔥 Save 1 lần (chuẩn clean + performance tốt)
+
             await _poiRepository.AddRangeAsync(pois);
         }
 
@@ -265,5 +306,38 @@ namespace Application.Services
             _imageMap[key] = url;
         }
 
+        private string GetVisitRecommendation(
+            TimeOnly? openHour,
+            TimeOnly? closeHour,
+            bool is24Hours,
+            bool isIndoor)
+        {
+            if (is24Hours)
+                return "Open 24 hours - can be visited anytime";
+
+            if (!openHour.HasValue || !closeHour.HasValue)
+                return "Opening hours not available";
+
+            var open = openHour.Value;
+            var close = closeHour.Value;
+
+            // Morning place
+            if (open <= new TimeOnly(6, 0) && close <= new TimeOnly(14, 0))
+                return "Best visited in the morning";
+
+            // Afternoon place
+            if (open >= new TimeOnly(10, 0) && close <= new TimeOnly(18, 0))
+                return "Best visited in the afternoon";
+
+            // Evening / night place
+            if (open >= new TimeOnly(16, 0) || close >= new TimeOnly(22, 0))
+                return "Ideal for evening or night visits";
+
+            // Outdoor vs indoor bonus
+            if (!isIndoor)
+                return "Best visited during daylight hours";
+
+            return "Suitable to visit at any time of the day";
+        }
     }
 }
