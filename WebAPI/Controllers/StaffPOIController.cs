@@ -1,6 +1,7 @@
 ﻿using Application.DTOs.Requests;
 using Application.Interfaces;
 using Application.Services;
+using AutoMapper;
 using Domain.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -15,11 +16,13 @@ namespace WebAPI.Controllers
     {
         private readonly IPOIService _poiService;
         private readonly ICloudinaryService _cloudinaryService;
+        private readonly IMapper _mapper;
 
-        public StaffPOIController(IPOIService poiService, ICloudinaryService cloudinaryService)
+        public StaffPOIController(IPOIService poiService, ICloudinaryService cloudinaryService, IMapper mapper)
         {
             _cloudinaryService = cloudinaryService;
             _poiService = poiService;
+            _mapper = mapper;
         }
 
         [HttpGet]
@@ -43,15 +46,17 @@ namespace WebAPI.Controllers
         [HttpPost]
         public async Task<IActionResult> Create(CreatePoiRequest request)
         {
-            var poi = await _poiService.CreateAsync(request);
-            return Ok(poi);
+            var poi = _mapper.Map<POI>(request);
+            var response = await _poiService.CreateAsync(poi);
+            return Ok(response);
         }
 
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(Guid id, UpdatePoiRequest request)
         {
-            var poi = await _poiService.UpdateAsync(id, request);
-            return Ok(poi);
+            var poi = _mapper.Map<POI>(request);
+            var response = await _poiService.UpdateAsync(id, poi);
+            return Ok(response);
         }
 
         [HttpDelete("{id}")]

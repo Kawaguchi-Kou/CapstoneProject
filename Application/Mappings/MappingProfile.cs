@@ -66,6 +66,10 @@ namespace Application.Mappings
                             .Select(x => x.Preference.Name)
                             .ToList()));
 
+            //Location
+            CreateMap<CreatePoiRequest, POI>();
+            CreateMap<UpdatePoiRequest, POI>();
+
             //Trip Risk Profile
             CreateMap<Trip, TripRiskContextResponse>();
 

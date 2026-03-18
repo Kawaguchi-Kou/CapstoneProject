@@ -21,15 +21,18 @@ namespace Application.Services
         private readonly IPOIRepository _poiRepository;
         private readonly IUserRepository _userRepository;
         private readonly IGeocodingService _geocodingService;
+        private readonly ILocationRepository _locationRepository;
 
         public POIService(
             IPOIRepository poiRepository,
             IUserRepository userRepository,
-            IGeocodingService geocodingService)
+            IGeocodingService geocodingService,
+            ILocationRepository locationRepository)
         {
             _poiRepository = poiRepository;
             _userRepository = userRepository;
             _geocodingService = geocodingService;
+            _locationRepository = locationRepository;
         }
 
         //public async Task<List<POIScoreResult>> CalculateScoresAsync(Guid accountId)
@@ -107,47 +110,21 @@ namespace Application.Services
                         return result;
                     }
 
-        public async Task<List<POIResponse>> GetAllAsync()
+        public async Task<List<POI>> GetAllAsync()
         {
             var pois = await _poiRepository.GetAllAsync();
 
-            return pois.Select(p => new POIResponse
-            {
-                Id = p.Id,
-                Name = p.Name,
-                Address = p.Address,
-                City = p.City,
-                ApproxCost = p.ApproxCost,
-                OpeningHours = p.OpeningHours,
-                GoogleMapLink = p.GoogleMapLink,
-                IsIndoor = p.IsIndoor,
-                Latitude = p.Latitude,
-                Longitude = p.Longitude,
-                LocationId = p.LocationId
-            }).ToList();
+            return pois;
         }
 
-        public async Task<POIResponse?> GetByIdAsync(Guid id)
+        public async Task<POI?> GetByIdAsync(Guid id)
         {
             var poi = await _poiRepository.GetByIdAsync(id);
 
             if (poi == null)
                 return null;
 
-            return new POIResponse
-            {
-                Id = poi.Id,
-                Name = poi.Name,
-                Address = poi.Address,
-                City = poi.City,
-                ApproxCost = poi.ApproxCost,
-                OpeningHours = poi.OpeningHours,
-                GoogleMapLink = poi.GoogleMapLink,
-                IsIndoor = poi.IsIndoor,
-                Latitude = poi.Latitude,
-                Longitude = poi.Longitude,
-                LocationId = poi.LocationId
-            };
+            return poi;
         }
 
         public async Task<POI> CreateAsync(POI request)
@@ -221,7 +198,7 @@ namespace Application.Services
             int rowCount = worksheet.Dimension.Rows;
 
             // 🔥 Load toàn bộ Location 1 lần (tránh gọi DB trong loop)
-            var locations = (await _poiRepository.GetAllLocationsAsync())
+            var locations = (await _locationRepository.GetAllAsync())
               .GroupBy(x => x.LocationName.ToLower())
               .ToDictionary(g => g.Key, g => g.First());
 
