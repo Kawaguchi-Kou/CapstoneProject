@@ -119,6 +119,9 @@ builder.Services.AddScoped<IAdvertisementRepository, AdvertisementRepository>();
 //Location
 builder.Services.AddScoped<ILocationRepository, LocationRepository>();
 
+//Cloudinary
+builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
+
 // add CORS
 builder.Services.AddCors(options =>
 {

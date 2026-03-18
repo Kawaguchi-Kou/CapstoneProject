@@ -14,9 +14,9 @@ namespace WebAPI.Controllers
     public class StaffPOIController : ControllerBase
     {
         private readonly IPOIService _poiService;
-        private readonly ICloudinaryService cloudinaryService,;
+        private readonly ICloudinaryService _cloudinaryService;
 
-        public StaffPOIController(IPOIService poiService)
+        public StaffPOIController(IPOIService poiService, ICloudinaryService cloudinaryService)
         {
             _cloudinaryService = cloudinaryService;
             _poiService = poiService;
@@ -76,12 +76,15 @@ namespace WebAPI.Controllers
         [HttpPost("upload-image")]
         public async Task<IActionResult> UploadImage(IFormFile file)
         {
+            if (file == null || file.Length == 0)
+                return BadRequest("File is empty");
+
             using var stream = file.OpenReadStream();
 
             var url = await _cloudinaryService.UploadImageAsync(stream, file.FileName);
 
-            // 🔥 key = tên file (trùng với Name POI)
-            _poiService.AddImageMapping(file.FileName, url);
+            var key = Path.GetFileNameWithoutExtension(file.FileName).Trim().ToLower();
+            _poiService.AddImageMapping(key, url);
 
             return Ok(new { url });
         }
