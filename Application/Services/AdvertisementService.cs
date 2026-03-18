@@ -185,5 +185,16 @@ namespace Application.Services
                 TotalPages = totalItems == 0 ? 0 : (int)Math.Ceiling(totalItems / (double)pageSize)
             };
         }
+        public async Task<List<Advertisement>> GetAllAsync()
+        {
+            return await _advertisementRepository.GetAllAsync();
+        }
+
+        public async Task<List<Advertisement>> GetPendingAsync()
+        {
+            return await _advertisementRepository.GetPendingAsync();
+        }
+
+
     }
 }
