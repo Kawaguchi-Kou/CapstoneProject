@@ -18,7 +18,7 @@ namespace Domain.Entities
         public string ApproxCost { get; set; } = string.Empty;
         public string OpeningHours { get; set; } = string.Empty;
         public string GoogleMapLink { get; set; } = string.Empty;
-        public string POIImgUrl { get; set; } = string.Empty;
+        public string? POIImgUrl { get; set; } 
         public bool IsIndoor { get; set; }
         public double Latitude { get; set; }
         public double Longitude { get; set; }
