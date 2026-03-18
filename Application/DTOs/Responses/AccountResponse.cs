@@ -14,6 +14,7 @@ namespace Application.DTOs.Responses
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public bool IsActive { get; set; } = false;
         public string RoleName { get; set; } = string.Empty;
+        public string Name { get; set; } = string.Empty;
 
         public ProfileResponse? Profile { get; set; }
     }

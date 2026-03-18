@@ -12,6 +12,7 @@ namespace Application.Interfaces
     public interface IAdminService
     {
         Task<List<Account>> GetAll();
+        Task<List<Account>> GetFilteredAccountsAsync(string? roleName, bool? isActive, string? name);
         Task ActivateAccount(Guid id);
         Task DeactivateAccount(Guid id);
     }

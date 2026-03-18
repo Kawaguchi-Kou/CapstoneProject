@@ -81,10 +81,13 @@ namespace WebAPI.Controllers
 
         [HttpGet]
         [Authorize]
-        public async Task<IActionResult> GetAllPackages()
+        public async Task<IActionResult> GetAllPackages([FromQuery] int page = 1)
         {
             try
             {
+                const int pageSize = 15;
+                if (page < 1) page = 1;
+
                 var packages = await _packageService.GetAllPackagesAsync();
                 
                 // Partner chỉ xem được gói active, Admin xem được tất cả
@@ -94,7 +97,12 @@ namespace WebAPI.Controllers
                     packages = packages.Where(p => p.Status.ToLower() == "active").ToList();
                 }
 
-                var responses = _mapper.Map<List<AdSubscriptionPackageResponse>>(packages);
+                var pagedPackages = packages
+                    .Skip((page - 1) * pageSize)
+                    .Take(pageSize)
+                    .ToList();
+
+                var responses = _mapper.Map<List<AdSubscriptionPackageResponse>>(pagedPackages);
                 return Ok(responses);
             }
             catch (Exception ex)
