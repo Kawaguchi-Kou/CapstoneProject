@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
+using System.Security.Cryptography.Xml;
 using System.Text;
 using System.Threading.Tasks;
 using Application.DTOs.Requests;
@@ -8,6 +10,9 @@ using Application.DTOs.Responses;
 using Application.Interfaces;
 using Domain.Entities;
 using Domain.Interfaces;
+using Microsoft.AspNetCore.Http;
+using OfficeOpenXml;
+
 
 namespace Application.Services
 {
@@ -102,21 +107,47 @@ namespace Application.Services
                         return result;
                     }
 
-        public async Task<List<POI>> GetAllAsync()
+        public async Task<List<POIResponse>> GetAllAsync()
         {
             var pois = await _poiRepository.GetAllAsync();
 
-            return pois;
+            return pois.Select(p => new POIResponse
+            {
+                Id = p.Id,
+                Name = p.Name,
+                Address = p.Address,
+                City = p.City,
+                ApproxCost = p.ApproxCost,
+                OpeningHours = p.OpeningHours,
+                GoogleMapLink = p.GoogleMapLink,
+                IsIndoor = p.IsIndoor,
+                Latitude = p.Latitude,
+                Longitude = p.Longitude,
+                LocationId = p.LocationId
+            }).ToList();
         }
 
-        public async Task<POI> GetByIdAsync(Guid id)
+        public async Task<POIResponse?> GetByIdAsync(Guid id)
         {
             var poi = await _poiRepository.GetByIdAsync(id);
 
             if (poi == null)
                 return null;
 
-            return poi;
+            return new POIResponse
+            {
+                Id = poi.Id,
+                Name = poi.Name,
+                Address = poi.Address,
+                City = poi.City,
+                ApproxCost = poi.ApproxCost,
+                OpeningHours = poi.OpeningHours,
+                GoogleMapLink = poi.GoogleMapLink,
+                IsIndoor = poi.IsIndoor,
+                Latitude = poi.Latitude,
+                Longitude = poi.Longitude,
+                LocationId = poi.LocationId
+            };
         }
 
         public async Task<POI> CreateAsync(POI request)
@@ -165,9 +196,9 @@ namespace Application.Services
 
                 poi.IsIndoor = request.IsIndoor;
 
-            var updatedPOI = await _poiRepository.GetByIdAsync(id);
+            await _poiRepository.UpdateAsync(poi);
 
-            return updatedPOI!;
+            return poi;
         }
 
         public async Task DeleteAsync(Guid id)
@@ -179,5 +210,83 @@ namespace Application.Services
 
             await _poiRepository.DeleteAsync(poi);
         }
+
+        public async Task ImportExcelAsync(IFormFile file)
+        {
+            using var stream = new MemoryStream();
+            await file.CopyToAsync(stream);
+
+            using var package = new ExcelPackage(stream);
+            var worksheet = package.Workbook.Worksheets[0];
+            int rowCount = worksheet.Dimension.Rows;
+
+            // 🔥 Load toàn bộ Location 1 lần (tránh gọi DB trong loop)
+            var locations = (await _poiRepository.GetAllLocationsAsync())
+              .GroupBy(x => x.LocationName.ToLower())
+              .ToDictionary(g => g.Key, g => g.First());
+
+            List<POI> pois = new();
+
+            for (int row = 2; row <= rowCount; row++)
+            {
+                string name = worksheet.Cells[row, 1].Text.Trim();
+                string address = worksheet.Cells[row, 2].Text.Trim();
+                string cityRaw = worksheet.Cells[row, 3].Text.Trim();
+                string cityKey = cityRaw.ToLower();
+
+                if (!locations.ContainsKey(cityKey))
+                    continue;
+
+                var location = locations[cityKey];
+
+                decimal.TryParse(worksheet.Cells[row, 4].Text, out var cost);
+                bool.TryParse(worksheet.Cells[row, 7].Text, out var isIndoor);
+
+                // 🔥 LẤY IMAGE TỪ MAP
+                var normalizedName = name.Trim().ToLower();
+
+                string? imageUrl = _imageMap.ContainsKey(normalizedName)
+                    ? _imageMap[normalizedName]
+                    : null;
+
+                var poi = new POI
+                {
+                    Id = Guid.NewGuid(),
+
+                    Name = name,
+                    Address = address,
+                    City = cityRaw,
+
+                    ApproxCost = cost.ToString(),
+                    OpeningHours = worksheet.Cells[row, 5].Text,
+                    GoogleMapLink = worksheet.Cells[row, 6].Text,
+                    IsIndoor = isIndoor,
+
+                    LocationId = location.LocationId,
+                    Latitude = location.Latitude,
+                    Longitude = location.Longitude,
+
+                    // 🔥 QUAN TRỌNG NHẤT
+                    POIImgUrl = imageUrl
+                };
+
+                pois.Add(poi);
+            }
+
+            // 🔥 Save 1 lần (chuẩn clean + performance tốt)
+            await _poiRepository.AddRangeAsync(pois);
+        }
+
+        private static Dictionary<string, string> _imageMap = new();
+
+        public void AddImageMapping(string fileName, string url)
+        {
+            var key = Path.GetFileNameWithoutExtension(fileName)
+                .Trim()
+                .ToLower();
+
+            _imageMap[key] = url;
+        }
+
     }
 }

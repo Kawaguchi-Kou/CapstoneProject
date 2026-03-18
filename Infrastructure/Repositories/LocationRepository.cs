@@ -1,12 +1,16 @@
-﻿using System;
+
+using System;
+
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+
 using Domain.Entities;
 using Domain.Interfaces;
 using Infrastructure.EntitiesConfigurations;
 using Microsoft.EntityFrameworkCore;
+
 
 namespace Infrastructure.Repositories
 {
@@ -19,6 +23,23 @@ namespace Infrastructure.Repositories
             _context = context;
         }
 
+        public async Task AddAsync(Location location)
+        {
+            await _context.Locations.AddAsync(location);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task UpdateAsync(Location location)
+        {
+            _context.Locations.Update(location);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task DeleteAsync(Location location)
+        {
+            _context.Locations.Remove(location);
+            await _context.SaveChangesAsync();
+        }
         public async Task<Location> GetByIdAsync(Guid locationId)
         {
             var location = await _context.Locations.FindAsync(locationId);
