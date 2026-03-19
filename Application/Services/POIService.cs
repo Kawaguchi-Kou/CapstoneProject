@@ -22,17 +22,23 @@ namespace Application.Services
         private readonly IUserRepository _userRepository;
         private readonly IGeocodingService _geocodingService;
         private readonly ILocationRepository _locationRepository;
+        private readonly IPOIPreferenceRepository _poiPreferenceRepository;
+        private readonly IPreferenceRepository _preferenceRepository;
 
         public POIService(
-            IPOIRepository poiRepository,
-            IUserRepository userRepository,
-            IGeocodingService geocodingService,
-            ILocationRepository locationRepository)
+    IPOIRepository poiRepository,
+    IUserRepository userRepository,
+    IGeocodingService geocodingService,
+    ILocationRepository locationRepository,
+    IPOIPreferenceRepository poiPreferenceRepository,
+    IPreferenceRepository preferenceRepository)
         {
             _poiRepository = poiRepository;
             _userRepository = userRepository;
             _geocodingService = geocodingService;
             _locationRepository = locationRepository;
+            _poiPreferenceRepository = poiPreferenceRepository;
+            _preferenceRepository = preferenceRepository;
         }
 
         //public async Task<List<POIScoreResult>> CalculateScoresAsync(Guid accountId)
@@ -200,12 +206,17 @@ namespace Application.Services
             var worksheet = package.Workbook.Worksheets[0];
             int rowCount = worksheet.Dimension.Rows;
 
-            // 🔥 Load toàn bộ Location 1 lần (tránh gọi DB trong loop)
+            // 🔥 Load Location
             var locations = (await _locationRepository.GetAllAsync())
-              .GroupBy(x => x.LocationName.ToLower())
-              .ToDictionary(g => g.Key, g => g.First());
+                .GroupBy(x => x.LocationName.ToLower())
+                .ToDictionary(g => g.Key, g => g.First());
+
+            // 🔥 Load Preferences
+            var preferences = (await _preferenceRepository.GetAllAsync())
+                .ToDictionary(x => x.Name.ToLower(), x => x.Id);
 
             List<POI> pois = new();
+            List<POIPreference> poiPreferences = new();
 
             for (int row = 2; row <= rowCount; row++)
             {
@@ -222,7 +233,7 @@ namespace Application.Services
                 decimal.TryParse(worksheet.Cells[row, 4].Text, out var cost);
                 bool.TryParse(worksheet.Cells[row, 7].Text, out var isIndoor);
 
-                //Opening Hours Parsing
+                // Opening Hours
                 var openingRaw = worksheet.Cells[row, 5].Text.Trim();
 
                 TimeOnly? openHour = null;
@@ -241,15 +252,11 @@ namespace Application.Services
                         if (TimeOnly.TryParse(parts[1], out var close))
                             closeHour = close;
 
-                        // 24h case
                         if (openHour == TimeOnly.MinValue && closeHour == TimeOnly.MinValue)
-                        {
                             is24Hours = true;
-                        }
                     }
                 }
 
-                // Visit Recommendation
                 string visitRecommendation = GetVisitRecommendation(
                     openHour,
                     closeHour,
@@ -257,8 +264,7 @@ namespace Application.Services
                     isIndoor
                 );
 
-                // LẤY IMAGE TỪ MAP
-                var normalizedName = name.Trim().ToLower();
+                var normalizedName = name.ToLower();
 
                 string? imageUrl = _imageMap.ContainsKey(normalizedName)
                     ? _imageMap[normalizedName]
@@ -284,15 +290,37 @@ namespace Application.Services
                     Latitude = location.Latitude,
                     Longitude = location.Longitude,
 
-
                     POIImgUrl = imageUrl
                 };
 
                 pois.Add(poi);
+
+                // 🔥 GẮN PREFERENCE (cột 8)
+                string prefRaw = worksheet.Cells[row, 8].Text.Trim();
+
+                if (!string.IsNullOrWhiteSpace(prefRaw))
+                {
+                    var prefList = prefRaw.Split(',', StringSplitOptions.TrimEntries);
+
+                    foreach (var pref in prefList)
+                    {
+                        var key = pref.ToLower();
+
+                        if (preferences.ContainsKey(key))
+                        {
+                            poiPreferences.Add(new POIPreference
+                            {
+                                PoiId = poi.Id,
+                                PreferenceId = preferences[key]
+                            });
+                        }
+                    }
+                }
             }
 
-
+            // 🔥 Save 1 lần (tối ưu)
             await _poiRepository.AddRangeAsync(pois);
+            await _poiPreferenceRepository.AddRangeAsync(poiPreferences);
         }
 
         private static Dictionary<string, string> _imageMap = new();
