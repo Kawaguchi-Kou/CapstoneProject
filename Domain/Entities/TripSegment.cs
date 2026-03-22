@@ -23,7 +23,8 @@ namespace Domain.Entities
         [Required]
         public int OrderIndex { get; set; }   // Thứ tự chặng
 
-        public int StayDays { get; set; }  // Số ngày ở lại tại chặng này, mặc định là 0 (chỉ đi qua)
+        public DateOnly StartDate { get; set; }
+        public DateOnly EndDate { get; set; }
 
         public float? DistanceKm { get; set; }
 
