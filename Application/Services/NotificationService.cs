@@ -1,68 +1,79 @@
-﻿using Application.Interfaces;
-using Domain.Entities;
-using Domain.Interfaces;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Application.DTOs.Requests;
+using Application.Interfaces;
+using Domain.Entities;
+using Domain.Interfaces;
 
 namespace Application.Services
 {
     public class NotificationService : INotificationService
     {
         private readonly INotificationRepository _notificationRepository;
-        private readonly INotificationRecipientRepository _notificationRecipientRepository;
- //       private readonly IScheduleParticipantRepository _participantRepository;
+        private readonly INotificationRecipientRepository _recipientRepository;
+        private readonly IParticipantRepository _participantRepository;
 
-        public NotificationService(INotificationRepository notificationRepository, INotificationRecipientRepository notificationRecipientRepository
-//            , IScheduleParticipantRepository scheduleParticipantRepository
-            )
+        public NotificationService(
+            INotificationRepository notificationRepository,
+            INotificationRecipientRepository recipientRepository,
+            IParticipantRepository participantRepository)
         {
             _notificationRepository = notificationRepository;
-            _notificationRecipientRepository = notificationRecipientRepository;
-  //          _participantRepository = scheduleParticipantRepository;
+            _recipientRepository = recipientRepository;
+            _participantRepository = participantRepository;
         }
 
-        public async Task CreateNotificationAsync(Notification notification)
+        public async Task CreateNotificationAsync(CreateNotificationRequest request)
         {
+            var notification = new Notification
+            {
+                Id = Guid.NewGuid(),
+                TripId = request.TripId,
+                SenderId = request.SenderId,
+                Message = request.Message,
+                CreatedAt = DateTime.UtcNow
+            };
+
             await _notificationRepository.AddAsync(notification);
 
-            if (notification.TripId != null)
-            {
-                var participants = new List<Participant>();
-                //await _participantRepository.GetAllParticipantByScheduleIdAsync(notification.TripId);
-                var recipients = new List<NotificationRecipient>();
-                foreach (var participant in participants)
-                {
-                    // Except sender of notification
-                    if (participant.UserId != notification.SenderId)
-                    {
-                        recipients.Add(new NotificationRecipient
-                        {
-                            Id = Guid.NewGuid(),
-                            NotificationId = notification.Id,
-                            RecipientId = participant.UserId,
-                            IsRead = false,
-                            ReadAt = null
-                        });
-                    }
-                }
+            var recipients = new List<NotificationRecipient>();
 
-                await _notificationRecipientRepository.CreateNotificationRecipientsAsync(recipients);
-            }
-            else if (notification.RecipientId != null)
-            {
-                var recipient = new NotificationRecipient
+            // ⭐ Case 1: gửi theo Trip
+                var participants = await _participantRepository
+                    .GetAllParticipantByTripIdAsync(request.TripId);
+
+                foreach (var p in participants)
+                {
+                    if (p.UserId == request.SenderId) continue;
+
+                    recipients.Add(new NotificationRecipient
+                    {
+                        Id = Guid.NewGuid(),
+                        NotificationId = notification.Id,
+                        RecipientId = p.UserId,
+                        IsRead = false,
+                        ReadAt = null
+                    });
+                }
+            
+
+            // ⭐ Case 2: gửi 1 user
+
+                recipients.Add(new NotificationRecipient
                 {
                     Id = Guid.NewGuid(),
                     NotificationId = notification.Id,
-                    RecipientId = notification.RecipientId,
+                    RecipientId = request.RecipientId,
                     IsRead = false,
-                    ReadAt = DateTime.UtcNow
-                };
-                await _notificationRecipientRepository.CreateNotificationRecipientsAsync(new List<NotificationRecipient> { recipient });
-            }
+                    ReadAt = null
+                });
+            
+
+            await _recipientRepository
+                .CreateNotificationRecipientsAsync(recipients);
         }
     }
 }

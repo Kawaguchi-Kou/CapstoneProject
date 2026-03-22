@@ -1,23 +1,26 @@
 using System;
 using System.Security.Claims;
 using System.Text;
+using Application.Hubs;
 using Application.Interfaces;
 using Application.Mappings;
 using Application.Services;
 using Domain.Interfaces;
 using DotNetEnv;
 using Hangfire;
+using Hangfire.PostgreSql;
 using Infrastructure.BackgroundJobs;
 using Infrastructure.EntitiesConfigurations;
 using Infrastructure.ExternalApis.OpenMeteo;
 using Infrastructure.ExternalApis.SePay;
 using Infrastructure.Repositories;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using WebAPI.Converters;
 using OfficeOpenXml;
+using WebAPI.Converters;
 
 
 //load .env
@@ -33,7 +36,13 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("Supabase")));
 
 //Hangfire configuration 
-//builder.Services.AddHangfireServer();
+builder.Services.AddHangfire(config =>
+    config.UsePostgreSqlStorage(options =>
+        options.UseNpgsqlConnection(
+            builder.Configuration.GetConnectionString("Supabase")
+        )
+    ));
+builder.Services.AddHangfireServer();
 
 // =====================
 // WEATHER - OPEN METEO
@@ -120,12 +129,24 @@ builder.Services.AddScoped<Domain.Interfaces.IPaymentRepository, Infrastructure.
 //Advertisement
 builder.Services.AddScoped<IAdvertisementRepository, AdvertisementRepository>();
 
+//Itinerary
+builder.Services.AddScoped<IItineraryRepository, ItineraryRepository>();
+
+//ItineraryDetail
+builder.Services.AddScoped<IItineraryDetailRepository, ItineraryDetailRepository>();
+
+//Segment
+builder.Services.AddScoped<ITripSegmentRepository, TripSegmentRepository>();
 
 //Location
 builder.Services.AddScoped<ILocationRepository, LocationRepository>();
 
 //Cloudinary
 builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
+
+//SignalR
+builder.Services.AddSignalR();
+builder.Services.AddSingleton<IUserIdProvider, CustomUserIdProvider>();
 
 // add CORS
 builder.Services.AddCors(options =>
@@ -180,6 +201,23 @@ builder.Services.AddAuthentication(options =>
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey)),
         NameClaimType = ClaimTypes.NameIdentifier, 
         RoleClaimType = ClaimTypes.Role
+    };
+    options.Events = new JwtBearerEvents
+    {
+        OnMessageReceived = context =>
+        {
+            var accessToken = context.Request.Query["access_token"];
+
+            var path = context.HttpContext.Request.Path;
+
+            if (!string.IsNullOrEmpty(accessToken) &&
+                path.StartsWithSegments("/hubs/notification"))
+            {
+                context.Token = accessToken;
+            }
+
+            return Task.CompletedTask;
+        }
     };
 });
 
@@ -239,16 +277,17 @@ app.UseAuthorization();
 app.UseSwagger();
 app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "ProjectName API v1"));
 
-//app.UseHangfireDashboard("/hangfire");
+app.UseHangfireDashboard("/hangfire");
 
 app.MapControllers();
+app.MapHub<NotificationHub>("/hubs/notification");
 
 // ============================
 // HANGFIRE RECURRING JOB
 // ============================
-//RecurringJob.AddOrUpdate<WeatherMonitorJob>(
-//    "weather-hourly-scan",
-//    x => x.ScanUpcomingTripsAsync(),
-//    Cron.Hourly);
+RecurringJob.AddOrUpdate<IWeatherMonitorJob>(
+    "weather-hourly-scan",
+    x => x.ScanUpcomingTripsAsync(),
+    Cron.Hourly);
 
 app.Run();

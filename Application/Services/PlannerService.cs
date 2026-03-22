@@ -1,40 +1,86 @@
-﻿using Application.DTOs.Responses;
-using Application.Interfaces;
-using Domain.Entities;
-using Domain.Interfaces;
-using Domain.Weather;
+﻿//using Application.DTOs.Responses;
+//using Application.Interfaces;
+//using Domain.Entities;
+//using Domain.Interfaces;
+//using Domain.Weather;
 
-public class PlannerService : IPlannerService
-{
-    private readonly IPlannerRepository _plannerRepository;
-    private readonly IOpenMeteoService _weatherService;
-    private readonly AdaptiveWeatherRiskEngine _riskEngine;
+//public class PlannerService : IPlannerService
+//{
+//    private readonly IPOIRepository _poiRepo;
+//    private readonly IWeatherForecastRepository _weatherRepo;
+//    private readonly IItineraryRepository _itineraryRepo;
+//    private readonly IItineraryDetailRepository _detailRepo;
+//    private readonly ITripSegmentRepository _segmentRepo;
+//    private readonly IAdaptiveWeatherRiskEngine _riskEngine;
 
-    public PlannerService(
-        IPlannerRepository plannerRepository,
-        IOpenMeteoService weatherService,
-        AdaptiveWeatherRiskEngine riskEngine)
-    {
-        _plannerRepository = plannerRepository;
-        _weatherService = weatherService;
-        _riskEngine = riskEngine;
-    }
+//    public PlannerService(
+//        IPOIRepository poiRepo,
+//        IWeatherForecastRepository weatherRepo,
+//        IItineraryRepository itineraryRepo,
+//        IItineraryDetailRepository detailRepo,
+//        IAdaptiveWeatherRiskEngine riskEngine,
+//        ITripSegmentRepository segmentRepo)
+//    {
+//        _poiRepo = poiRepo;
+//        _weatherRepo = weatherRepo;
+//        _itineraryRepo = itineraryRepo;
+//        _detailRepo = detailRepo;
+//        _riskEngine = riskEngine;
+//        _segmentRepo = segmentRepo;
+//    }
 
-    //public async Task UpdateItineraryDetail(Guid detailId, UpdateDetailRequest dto)
-    //{
-    //    var detail = await _repo.GetDetail(detailId);
+//    public async Task GenerateAsync(Guid tripId)
+//    {
+//        var segments = await _segmentRepo.GetByTripIdAsync(tripId);
 
-    //    detail.PoiId = dto.NewPoiId;
-    //    detail.VisitDate = dto.NewDate;
-    //    detail.IsManualOverride = true;
+//        foreach (var segment in segments)
+//        {
+//            var itinerary = new Itinerary
+//            {
+//                ItineraryId = Guid.NewGuid(),
+//                SegmentId = segment.SegmentId,
+//                GeneratedByAI = true
+//            };
 
-    //    var weather = await _weatherService.GetForecast(
-    //        detail.LocationId,
-    //        detail.VisitDate);
+//            await _itineraryRepo.AddAsync(itinerary);
 
-    //    detail.WeatherRiskScore =
-    //        _riskEngine.CalculateRisk(weather);
+//            var pois = await _poiRepo.GetByLocationAsync(segment.LocationId);
 
-    //    await _repo.SaveChanges();
-    //}
-}
+//            var currentDate = segment.StartDate;
+
+//            while (currentDate <= segment.EndDate)
+//            {
+//                var timeline = GenerateDayTimeline(currentDate);
+
+//                foreach (var slot in timeline)
+//                {
+//                    var poi = SelectBestPOI(pois, slot);
+
+//                    if (poi == null) continue;
+
+//                    if (!IsValidTimeSlot(poi, slot)) continue;
+
+//                    var forecast = await _weatherRepo
+//                        .GetAsync(segment.LocationId, currentDate);
+
+//                    var risk = _riskEngine.CalculateRisk(forecast, poi.IsIndoor);
+
+//                    var detail = new ItineraryDetail
+//                    {
+//                        DetailId = Guid.NewGuid(),
+//                        ItineraryId = itinerary.ItineraryId,
+//                        PoiId = poi.Id,
+//                        VisitDate = currentDate,
+//                        StartTime = slot.Start,
+//                        EndTime = slot.End,
+//                        WeatherRiskScore = risk
+//                    };
+
+//                    await _detailRepo.AddAsync(detail);
+//                }
+
+//                currentDate = currentDate.AddDays(1);
+//            }
+//        }
+//    }
+//}

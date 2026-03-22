@@ -3,16 +3,18 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Application.DTOs.Requests;
 using Application.Interfaces;
+using Application.Services;
 using Domain.Interfaces;
 
 namespace Infrastructure.BackgroundJobs
 {
-    public class WeatherMonitorJob
+    public class WeatherMonitorJob : IWeatherMonitorJob
     {
         private readonly ITripRepository _tripRepository;
         private readonly IWeatherRiskScanService _riskScan;
-        private readonly INotificationService _noti;
+        private readonly INotificationService _notificationService;
 
         public WeatherMonitorJob(
             ITripRepository tripRepository,
@@ -21,7 +23,7 @@ namespace Infrastructure.BackgroundJobs
         {
             _tripRepository = tripRepository;
             _riskScan = riskScan;
-            _noti = noti;
+            _notificationService = noti;
         }
 
         public async Task ScanUpcomingTripsAsync()
@@ -31,17 +33,21 @@ namespace Infrastructure.BackgroundJobs
             var trips = await _tripRepository
                 .GetUpcomingTripsAsync(today);
 
-            //foreach (var trip in trips)
-            //{
-            //    var summary = await _riskScan.ScanAsync(trip.TripId);
+            foreach (var trip in trips)
+            {
+                var summary = await _riskScan.ScanAsync(trip.TripId);
 
-            //    if (summary.HasHighRisk)
-            //    {
-            //        await _noti.SendAsync(
-            //            summary.AccountId,
-            //            $"Weather risk detected for trip {trip.Title}. Open AI preview to replan.");
-            //    }
-            //}
+                if (summary.HasHighRisk)
+                {
+                    await _notificationService.CreateNotificationAsync(
+                        new CreateNotificationRequest
+                        {
+                            RecipientId = summary.AccountId,
+                            SenderId = Guid.Empty, // system
+                            Message = "Weather may affect your trip. Open AI preview to replan."
+                        });
+                }
+            }
         }
     }
 }

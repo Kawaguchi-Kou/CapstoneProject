@@ -12,6 +12,7 @@ namespace Domain.Interfaces
         Task<Participant?> GetByUserIdAndTripIdAsync(Guid userId, Guid tripId);
         Task<Participant> AddTripParticipantAsync(Participant participant);
         Task<List<Participant>> GetAllTripByParticipantIdAsync(Guid participantId);
+        Task<List<Participant>> GetAllParticipantByTripIdAsync(Guid tripId);
         Task SaveChangesAsync();
     }
 }
