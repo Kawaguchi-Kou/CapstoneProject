@@ -149,5 +149,29 @@ namespace Application.Services
         {
             return await _packageRepository.DeleteAsync(packageId);
         }
+
+        public async Task ActivatePackageAsync(Guid packageId)
+        {
+            var package = await _packageRepository.GetByIdAsync(packageId);
+
+            if (package == null)
+                throw new KeyNotFoundException("Package not found");
+
+            package.Status = "active";
+
+            await _packageRepository.UpdateAsync(package);
+        }
+
+        public async Task DeactivatePackageAsync(Guid packageId)
+        {
+            var package = await _packageRepository.GetByIdAsync(packageId);
+
+            if (package == null)
+                throw new KeyNotFoundException("Package not found");
+
+            package.Status = "inactive";
+
+            await _packageRepository.UpdateAsync(package);
+        }
     }
 }

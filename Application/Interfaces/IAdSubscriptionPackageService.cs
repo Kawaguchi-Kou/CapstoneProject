@@ -16,5 +16,7 @@ namespace Application.Interfaces
         Task<List<AdSubscriptionPackage>> GetAllPackagesAsync();
         Task<AdSubscriptionPackage> UpdatePackageAsync(Guid packageId, CreateAdSubscriptionPackageRequest request);
         Task<bool> DeletePackageAsync(Guid packageId);
+        Task ActivatePackageAsync(Guid packageId);
+        Task DeactivatePackageAsync(Guid packageId);
     }
 }

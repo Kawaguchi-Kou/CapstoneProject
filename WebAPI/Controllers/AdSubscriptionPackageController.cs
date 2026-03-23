@@ -166,5 +166,57 @@ namespace WebAPI.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
+
+        [HttpPut("{id}/activate")]
+        [Authorize]
+        public async Task<IActionResult> ActivatePackage(Guid id)
+        {
+            try
+            {
+                // Kiểm tra role Admin
+                var userRole = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value?.Trim();
+                if (userRole != "Admin")
+                {
+                    return StatusCode(403, new { message = "Bạn không có quyền thực hiện thao tác này. Yêu cầu role Admin.", role = userRole });
+                }
+
+                await _packageService.ActivatePackageAsync(id);
+                return Ok(new { message = "Package activated successfully" });
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpPut("{id}/deactivate")]
+        [Authorize]
+        public async Task<IActionResult> DeactivatePackage(Guid id)
+        {
+            try
+            {
+                // Kiểm tra role Admin
+                var userRole = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value?.Trim();
+                if (userRole != "Admin")
+                {
+                    return StatusCode(403, new { message = "Bạn không có quyền thực hiện thao tác này. Yêu cầu role Admin.", role = userRole });
+                }
+
+                await _packageService.DeactivatePackageAsync(id);
+                return Ok(new { message = "Package deactivated successfully" });
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
     }
 }
