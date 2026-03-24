@@ -144,6 +144,15 @@ builder.Services.AddScoped<ILocationRepository, LocationRepository>();
 //Cloudinary
 builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
 
+//WeatherMobitorJob
+builder.Services.AddScoped<IWeatherMonitorJob, WeatherMonitorJob>();
+
+//Notification
+builder.Services.AddScoped<INotificationService, NotificationService>();
+
+//WeatherRiskScan
+builder.Services.AddScoped<IWeatherRiskScanService, WeatherRiskScanService>();
+
 //SignalR
 builder.Services.AddSignalR();
 builder.Services.AddSingleton<IUserIdProvider, CustomUserIdProvider>();
