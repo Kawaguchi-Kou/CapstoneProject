@@ -142,6 +142,7 @@ namespace Application.Services
                 ApproxCost = request.ApproxCost,
                 OpenHour = request.OpenHour,
                 CloseHour = request.CloseHour,
+                LocationId = request.LocationId,
                 GoogleMapLink = request.GoogleMapLink,
                 IsIndoor = request.IsIndoor,
                 Latitude = lat,

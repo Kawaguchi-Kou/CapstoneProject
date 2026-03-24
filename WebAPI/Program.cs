@@ -6,6 +6,7 @@ using Application.Interfaces;
 using Application.Mappings;
 using Application.Services;
 using Domain.Interfaces;
+using Domain.Weather;
 using DotNetEnv;
 using Hangfire;
 using Hangfire.PostgreSql;
@@ -124,7 +125,7 @@ builder.Services.AddScoped<IAdSubscriptionPackageRepository, AdSubscriptionPacka
 builder.Services.AddScoped<IAccountSubscriptionRepository, AccountSubscriptionRepository>();
 
 //Payment
-builder.Services.AddScoped<Domain.Interfaces.IPaymentRepository, Infrastructure.Repositories.PaymentRepository>();
+builder.Services.AddScoped<IPaymentRepository, PaymentRepository>();
 
 //Advertisement
 builder.Services.AddScoped<IAdvertisementRepository, AdvertisementRepository>();
@@ -147,11 +148,24 @@ builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
 //WeatherMobitorJob
 builder.Services.AddScoped<IWeatherMonitorJob, WeatherMonitorJob>();
 
+//RiskEngine
+builder.Services.AddScoped<IAdaptiveWeatherRiskEngine, AdaptiveWeatherRiskEngine>();
+
 //Notification
 builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
+builder.Services.AddScoped<INotificationRecipientService, NotificationRecipientService>();
+builder.Services.AddScoped<INotificationRecipientRepository, NotificationRecipientRepository>();
+
+//Participant
+builder.Services.AddScoped<IParticipantRepository, ParticipantRepository>();
 
 //WeatherRiskScan
 builder.Services.AddScoped<IWeatherRiskScanService, WeatherRiskScanService>();
+
+//Trip
+builder.Services.AddScoped<ITripRepository, TripRepository>();
+builder.Services.AddScoped<ITripQueryService, TripQueryService>();
 
 //SignalR
 builder.Services.AddSignalR();
