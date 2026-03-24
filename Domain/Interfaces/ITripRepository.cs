@@ -14,5 +14,7 @@ namespace Domain.Interfaces
         Task AddAsync(Trip trip);
 
         Task<List<Trip>> GetUpcomingTripsAsync(DateOnly fromDate);
+
+        Task<Trip?> GetByIdAsync(Guid tripId);
     }
 }

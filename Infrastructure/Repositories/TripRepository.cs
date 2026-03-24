@@ -44,5 +44,10 @@ namespace Infrastructure.Repositories
                 .Where(t => t.StartDate >= fromDate)
                 .ToListAsync();
         }
+
+        public async Task<Trip?> GetByIdAsync(Guid tripId)
+        {
+            return await _db.Trips.FindAsync(tripId);
+        }
     }
 }

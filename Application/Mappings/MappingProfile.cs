@@ -78,6 +78,15 @@ namespace Application.Mappings
             CreateMap<ItineraryDetail, ItineraryRiskContextResponse>()
                 .ForMember(d => d.StoredRiskScore,
                     opt => opt.MapFrom(s => s.WeatherRiskScore));
+
+            //Trip
+            CreateMap<TripRequest, Trip>();
+            CreateMap<Trip, TripResponse>();
+
+            //Segment
+            CreateMap<AddTripSegmentRequest, TripSegment>();
+
+            CreateMap<TripSegment, TripSegmentResponse>();
         }
     }
 }

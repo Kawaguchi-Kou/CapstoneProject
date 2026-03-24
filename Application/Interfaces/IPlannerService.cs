@@ -9,7 +9,7 @@ namespace Application.Interfaces
 {
     public interface IPlannerService
     {
-        //Task<PlannerResponse> PlanAsync(Guid tripId);
+        Task GenerateAsync(Guid tripId);
         //Task<PlannerResponse> ReplanAsync(Guid tripId);
         //Task UpdateItineraryDetail(Guid detailId, UpdateDetailRequest dto);
     }

@@ -10,5 +10,6 @@ namespace Domain.Weather
     public interface IAdaptiveWeatherRiskEngine
     {
         double CalculateRisk(WeatherForecast forecast, bool isIndoor);
+        double CalculateRisk(WeatherForecast forecast);
     }
 }

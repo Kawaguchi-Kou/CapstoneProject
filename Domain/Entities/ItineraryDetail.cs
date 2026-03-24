@@ -14,7 +14,7 @@ namespace Domain.Entities
         public Guid DetailId { get; set; }
         [Required]
         public Guid ItineraryId { get; set; }
-        public DateTime VisitDate { get; set; }
+        public DateOnly VisitDate { get; set; }
         public Guid? PoiId { get; set; }
         public double WeatherRiskScore { get; set; }
         public TimeOnly StartTime { get; set; }

@@ -138,6 +138,7 @@ builder.Services.AddScoped<IItineraryDetailRepository, ItineraryDetailRepository
 
 //Segment
 builder.Services.AddScoped<ITripSegmentRepository, TripSegmentRepository>();
+builder.Services.AddScoped<ITripSegmentService, TripSegmentService>();
 
 //Location
 builder.Services.AddScoped<ILocationRepository, LocationRepository>();
@@ -163,8 +164,12 @@ builder.Services.AddScoped<IParticipantRepository, ParticipantRepository>();
 //WeatherRiskScan
 builder.Services.AddScoped<IWeatherRiskScanService, WeatherRiskScanService>();
 
+//Weatherforecast
+builder.Services.AddScoped<IWeatherForecastRepository, WeatherForecastRepository>();
+
 //Trip
 builder.Services.AddScoped<ITripRepository, TripRepository>();
+builder.Services.AddScoped<ITripService, TripService>();
 builder.Services.AddScoped<ITripQueryService, TripQueryService>();
 
 //SignalR

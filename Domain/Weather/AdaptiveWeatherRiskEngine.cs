@@ -61,6 +61,18 @@ namespace Domain.Weather
             return Math.Clamp(risk, 0, 1);
         }
 
+        public double CalculateRisk(
+            WeatherForecast forecast)
+        {
+            var T = NormalizeTemperature(forecast.TemperatureCelsius);
+            var W = NormalizeWind(forecast.WindSpeed);
+            var P = NormalizePrecipitation(forecast.PrecipitationProbability);
+
+            var risk = 0.5 * P + 0.3 * W + 0.2 * T;
+
+            return Math.Clamp(risk, 0, 1);
+        }
+
         private static double NormalizeTemperature(double temperature)
         {
             return Math.Min(Math.Abs(temperature - 22) / 15.0, 1.0);

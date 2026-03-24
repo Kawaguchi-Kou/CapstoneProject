@@ -1,0 +1,21 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using Application.DTOs.Requests;
+using Application.DTOs.Responses;
+using Domain.Entities;
+
+namespace Application.Interfaces
+{
+    public interface ITripSegmentService
+    {
+        Task<List<Location>> RecommendSegmentsAsync(
+            DateOnly startDate,
+            DateOnly endDate,
+            int maxStops);
+
+        Task<List<TripSegment>> AddSegmentsToTripAsync(Guid tripId, List<TripSegment> segments);
+    }
+}
