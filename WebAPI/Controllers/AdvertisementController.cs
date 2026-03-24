@@ -3,7 +3,6 @@ using Application.DTOs.Requests;
 using Application.DTOs.Responses;
 using Application.Interfaces;
 using AutoMapper;
-using Domain.Enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -28,17 +27,16 @@ namespace WebAPI.Controllers
         {
             try
             {
-                // Kiểm tra role Partner
                 var userRole = User.FindFirst(ClaimTypes.Role)?.Value?.Trim();
                 if (userRole != "Partner")
                 {
-                    return StatusCode(403, new { 
-                        message = "Bạn không có quyền thực hiện thao tác này. Yêu cầu role Partner.", 
-                        role = userRole 
+                    return StatusCode(403, new
+                    {
+                        message = "Bạn không có quyền thực hiện thao tác này. Yêu cầu role Partner.",
+                        role = userRole
                     });
                 }
 
-                // Lấy accountId từ JWT token
                 var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
                 if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var accountId))
                 {
@@ -68,6 +66,7 @@ namespace WebAPI.Controllers
         }
 
         [HttpGet("{id}")]
+        [AllowAnonymous]
         public async Task<IActionResult> GetById(Guid id)
         {
             try
@@ -77,6 +76,22 @@ namespace WebAPI.Controllers
                     return NotFound(new { message = "Advertisement not found" });
 
                 var response = _mapper.Map<AdvertisementResponse>(advertisement);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpGet("active")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetActiveAdvertisements()
+        {
+            try
+            {
+                var advertisements = await _advertisementService.GetActiveAsync();
+                var response = _mapper.Map<List<AdvertisementResponse>>(advertisements);
                 return Ok(response);
             }
             catch (Exception ex)
@@ -162,7 +177,6 @@ namespace WebAPI.Controllers
             {
                 var advertisements = await _advertisementService.GetAllAsync();
                 var response = _mapper.Map<List<AdvertisementResponse>>(advertisements);
-
                 return Ok(response);
             }
             catch (Exception ex)
@@ -179,7 +193,6 @@ namespace WebAPI.Controllers
             {
                 var advertisements = await _advertisementService.GetPendingAsync();
                 var response = _mapper.Map<List<AdvertisementResponse>>(advertisements);
-
                 return Ok(response);
             }
             catch (Exception ex)
@@ -187,9 +200,5 @@ namespace WebAPI.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
-
-        
-
-
     }
 }

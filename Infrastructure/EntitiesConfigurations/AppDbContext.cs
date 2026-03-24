@@ -39,6 +39,8 @@ namespace Infrastructure.EntitiesConfigurations
         public DbSet<AdSubscriptionPackage> adSubscriptionPackages { get; set; }
         public DbSet<AdPayment> adPayments { get; set; }
         public DbSet<AccountSubscription> accountSubscriptions { get; set; }
+        public DbSet<Promotion> Promotions { get; set; }
+        public DbSet<SavedPromotion> SavedPromotions { get; set; }
 
         //Weather Forecast
         public DbSet<WeatherForecast> WeatherForecasts { get; set; }
@@ -397,6 +399,69 @@ namespace Infrastructure.EntitiesConfigurations
                       .WithMany()
                       .HasForeignKey(e => e.PackageId)
                       .OnDelete(DeleteBehavior.SetNull);
+
+                entity.HasOne(e => e.POI)
+                      .WithMany(p => p.Advertisements)
+                      .HasForeignKey(e => e.POIId)
+                      .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            modelBuilder.Entity<Promotion>(entity =>
+            {
+                entity.ToTable("promotions");
+
+                entity.HasKey(e => e.PromotionId);
+
+                entity.Property(e => e.Title)
+                      .IsRequired()
+                      .HasMaxLength(200);
+
+                entity.Property(e => e.Description)
+                      .HasMaxLength(2000);
+
+                entity.Property(e => e.Terms)
+                      .HasMaxLength(2000);
+
+                entity.Property(e => e.Status)
+                      .HasConversion<int>()
+                      .IsRequired();
+
+                entity.Property(e => e.SaveCount)
+                      .HasDefaultValue(0);
+
+                entity.Property(e => e.CreatedAt)
+                      .HasDefaultValueSql("NOW()");
+
+                entity.HasIndex(e => e.AdId)
+                      .IsUnique();
+
+                entity.HasOne(e => e.Advertisement)
+                      .WithOne(a => a.Promotion)
+                      .HasForeignKey<Promotion>(e => e.AdId)
+                      .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            modelBuilder.Entity<SavedPromotion>(entity =>
+            {
+                entity.ToTable("saved_promotions");
+
+                entity.HasKey(e => e.SavedPromotionId);
+
+                entity.Property(e => e.SavedAt)
+                      .HasDefaultValueSql("NOW()");
+
+                entity.HasIndex(e => new { e.PromotionId, e.AccountId })
+                      .IsUnique();
+
+                entity.HasOne(e => e.Promotion)
+                      .WithMany(p => p.SavedPromotions)
+                      .HasForeignKey(e => e.PromotionId)
+                      .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(e => e.Account)
+                      .WithMany(a => a.SavedPromotions)
+                      .HasForeignKey(e => e.AccountId)
+                      .OnDelete(DeleteBehavior.Cascade);
             });
 
             modelBuilder.Entity<AdPayment>(entity =>

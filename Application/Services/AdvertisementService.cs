@@ -28,8 +28,7 @@ namespace Application.Services
             var subscription = await _subscriptionService.GetActiveSubscriptionAsync(accountId);
             if (subscription == null)
             {
-                throw new InvalidOperationException(
-                    "Không thể tạo quảng cáo. Bạn chưa có subscription active.");
+                throw new InvalidOperationException("Không thể tạo quảng cáo. Bạn chưa có subscription active.");
             }
 
             var poi = await _poiRepository.GetByIdAsync(request.POIId);
@@ -41,6 +40,11 @@ namespace Application.Services
             if (request.StartDate >= request.EndDate)
             {
                 throw new ArgumentException("StartDate must be before EndDate");
+            }
+
+            if (request.Promotion == null)
+            {
+                throw new ArgumentException("Promotion payload is required");
             }
 
             var advertisement = new Advertisement
@@ -58,7 +62,17 @@ namespace Application.Services
                 CreatedAt = DateTime.UtcNow
             };
 
-            return await _advertisementRepository.CreateAsync(advertisement);
+            var promotion = new Promotion
+            {
+                Title = request.Promotion.Title,
+                Description = request.Promotion.Description,
+                Terms = request.Promotion.Terms,
+                Status = PromotionStatus.Pending,
+                SaveCount = 0,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            return await _advertisementRepository.CreateWithPromotionAsync(advertisement, promotion);
         }
 
         public async Task<Advertisement?> GetByIdAsync(Guid adId)
@@ -90,8 +104,13 @@ namespace Application.Services
             }
 
             advertisement.Status = AdStatus.Active;
-            await _advertisementRepository.UpdateAsync(advertisement);
+            if (advertisement.Promotion != null)
+            {
+                advertisement.Promotion.Status = PromotionStatus.Active;
+                advertisement.Promotion.UpdatedAt = DateTime.UtcNow;
+            }
 
+            await _advertisementRepository.UpdateAsync(advertisement);
             await _subscriptionService.IncrementAdsUsedAsync(advertisement.AccountId);
 
             return advertisement;
@@ -109,9 +128,70 @@ namespace Application.Services
             }
 
             advertisement.Status = AdStatus.Rejected;
-            await _advertisementRepository.UpdateAsync(advertisement);
+            if (advertisement.Promotion != null)
+            {
+                advertisement.Promotion.Status = PromotionStatus.Rejected;
+                advertisement.Promotion.UpdatedAt = DateTime.UtcNow;
+            }
 
+            await _advertisementRepository.UpdateAsync(advertisement);
             return advertisement;
+        }
+
+        public async Task SavePromotionAsync(Guid accountId, Guid promotionId)
+        {
+            var promotion = await _advertisementRepository.GetPromotionByIdAsync(promotionId);
+            if (promotion == null)
+            {
+                throw new KeyNotFoundException("Promotion not found");
+            }
+
+            if (promotion.Status != PromotionStatus.Active)
+            {
+                throw new InvalidOperationException("Promotion is not active");
+            }
+
+            if (promotion.Advertisement == null)
+            {
+                throw new InvalidOperationException("Promotion is not linked to any advertisement");
+            }
+
+            if (promotion.Advertisement.Status != AdStatus.Active)
+            {
+                throw new InvalidOperationException("Advertisement is not active");
+            }
+
+            var now = DateTime.UtcNow;
+            if (promotion.Advertisement.StartDate > now || promotion.Advertisement.EndDate < now)
+            {
+                throw new InvalidOperationException("Advertisement is out of effective time window");
+            }
+
+            var alreadySaved = await _advertisementRepository.IsPromotionSavedAsync(accountId, promotionId);
+            if (alreadySaved)
+            {
+                throw new InvalidOperationException("Promotion already saved");
+            }
+
+            var savedPromotion = new SavedPromotion
+            {
+                SavedPromotionId = Guid.NewGuid(),
+                PromotionId = promotionId,
+                AccountId = accountId,
+                SavedAt = now
+            };
+
+            await _advertisementRepository.SavePromotionAsync(savedPromotion);
+
+            promotion.SaveCount += 1;
+            promotion.UpdatedAt = now;
+
+            await _advertisementRepository.SaveChangesAsync();
+        }
+
+        public async Task<List<SavedPromotion>> GetSavedPromotionsByAccountIdAsync(Guid accountId)
+        {
+            return await _advertisementRepository.GetSavedPromotionsByAccountIdAsync(accountId);
         }
 
         public async Task<PagedResultResponse<PendingAdvertisementAccountItemResponse>> GetPendingAdvertisementAccountsAsync(
@@ -185,6 +265,7 @@ namespace Application.Services
                 TotalPages = totalItems == 0 ? 0 : (int)Math.Ceiling(totalItems / (double)pageSize)
             };
         }
+
         public async Task<List<Advertisement>> GetAllAsync()
         {
             return await _advertisementRepository.GetAllAsync();
@@ -195,6 +276,9 @@ namespace Application.Services
             return await _advertisementRepository.GetPendingAsync();
         }
 
-
+        public async Task<List<Advertisement>> GetActiveAsync()
+        {
+            return await _advertisementRepository.GetActiveAsync();
+        }
     }
 }

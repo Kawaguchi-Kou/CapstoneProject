@@ -21,6 +21,7 @@ namespace Infrastructure.Repositories
                 .Include(a => a.Account)
                 .Include(a => a.Package)
                 .Include(a => a.POI)
+                .Include(a => a.Promotion)
                 .FirstOrDefaultAsync(a => a.AdId == adId);
         }
 
@@ -29,17 +30,25 @@ namespace Infrastructure.Repositories
             return await _context.Advertisements
                 .Include(a => a.Package)
                 .Include(a => a.POI)
+                .Include(a => a.Promotion)
                 .Where(a => a.AccountId == accountId)
                 .OrderByDescending(a => a.CreatedAt)
                 .ToListAsync();
         }
 
-        public async Task<Advertisement> CreateAsync(Advertisement advertisement)
+        public async Task<Advertisement> CreateWithPromotionAsync(Advertisement advertisement, Promotion promotion)
         {
             advertisement.AdId = Guid.NewGuid();
             advertisement.CreatedAt = DateTime.UtcNow;
+
+            promotion.PromotionId = Guid.NewGuid();
+            promotion.AdId = advertisement.AdId;
+            promotion.CreatedAt = DateTime.UtcNow;
+
             await _context.Advertisements.AddAsync(advertisement);
+            await _context.Promotions.AddAsync(promotion);
             await _context.SaveChangesAsync();
+
             return advertisement;
         }
 
@@ -48,6 +57,34 @@ namespace Infrastructure.Repositories
             _context.Advertisements.Update(advertisement);
             await _context.SaveChangesAsync();
             return advertisement;
+        }
+
+        public async Task<Promotion?> GetPromotionByIdAsync(Guid promotionId)
+        {
+            return await _context.Promotions
+                .Include(p => p.Advertisement)
+                .FirstOrDefaultAsync(p => p.PromotionId == promotionId);
+        }
+
+        public async Task<List<SavedPromotion>> GetSavedPromotionsByAccountIdAsync(Guid accountId)
+        {
+            return await _context.SavedPromotions
+                .Include(sp => sp.Promotion)
+                    .ThenInclude(p => p.Advertisement)
+                .Where(sp => sp.AccountId == accountId)
+                .OrderByDescending(sp => sp.SavedAt)
+                .ToListAsync();
+        }
+
+        public async Task<bool> IsPromotionSavedAsync(Guid accountId, Guid promotionId)
+        {
+            return await _context.SavedPromotions
+                .AnyAsync(sp => sp.AccountId == accountId && sp.PromotionId == promotionId);
+        }
+
+        public async Task SavePromotionAsync(SavedPromotion savedPromotion)
+        {
+            await _context.SavedPromotions.AddAsync(savedPromotion);
         }
 
         public async Task<List<(Account Account, int PendingAdsCount, DateTime LatestPendingAt)>> GetPendingAccountsAsync(
@@ -113,15 +150,12 @@ namespace Infrastructure.Repositories
                 .CountAsync();
         }
 
-        public async Task<List<Advertisement>> GetPendingByAccountIdAsync(
-            Guid accountId,
-            int skip,
-            int take,
-            string? keyword = null)
+        public async Task<List<Advertisement>> GetPendingByAccountIdAsync(Guid accountId, int skip, int take, string? keyword = null)
         {
             var query = _context.Advertisements
                 .Include(a => a.Package)
                 .Include(a => a.POI)
+                .Include(a => a.Promotion)
                 .Where(a => a.AccountId == accountId && a.Status == AdStatus.PendingApproval);
 
             if (!string.IsNullOrWhiteSpace(keyword))
@@ -160,12 +194,14 @@ namespace Infrastructure.Repositories
         {
             await _context.SaveChangesAsync();
         }
+
         public async Task<List<Advertisement>> GetAllAsync()
         {
             return await _context.Advertisements
                 .Include(a => a.Account)
                 .Include(a => a.Package)
                 .Include(a => a.POI)
+                .Include(a => a.Promotion)
                 .OrderByDescending(a => a.CreatedAt)
                 .ToListAsync();
         }
@@ -176,11 +212,25 @@ namespace Infrastructure.Repositories
                 .Include(a => a.Account)
                 .Include(a => a.Package)
                 .Include(a => a.POI)
+                .Include(a => a.Promotion)
                 .Where(a => a.Status == AdStatus.PendingApproval)
                 .OrderByDescending(a => a.CreatedAt)
                 .ToListAsync();
         }
 
-       
+        public async Task<List<Advertisement>> GetActiveAsync()
+        {
+            var now = DateTime.UtcNow;
+            return await _context.Advertisements
+                .Include(a => a.POI)
+                .Include(a => a.Promotion)
+                .Where(a => a.Status == AdStatus.Active
+                    && a.StartDate <= now
+                    && a.EndDate >= now
+                    && a.Promotion != null
+                    && a.Promotion.Status == PromotionStatus.Active)
+                .OrderByDescending(a => a.CreatedAt)
+                .ToListAsync();
+        }
     }
 }

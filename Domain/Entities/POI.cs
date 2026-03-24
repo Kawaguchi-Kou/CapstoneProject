@@ -33,5 +33,6 @@ namespace Domain.Entities
         public Location Location { get; set; }
         public ICollection<POIPreference> PoiPreferences { get; set; }
         public ICollection<ItineraryDetail> ItineraryDetails { get; set; }
+        public ICollection<Advertisement> Advertisements { get; set; } = new List<Advertisement>();
     }
 }

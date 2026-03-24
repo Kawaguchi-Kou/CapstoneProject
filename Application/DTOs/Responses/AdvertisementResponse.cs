@@ -1,8 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Domain.Enums;
 
 namespace Application.DTOs.Responses
@@ -21,5 +16,26 @@ namespace Application.DTOs.Responses
         public DateTime EndDate { get; set; }
         public AdStatus Status { get; set; }
         public DateTime CreatedAt { get; set; }
+        public PromotionSummaryResponse? Promotion { get; set; }
+    }
+
+    public class PromotionSummaryResponse
+    {
+        public Guid PromotionId { get; set; }
+        public string Title { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
+        public string Terms { get; set; } = string.Empty;
+        public PromotionStatus Status { get; set; }
+        public int SaveCount { get; set; }
+    }
+
+    public class SavedPromotionResponse
+    {
+        public Guid SavedPromotionId { get; set; }
+        public Guid PromotionId { get; set; }
+        public Guid AdId { get; set; }
+        public DateTime SavedAt { get; set; }
+        public string PromotionTitle { get; set; } = string.Empty;
+        public string AdvertisementTitle { get; set; } = string.Empty;
     }
 }
