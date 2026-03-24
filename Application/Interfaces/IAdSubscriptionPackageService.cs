@@ -14,6 +14,7 @@ namespace Application.Interfaces
         Task<AdSubscriptionPackage> CreatePackageAsync(CreateAdSubscriptionPackageRequest request);
         Task<AdSubscriptionPackage?> GetPackageByIdAsync(Guid packageId);
         Task<List<AdSubscriptionPackage>> GetAllPackagesAsync();
+        Task<List<AdSubscriptionPackage>> GetFilteredPackagesAsync(string? title, string? status, string? sortPrice);
         Task<AdSubscriptionPackage> UpdatePackageAsync(Guid packageId, CreateAdSubscriptionPackageRequest request);
         Task<bool> DeletePackageAsync(Guid packageId);
         Task ActivatePackageAsync(Guid packageId);

@@ -107,6 +107,36 @@ namespace Application.Services
         {
             return await _packageRepository.GetAllAsync();
         }
+        
+        public async Task<List<AdSubscriptionPackage>> GetFilteredPackagesAsync(string? title, string? status, string? sortPrice)
+        {
+            var packages = await _packageRepository.GetAllAsync();
+            var query = packages.AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(title))
+            {
+                query = query.Where(p => p.Title.Contains(title, StringComparison.OrdinalIgnoreCase));
+            }
+
+            if (!string.IsNullOrWhiteSpace(status) && !status.Equals("Status", StringComparison.OrdinalIgnoreCase))
+            {
+                query = query.Where(p => p.Status.Equals(status, StringComparison.OrdinalIgnoreCase));
+            }
+
+            if (!string.IsNullOrWhiteSpace(sortPrice))
+            {
+                if (sortPrice.Equals("asc", StringComparison.OrdinalIgnoreCase))
+                {
+                    query = query.OrderBy(p => p.Price);
+                }
+                else if (sortPrice.Equals("desc", StringComparison.OrdinalIgnoreCase))
+                {
+                    query = query.OrderByDescending(p => p.Price);
+                }
+            }
+
+            return query.ToList();
+        }
 
         public async Task<AdSubscriptionPackage> UpdatePackageAsync(Guid packageId, CreateAdSubscriptionPackageRequest request)
         {

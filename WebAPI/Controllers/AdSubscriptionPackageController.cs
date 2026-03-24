@@ -111,6 +111,33 @@ namespace WebAPI.Controllers
             }
         }
 
+        [HttpGet("filter")]
+        [Authorize]
+        public async Task<IActionResult> FilterPackages(
+            [FromQuery] string? title,
+            [FromQuery] string? status,
+            [FromQuery] string? sortPrice)
+        {
+            try
+            {
+                var packages = await _packageService.GetFilteredPackagesAsync(title, status, sortPrice);
+
+                // Partner chỉ xem được gói active, Admin xem được tất cả
+                var userRole = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value?.Trim();
+                if (userRole != "Admin")
+                {
+                    packages = packages.Where(p => p.Status.ToLower() == "active").ToList();
+                }
+
+                var responses = _mapper.Map<List<AdSubscriptionPackageResponse>>(packages);
+                return Ok(responses);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
         [HttpPut("{id}")]
         [Authorize]
         public async Task<IActionResult> UpdatePackage(Guid id, [FromBody] CreateAdSubscriptionPackageRequest request)
