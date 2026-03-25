@@ -38,5 +38,6 @@ namespace Domain.Entities
         public Account Partner { get; set; }
         public ICollection<POIPreference> PoiPreferences { get; set; }
         public ICollection<ItineraryDetail> ItineraryDetails { get; set; }
+        public ICollection<Advertisement> Advertisements { get; set; } = new List<Advertisement>();
     }
 }

@@ -1,5 +1,4 @@
 using Domain.Entities;
-using Domain.Enums;
 
 namespace Domain.Interfaces
 {
@@ -7,8 +6,13 @@ namespace Domain.Interfaces
     {
         Task<Advertisement?> GetByIdAsync(Guid adId);
         Task<List<Advertisement>> GetByAccountIdAsync(Guid accountId);
-        Task<Advertisement> CreateAsync(Advertisement advertisement);
+        Task<Advertisement> CreateWithPromotionAsync(Advertisement advertisement, Promotion promotion);
         Task<Advertisement> UpdateAsync(Advertisement advertisement);
+
+        Task<Promotion?> GetPromotionByIdAsync(Guid promotionId);
+        Task<List<SavedPromotion>> GetSavedPromotionsByAccountIdAsync(Guid accountId);
+        Task<bool> IsPromotionSavedAsync(Guid accountId, Guid promotionId);
+        Task SavePromotionAsync(SavedPromotion savedPromotion);
 
         Task<List<(Account Account, int PendingAdsCount, DateTime LatestPendingAt)>> GetPendingAccountsAsync(
             int skip,
@@ -24,9 +28,8 @@ namespace Domain.Interfaces
         Task<int> CountPendingByAccountIdAsync(Guid accountId, string? keyword = null);
 
         Task SaveChangesAsync();
-
         Task<List<Advertisement>> GetAllAsync();
-
         Task<List<Advertisement>> GetPendingAsync();
+        Task<List<Advertisement>> GetActiveAsync();
     }
 }

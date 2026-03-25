@@ -38,6 +38,8 @@ namespace Domain.Entities
         public AdSubscriptionPackage? Package { get; set; }
         [ForeignKey(nameof(POIId))]
         public POI? POI { get; set; }
+
+        public Promotion? Promotion { get; set; }
     }
 
 }
