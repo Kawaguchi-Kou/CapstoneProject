@@ -22,10 +22,11 @@ namespace Application.Interfaces
             int page,
             int pageSize,
             string? keyword = null);
+
         Task<List<Advertisement>> GetAllAsync();
-
         Task<List<Advertisement>> GetPendingAsync();
-
-
+        Task<List<Advertisement>> GetActiveAsync();
+        Task<List<SavedPromotion>> GetSavedPromotionsByAccountIdAsync(Guid accountId);
+        Task SavePromotionAsync(Guid accountId, Guid promotionId);
     }
 }

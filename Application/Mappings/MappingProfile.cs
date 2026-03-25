@@ -51,7 +51,18 @@ namespace Application.Mappings
 
             //Advertisement
             CreateMap<CreateAdvertisementRequest, Advertisement>();
-            CreateMap<Advertisement, AdvertisementResponse>();
+            CreateMap<Promotion, PromotionSummaryResponse>();
+            CreateMap<Advertisement, AdvertisementResponse>()
+                .ForMember(dest => dest.Promotion,
+                    opt => opt.MapFrom(src => src.Promotion));
+
+            CreateMap<SavedPromotion, SavedPromotionResponse>()
+                .ForMember(dest => dest.AdId,
+                    opt => opt.MapFrom(src => src.Promotion != null ? src.Promotion.AdId : Guid.Empty))
+                .ForMember(dest => dest.PromotionTitle,
+                    opt => opt.MapFrom(src => src.Promotion != null ? src.Promotion.Title : string.Empty))
+                .ForMember(dest => dest.AdvertisementTitle,
+                    opt => opt.MapFrom(src => src.Promotion != null && src.Promotion.Advertisement != null ? src.Promotion.Advertisement.Title : string.Empty));
 
             //POI
             CreateMap<POI, PoiResponse>()

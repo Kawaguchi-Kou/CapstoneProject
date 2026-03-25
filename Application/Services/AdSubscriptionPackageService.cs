@@ -107,6 +107,36 @@ namespace Application.Services
         {
             return await _packageRepository.GetAllAsync();
         }
+        
+        public async Task<List<AdSubscriptionPackage>> GetFilteredPackagesAsync(string? title, string? status, string? sortPrice)
+        {
+            var packages = await _packageRepository.GetAllAsync();
+            var query = packages.AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(title))
+            {
+                query = query.Where(p => p.Title.Contains(title, StringComparison.OrdinalIgnoreCase));
+            }
+
+            if (!string.IsNullOrWhiteSpace(status) && !status.Equals("Status", StringComparison.OrdinalIgnoreCase))
+            {
+                query = query.Where(p => p.Status.Equals(status, StringComparison.OrdinalIgnoreCase));
+            }
+
+            if (!string.IsNullOrWhiteSpace(sortPrice))
+            {
+                if (sortPrice.Equals("asc", StringComparison.OrdinalIgnoreCase))
+                {
+                    query = query.OrderBy(p => p.Price);
+                }
+                else if (sortPrice.Equals("desc", StringComparison.OrdinalIgnoreCase))
+                {
+                    query = query.OrderByDescending(p => p.Price);
+                }
+            }
+
+            return query.ToList();
+        }
 
         public async Task<AdSubscriptionPackage> UpdatePackageAsync(Guid packageId, CreateAdSubscriptionPackageRequest request)
         {
@@ -148,6 +178,30 @@ namespace Application.Services
         public async Task<bool> DeletePackageAsync(Guid packageId)
         {
             return await _packageRepository.DeleteAsync(packageId);
+        }
+
+        public async Task ActivatePackageAsync(Guid packageId)
+        {
+            var package = await _packageRepository.GetByIdAsync(packageId);
+
+            if (package == null)
+                throw new KeyNotFoundException("Package not found");
+
+            package.Status = "active";
+
+            await _packageRepository.UpdateAsync(package);
+        }
+
+        public async Task DeactivatePackageAsync(Guid packageId)
+        {
+            var package = await _packageRepository.GetByIdAsync(packageId);
+
+            if (package == null)
+                throw new KeyNotFoundException("Package not found");
+
+            package.Status = "inactive";
+
+            await _packageRepository.UpdateAsync(package);
         }
     }
 }
