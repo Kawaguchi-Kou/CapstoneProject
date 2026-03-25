@@ -1,4 +1,5 @@
 ﻿using Application.DTOs.Requests;
+using Application.DTOs.Responses;
 using Application.Interfaces;
 using Application.Services;
 using AutoMapper;
@@ -44,11 +45,32 @@ namespace WebAPI.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create(CreatePoiRequest request)
+        public async Task<IActionResult> Create(CreatePoiRequest request, List<Guid> prefereenceIds)
         {
-            var poi = _mapper.Map<POI>(request);
-            var response = await _poiService.CreateAsync(poi);
-            return Ok(response);
+            try
+            {
+                string? poiUrl = null;
+
+                try
+                {
+                    if (request.POIImgUrl != null && request.POIImgUrl.Length > 0)
+                    {
+                        using var stream = request.POIImgUrl.OpenReadStream();
+                        poiUrl = await _cloudinaryService.UploadImageAsync(stream, request.POIImgUrl.FileName);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    return BadRequest($"File upload failed: {ex.Message}");
+                }
+                var poi = _mapper.Map<POI>(request);
+                var response = await _poiService.CreateAsync(poi, prefereenceIds);
+                var result = _mapper.Map<RecommendedPoiResponse>(response);
+                return Ok(result);
+            }   catch (Exception ex) 
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
 
         [HttpPut("{id}")]

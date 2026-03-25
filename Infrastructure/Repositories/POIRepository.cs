@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Domain.Entities;
+using Domain.Enums;
 using Domain.Interfaces;
 using Infrastructure.EntitiesConfigurations;
 using Microsoft.EntityFrameworkCore;
@@ -22,7 +23,7 @@ namespace Infrastructure.Repositories
         public async Task<POI?> GetByIdAsync(Guid poiId)
         {
             return await _context.POIs
-                .FirstOrDefaultAsync(p => p.Id == poiId);
+                .FirstOrDefaultAsync(p => p.Id == poiId && p.Status == POIStatus.Approved);
         }
 
         public async Task<List<POI>> GetAllWithPreferencesAsync()
@@ -30,18 +31,47 @@ namespace Infrastructure.Repositories
             return await _context.POIs
                 .Include(p => p.PoiPreferences)
                     .ThenInclude(pp => pp.Preference)
+                .Where(p => p.Status == POIStatus.Approved)
                 .ToListAsync();
         }
 
         public async Task<List<POI>> GetAllAsync()
         {
-            return await _context.POIs.ToListAsync();
+            return await _context.POIs.Where(p => p.Status == POIStatus.Approved).ToListAsync();
         }
 
-        public async Task AddAsync(POI poi)
+        public async Task AddAsync(POI poi, List<Guid> preferenceIds)
         {
-            await _context.POIs.AddAsync(poi);
-            await _context.SaveChangesAsync();
+            using var transaction = await _context.Database.BeginTransactionAsync();
+
+            try
+            {
+                poi.Status = POIStatus.Approved;
+
+                await _context.POIs.AddAsync(poi);
+                await _context.SaveChangesAsync();
+
+                if (preferenceIds != null && preferenceIds.Any())
+                {
+                    var uniqueIds = preferenceIds.Distinct();
+
+                    var poiPreferences = uniqueIds.Select(prefId => new POIPreference
+                    {
+                        PoiId = poi.Id,
+                        PreferenceId = prefId
+                    });
+
+                    await _context.POIPreferences.AddRangeAsync(poiPreferences);
+                    await _context.SaveChangesAsync();
+                }
+
+                await transaction.CommitAsync();
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
         }
         public async Task AddRangeAsync(List<POI> pois)
         {
@@ -76,7 +106,8 @@ namespace Infrastructure.Repositories
             return await _context.POIs
                 .FirstOrDefaultAsync(p =>
                     p.Name.ToLower() == name &&
-                    p.City.ToLower() == city);
+                    p.City.ToLower() == city &&
+                    p.Status == POIStatus.Approved);
         }
         public async Task<List<Location>> GetAllLocationsAsync()
         {
@@ -86,7 +117,7 @@ namespace Infrastructure.Repositories
         public async Task<List<POI>> GetByLocationAsync(Guid locationId)
         {
             return await _context.POIs
-                .Where(x => x.LocationId == locationId)
+                .Where(x => x.LocationId == locationId && x.Status == POIStatus.Approved)
                 .ToListAsync();
         }
     }

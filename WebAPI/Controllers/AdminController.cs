@@ -63,7 +63,7 @@ namespace WebAPI.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create([FromForm] CreatePoiRequest request)
+        public async Task<IActionResult> Create([FromForm] CreatePoiRequest request, List<Guid> preferenceIds)
         {
             try
             {
@@ -84,7 +84,7 @@ namespace WebAPI.Controllers
 
                 var poi = _mapper.Map<POI>(request);
                 poi.POIImgUrl = POIImgUrl!;
-                var newPoi = await _poiService.CreateAsync(poi);
+                var newPoi = await _poiService.CreateAsync(poi, preferenceIds);
 
                 var response = _mapper.Map<PoiResponse>(poi);
 

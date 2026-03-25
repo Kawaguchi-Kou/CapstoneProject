@@ -128,30 +128,18 @@ namespace Application.Services
             return poi;
         }
 
-        public async Task<POI> CreateAsync(POI request)
+        public async Task<POI> CreateAsync(POI request, List<Guid> preferenceIds)
         {
             var (lat, lon) = await _geocodingService
                 .GetCoordinatesAsync(request.Name, request.City);
 
-            var poi = new POI
-            {
-                Id = Guid.NewGuid(),
-                Name = request.Name,
-                Address = request.Address,
-                City = request.City,
-                ApproxCost = request.ApproxCost,
-                OpenHour = request.OpenHour,
-                CloseHour = request.CloseHour,
-                LocationId = request.LocationId,
-                GoogleMapLink = request.GoogleMapLink,
-                IsIndoor = request.IsIndoor,
-                Latitude = lat,
-                Longitude = lon
-            };
+            request.Latitude = lat;
+            request.Longitude = lon;
 
-            await _poiRepository.AddAsync(poi);
+            // Delegate everything DB-related to repository
+            await _poiRepository.AddAsync(request, preferenceIds);
 
-            return poi;
+            return request;
         }
 
         public async Task<POI> UpdateAsync(Guid id, POI request)

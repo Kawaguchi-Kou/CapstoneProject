@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Domain.Entities;
 
 namespace Application.DTOs.Responses
 {
@@ -33,5 +34,7 @@ namespace Application.DTOs.Responses
         public Guid LocationId { get; set; }
 
         public string LocationName { get; set; } = string.Empty;
+
+        public List<POIPreferenceResponse> Preferences { get; set; } = new List<POIPreferenceResponse>();
     }
 }

@@ -17,7 +17,7 @@ namespace Application.Interfaces
 
         Task<List<POI>> GetAllAsync();
         Task<POI?> GetByIdAsync(Guid id);
-        Task<POI> CreateAsync(POI request);
+        Task<POI> CreateAsync(POI request, List<Guid> preferenceIds);
         Task<POI> UpdateAsync(Guid id, POI request);
 
         Task DeleteAsync(Guid id);

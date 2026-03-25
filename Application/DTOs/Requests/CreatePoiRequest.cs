@@ -25,5 +25,7 @@ namespace Application.DTOs.Requests
         public IFormFile? POIImgUrl { get; set; }
 
         public bool IsIndoor { get; set; }
+
+        public List<Guid> Preferences { get; set; }
     }
 }

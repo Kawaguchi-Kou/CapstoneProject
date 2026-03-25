@@ -287,6 +287,11 @@ namespace Infrastructure.EntitiesConfigurations
                 entity.Property(p => p.Address)
                       .IsRequired()
                       .HasMaxLength(255);
+
+                entity.HasOne(poi => poi.Partner)
+                      .WithMany(p => p.POIs)
+                      .HasForeignKey(poi => poi.PartnerId)
+                      .OnDelete(DeleteBehavior.Cascade);
             });
 
             modelBuilder.Entity<POIPreference>(entity =>
