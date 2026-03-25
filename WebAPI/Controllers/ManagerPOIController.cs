@@ -11,15 +11,15 @@ using OfficeOpenXml;
 namespace WebAPI.Controllers
 {
     [ApiController]
-    [Route("api/staff/pois")]
-    [Authorize(Roles = "Staff")]
-    public class StaffPOIController : ControllerBase
+    [Route("api/manager/pois")]
+    [Authorize(Roles = "Manager")]
+    public class ManagerPOIController : ControllerBase
     {
         private readonly IPOIService _poiService;
         private readonly ICloudinaryService _cloudinaryService;
         private readonly IMapper _mapper;
 
-        public StaffPOIController(IPOIService poiService, ICloudinaryService cloudinaryService, IMapper mapper)
+        public ManagerPOIController(IPOIService poiService, ICloudinaryService cloudinaryService, IMapper mapper)
         {
             _cloudinaryService = cloudinaryService;
             _poiService = poiService;

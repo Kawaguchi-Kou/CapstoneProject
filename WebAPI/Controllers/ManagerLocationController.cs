@@ -6,13 +6,13 @@ using Microsoft.AspNetCore.Mvc;
 namespace WebAPI.Controllers
 {
     [ApiController]
-    [Route("api/staff/locations")]
-    [Authorize(Roles = "Staff")]
-    public class StaffLocationController : ControllerBase
+    [Route("api/manager/locations")]
+    [Authorize(Roles = "Manager")]
+    public class ManagerLocationController : ControllerBase
     {
         private readonly ILocationService _locationService;
 
-        public StaffLocationController(ILocationService locationService)
+        public ManagerLocationController(ILocationService locationService)
         {
             _locationService = locationService;
         }
