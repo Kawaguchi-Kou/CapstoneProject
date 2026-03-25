@@ -23,9 +23,10 @@ namespace Application.DTOs.Requests
 
         public string GoogleMapLink { get; set; } = string.Empty;
         public IFormFile? POIImgUrl { get; set; }
+        public string VisitRecommendation { get; set; } = string.Empty;
 
         public bool IsIndoor { get; set; }
 
-        public List<Guid> Preferences { get; set; }
+        public List<Guid> PoiPreferences { get; set; }
     }
 }

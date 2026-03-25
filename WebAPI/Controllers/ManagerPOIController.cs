@@ -45,7 +45,7 @@ namespace WebAPI.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create(CreatePoiRequest request, List<Guid> prefereenceIds)
+        public async Task<IActionResult> Create(CreatePoiRequest request)
         {
             try
             {
@@ -64,7 +64,8 @@ namespace WebAPI.Controllers
                     return BadRequest($"File upload failed: {ex.Message}");
                 }
                 var poi = _mapper.Map<POI>(request);
-                var response = await _poiService.CreateAsync(poi, prefereenceIds);
+                poi.POIImgUrl = poiUrl;
+                var response = await _poiService.CreateAsync(poi, request.PoiPreferences);
                 var result = _mapper.Map<RecommendedPoiResponse>(response);
                 return Ok(result);
             }   catch (Exception ex) 
