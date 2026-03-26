@@ -90,7 +90,7 @@ namespace Application.Services
                 Status = payment.PaymentStatus,
                 TransactionContent = payment.TransactionContent,
                 QrCodeUrl = qrCodeUrl,
-                BankInfo = "VP Bank - 0888294028 - SEPAY COMPANY",
+                BankInfo = _sePayService.GetBankInfo(),
                 CreatedAt = payment.PaidAt
             };
         }

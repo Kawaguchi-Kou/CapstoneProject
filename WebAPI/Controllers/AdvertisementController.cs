@@ -32,8 +32,8 @@ namespace WebAPI.Controllers
                 {
                     return StatusCode(403, new
                     {
-                        message = "Bạn không có quyền thực hiện thao tác này. Yêu cầu role Partner.",
-                        role = userRole
+                        message = "Bạn không có quyền thực hiện thao tác này. Yêu cầu role Partner.", 
+                        role = userRole 
                     });
                 }
 

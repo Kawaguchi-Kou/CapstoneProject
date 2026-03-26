@@ -17,7 +17,10 @@ namespace Application.DTOs.Responses
         public int AdsRemaining => MaxAds - AdsUsed;
         public SubStatus Status { get; set; }
         public DateTime CreatedAt { get; set; }
+        public DateTime? ExpiredAt { get; set; }
         public string PackageTitle { get; set; } = string.Empty;
+        public string PackageStatus { get; set; } = string.Empty;
+        public int DurationDays { get; set; }
 
         // Payment fields (khi cần thanh toán)
         public Guid? PaymentId { get; set; }
