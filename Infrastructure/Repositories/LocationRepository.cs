@@ -55,5 +55,33 @@ namespace Infrastructure.Repositories
         {
             return await _context.Locations.ToListAsync();
         }
+
+        public async Task<List<Location>> GetByIdsAsync(List<Guid> locationIds)
+        {
+            return await _context.Locations
+                .Where(x => locationIds.Contains(x.LocationId))
+                .ToListAsync();
+        }
+
+        public async Task<Dictionary<Guid, Location>> GetByIdsAsDictionaryAsync(List<Guid> locationIds)
+        {
+            if (locationIds == null || !locationIds.Any())
+                return new Dictionary<Guid, Location>();
+
+            locationIds = locationIds.Distinct().ToList();
+
+            var result =  await _context.Locations
+                .AsNoTracking()
+                .Where(x => locationIds.Contains(x.LocationId))
+                .ToDictionaryAsync(x => x.LocationId);
+
+            if (result.Count != locationIds.Count)
+            {
+                var missingIds = locationIds.Except(result.Keys);
+                throw new Exception($"Locations not found: {string.Join(", ", missingIds)}");
+            }
+
+            return result;
+        }
     }
 }

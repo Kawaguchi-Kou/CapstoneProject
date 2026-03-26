@@ -60,5 +60,29 @@ namespace Application.Services
 
             return (latitude, longitude);
         }
+
+        public async Task<double> GetDrivingDistance(
+        double lat1, double lon1,
+        double lat2, double lon2)
+        {
+            var token = _configuration["MAPBOX_ACCESS_TOKEN"];
+            var url = $"https://api.mapbox.com/directions/v5/mapbox/driving/" +
+                      $"{lon1},{lat1};{lon2},{lat2}" +
+                      $"?access_token={token}";
+
+            var response = await _httpClient.GetAsync(url);
+            response.EnsureSuccessStatusCode();
+
+            var json = await response.Content.ReadAsStringAsync();
+            var data = JsonDocument.Parse(json);
+
+            var distanceMeters = data
+                .RootElement
+                .GetProperty("routes")[0]
+                .GetProperty("distance")
+                .GetDouble();
+
+            return distanceMeters / 1000; // convert to km
+        }
     }
 }

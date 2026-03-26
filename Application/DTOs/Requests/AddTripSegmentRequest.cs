@@ -12,6 +12,5 @@ namespace Application.DTOs.Requests
         public int OrderIndex { get; set; }
         public DateOnly StartDate { get; set; }
         public DateOnly EndDate { get; set; }
-        public float? DistanceKm { get; set; }
     }
 }

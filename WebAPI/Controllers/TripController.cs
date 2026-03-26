@@ -29,7 +29,8 @@ namespace WebAPI.Controllers
 
         [HttpPost("create")]
         [Authorize]
-        public async Task<IActionResult> Create(TripRequest request, TripType type)
+        public async Task<IActionResult> Create([FromBody] TripRequest request,
+    [FromQuery] TripType type)
         {
             try
             {

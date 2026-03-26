@@ -18,6 +18,8 @@ namespace Domain.Interfaces
 
         Task<Location> GetByIdAsync(Guid locationId);
         Task<List<Location>> GetAllAsync();
+        Task<List<Location>> GetByIdsAsync(List<Guid> locationIds);
 
+        Task<Dictionary<Guid, Location>> GetByIdsAsDictionaryAsync(List<Guid> locationIds);
     }
 }

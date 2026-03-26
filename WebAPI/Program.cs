@@ -22,6 +22,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using OfficeOpenXml;
 using WebAPI.Converters;
+using System.Text.Json.Serialization;
 
 
 //load .env
@@ -256,6 +257,7 @@ builder.Services
     .AddJsonOptions(options =>
 {
     options.JsonSerializerOptions.Converters.Add(new DateOnlyJsonConverter());
+    options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
 });
 
 // Add AutoMapper
@@ -264,6 +266,7 @@ builder.Services.AddAutoMapper(typeof(MappingProfile));
 // Add Swagger
 builder.Services.AddSwaggerGen(c =>
 {
+    c.UseInlineDefinitionsForEnums();
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "TravelPlanner API", Version = "v1" });
 
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme

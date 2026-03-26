@@ -201,6 +201,19 @@ namespace Application.Services
                 string name = worksheet.Cells[row, 1].Text.Trim();
                 string address = worksheet.Cells[row, 2].Text.Trim();
                 string cityRaw = worksheet.Cells[row, 3].Text.Trim();
+                var prefRaw = worksheet.Cells[row, 8].Text.Trim();
+                var preferenceIds = new List<Guid>();
+                if (!string.IsNullOrEmpty(prefRaw))
+                {
+                    preferenceIds = prefRaw
+                        .Split(',', StringSplitOptions.RemoveEmptyEntries)
+                        .Select(x => Guid.TryParse(x.Trim(), out var id) ? id : (Guid?)null)
+                        .Where(x => x.HasValue)
+                        .Select(x => x!.Value)
+                        .ToList();
+                }
+                
+
                 string cityKey = cityRaw.ToLower();
 
                 if (!locations.ContainsKey(cityKey))
@@ -273,9 +286,13 @@ namespace Application.Services
                     Latitude = location.Latitude,
                     Longitude = location.Longitude,
 
-
                     POIImgUrl = imageUrl
                 };
+                var poiPreferences = preferenceIds.Select(prefId => new POIPreference
+                {
+                    PoiId = poi.Id,
+                    PreferenceId = prefId
+                }).ToList();
 
                 pois.Add(poi);
             }

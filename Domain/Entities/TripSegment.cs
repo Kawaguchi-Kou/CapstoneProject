@@ -26,7 +26,7 @@ namespace Domain.Entities
         public DateOnly StartDate { get; set; }
         public DateOnly EndDate { get; set; }
 
-        public float? DistanceKm { get; set; }
+        public double? DistanceKm { get; set; }
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 

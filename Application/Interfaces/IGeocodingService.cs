@@ -9,5 +9,8 @@ namespace Application.Interfaces
     public interface IGeocodingService
     {
         Task<(double Latitude, double Longitude)> GetCoordinatesAsync(string address, string city);
+        Task<double> GetDrivingDistance(
+        double lat1, double lon1,
+        double lat2, double lon2);
     }
 }
