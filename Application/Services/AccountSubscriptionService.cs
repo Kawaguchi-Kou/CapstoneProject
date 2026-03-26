@@ -104,7 +104,9 @@ namespace Application.Services
                 AdsUsed = subscriptionWithNav.AdsUsed,
                 Status = subscriptionWithNav.Status,
                 CreatedAt = subscriptionWithNav.CreatedAt,
-                PackageTitle = subscriptionWithNav.SubscriptionPackage?.Title ?? string.Empty
+                ExpiredAt = subscriptionWithNav.CreatedAt.AddDays(subscriptionWithNav.SubscriptionPackage?.DurationDays ?? 0),
+                PackageTitle = subscriptionWithNav.SubscriptionPackage?.Title ?? string.Empty,
+                PackageStatus = subscriptionWithNav.SubscriptionPackage?.Status ?? string.Empty
             };
         }
 
@@ -136,6 +138,25 @@ namespace Application.Services
             }
 
             return activeSubscriptions;
+        }
+
+        public async Task<List<AccountSubscription>> GetAllSubscriptionsAsync(Guid accountId)
+        {
+            var subscriptions = await _subscriptionRepository.GetByAccountIdAsync(accountId);
+
+            // Refresh trạng thái theo hạn dùng trước khi trả toàn bộ lịch sử
+            foreach (var subscription in subscriptions)
+            {
+                if (subscription.Status == SubStatus.Active && IsExpiredByDuration(subscription))
+                {
+                    subscription.Status = SubStatus.Expired;
+                    await _subscriptionRepository.UpdateAsync(subscription);
+                }
+            }
+
+            return subscriptions
+                .OrderByDescending(s => s.CreatedAt)
+                .ToList();
         }
 
         public async Task<bool> CanCreateAdvertisementAsync(Guid accountId)
