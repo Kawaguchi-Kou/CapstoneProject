@@ -47,7 +47,10 @@ namespace Application.Mappings
 
             //AccountSubscription
             CreateMap<AccountSubscription, AccountSubscriptionResponse>()
-                .ForMember(dest => dest.PackageTitle, opt => opt.MapFrom(src => src.SubscriptionPackage != null ? src.SubscriptionPackage.Title : string.Empty));
+                .ForMember(dest => dest.PackageTitle, opt => opt.MapFrom(src => src.SubscriptionPackage != null ? src.SubscriptionPackage.Title : string.Empty))
+                .ForMember(dest => dest.PackageStatus, opt => opt.MapFrom(src => src.SubscriptionPackage != null ? src.SubscriptionPackage.Status : string.Empty))
+                .ForMember(dest => dest.DurationDays, opt => opt.MapFrom(src => src.SubscriptionPackage != null ? src.SubscriptionPackage.DurationDays : 0))
+                .ForMember(dest => dest.ExpiredAt, opt => opt.MapFrom(src => src.SubscriptionPackage != null ? src.CreatedAt.AddDays(src.SubscriptionPackage.DurationDays) : (DateTime?)null));
 
             //Advertisement
             CreateMap<CreateAdvertisementRequest, Advertisement>();

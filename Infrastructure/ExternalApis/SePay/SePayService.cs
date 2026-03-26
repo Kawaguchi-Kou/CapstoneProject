@@ -33,6 +33,11 @@ namespace Infrastructure.ExternalApis.SePay
             return url;
         }
 
+        public string GetBankInfo()
+        {
+            return $"{_options.BankName} - {_options.AccountNumber}";
+        }
+
         /// <summary>
         /// Verify API Key từ webhook header
         /// </summary>

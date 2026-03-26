@@ -93,7 +93,9 @@ namespace WebAPI.Controllers
                     AdsUsed = subscription.AdsUsed,
                     Status = subscription.Status,
                     CreatedAt = subscription.CreatedAt,
-                    PackageTitle = subscription.SubscriptionPackage?.Title ?? string.Empty
+                    ExpiredAt = subscription.CreatedAt.AddDays(subscription.SubscriptionPackage?.DurationDays ?? 0),
+                    PackageTitle = subscription.SubscriptionPackage?.Title ?? string.Empty,
+                    PackageStatus = subscription.SubscriptionPackage?.Status ?? string.Empty
                 };
 
                 return Ok(response);
@@ -115,10 +117,10 @@ namespace WebAPI.Controllers
                     return Unauthorized(new { message = "Invalid token: User ID not found" });
                 }
 
-                var subscriptions = await _subscriptionService.GetActiveSubscriptionsAsync(accountId);
+                var subscriptions = await _subscriptionService.GetAllSubscriptionsAsync(accountId);
                 if (subscriptions == null || !subscriptions.Any())
                 {
-                    return NotFound(new { message = "Bạn chưa có gói đăng ký nào còn active" });
+                    return NotFound(new { message = "Bạn chưa có gói đăng ký nào" });
                 }
 
                 var responses = subscriptions.Select(subscription => new
@@ -131,7 +133,9 @@ namespace WebAPI.Controllers
                     AdsRemaining = subscription.MaxAds - subscription.AdsUsed,
                     subscription.Status,
                     subscription.CreatedAt,
-                    PackageTitle = subscription.SubscriptionPackage?.Title ?? string.Empty
+                    ExpiredAt = subscription.CreatedAt.AddDays(subscription.SubscriptionPackage?.DurationDays ?? 0),
+                    PackageTitle = subscription.SubscriptionPackage?.Title ?? string.Empty,
+                    PackageStatus = subscription.SubscriptionPackage?.Status ?? string.Empty
                 }).ToList();
 
                 return Ok(responses);
