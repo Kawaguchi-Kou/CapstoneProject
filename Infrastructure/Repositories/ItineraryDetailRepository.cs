@@ -80,5 +80,7 @@ namespace Infrastructure.Repositories
                 .OrderByDescending(x => x.WeatherRiskScore)
                 .ToListAsync();
         }
+
+
     }
 }

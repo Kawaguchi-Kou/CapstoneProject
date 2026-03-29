@@ -19,5 +19,15 @@ namespace Domain.Interfaces
             DateOnly to);
 
         Task UpsertAsync(List<WeatherForecast> forecasts);
+
+        Task UpsertAsync(WeatherForecast forecast);
+
+        Task<List<WeatherForecast>> GetByLocationAndDates(
+        Guid locationId,
+        List<DateOnly> dates);
+
+        Task<Dictionary<DateOnly, WeatherForecast>> GetByLocationAndDatesDict(
+    Guid locationId,
+    List<DateOnly> dates);
     }
 }

@@ -90,5 +90,51 @@ namespace Infrastructure.Repositories
             await _context.SaveChangesAsync();
         }
 
+        public async Task UpsertAsync(WeatherForecast forecast)
+        {
+            var existing = await _context.WeatherForecasts
+                .FirstOrDefaultAsync(x =>
+                    x.LocationId == forecast.LocationId &&
+                    x.ForecastDate == forecast.ForecastDate);
+
+            if (existing == null)
+            {
+                await _context.WeatherForecasts.AddAsync(forecast);
+            }
+            else
+            {
+                _context.Entry(existing).CurrentValues.SetValues(forecast);
+            }
+        }
+
+        public async Task<List<WeatherForecast>> GetByLocationAndDates(
+        Guid locationId,
+        List<DateOnly> dates)
+        {
+            if (dates == null || !dates.Any())
+                return new List<WeatherForecast>();
+
+            dates = dates.Distinct().ToList();
+
+            return await _context.WeatherForecasts
+                .AsNoTracking()
+                .Where(x => x.LocationId == locationId && dates.Contains(x.ForecastDate))
+                .ToListAsync();
+        }
+
+        public async Task<Dictionary<DateOnly, WeatherForecast>> GetByLocationAndDatesDict(
+    Guid locationId,
+    List<DateOnly> dates)
+        {
+            if (dates == null || !dates.Any())
+                return new Dictionary<DateOnly, WeatherForecast>();
+
+            dates = dates.Distinct().ToList();
+
+            return await _context.WeatherForecasts
+                .AsNoTracking()
+                .Where(x => x.LocationId == locationId && dates.Contains(x.ForecastDate))
+                .ToDictionaryAsync(x => x.ForecastDate);
+        }
     }
 }

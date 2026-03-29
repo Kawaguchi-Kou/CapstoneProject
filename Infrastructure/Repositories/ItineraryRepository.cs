@@ -52,5 +52,13 @@ namespace Infrastructure.Repositories
                 await _context.SaveChangesAsync();
             }
         }
+
+        public async Task AddRangeAsync(List<Itinerary> itineraries)
+        {
+            if (itineraries == null || !itineraries.Any())
+                return;
+
+            await _context.Itineraries.AddRangeAsync(itineraries);
+        }
     }
 }

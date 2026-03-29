@@ -18,5 +18,6 @@ namespace Domain.Interfaces
         Task UpdateAsync(Itinerary itinerary);
 
         Task DeleteAsync(Guid id);
+        Task AddRangeAsync(List<Itinerary> itineraries);
     }
 }

@@ -173,6 +173,9 @@ builder.Services.AddScoped<ITripRepository, TripRepository>();
 builder.Services.AddScoped<ITripService, TripService>();
 builder.Services.AddScoped<ITripQueryService, TripQueryService>();
 
+//Planner&RePlanner
+builder.Services.AddScoped<IPlannerService, PlannerService>();
+
 //SignalR
 builder.Services.AddSignalR();
 builder.Services.AddSingleton<IUserIdProvider, CustomUserIdProvider>();
