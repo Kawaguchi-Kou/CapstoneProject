@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Domain.Entities;
+using Domain.Enums;
 
 namespace Application.DTOs.Responses
 {
@@ -18,6 +19,7 @@ namespace Application.DTOs.Responses
         public TimeOnly? CloseHour { get; set; }
         public string GoogleMapLink { get; set; } = string.Empty;
         public string POIImgUrl { get; set; } = string.Empty;
+        public POIType Type { get; set; }
         public bool IsIndoor { get; set; }
         public decimal Latitude { get; set; }
         public decimal Longitude { get; set; }

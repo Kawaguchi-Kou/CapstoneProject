@@ -39,9 +39,7 @@ namespace WebAPI.Controllers
                 var pois = await _poiService
                     .GetAllPoisSortedByPreferenceAsync(accountId);
 
-                var result = _mapper.Map<List<RecommendedPoiResponse>>(pois);
-
-                return Ok(result.Take(limit));
+                return Ok(pois.Take(limit));
             }
             catch(Exception ex)
             {
