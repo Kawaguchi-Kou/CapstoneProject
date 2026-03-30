@@ -28,6 +28,9 @@ using System.Text.Json.Serialization;
 //load .env
 Env.Load();
 
+System.Net.ServicePointManager.SecurityProtocol =
+    System.Net.SecurityProtocolType.Tls12;
+
 var builder = WebApplication.CreateBuilder(args);
 
 ExcelPackage.License.SetNonCommercialPersonal("CapstoneProject");
@@ -53,6 +56,12 @@ builder.Services.Configure<OpenMeteoOptions>(
     builder.Configuration.GetSection(OpenMeteoOptions.SectionName));
 
 builder.Services.AddHttpClient<IOpenMeteoService, OpenMeteoService>();
+
+//======================
+//GEMINI - GENERATIVE AI
+//======================
+builder.Configuration["Gemini:ApiKey"] =
+    Environment.GetEnvironmentVariable("GEMINI_API_KEY");
 
 
 // =====================
@@ -98,8 +107,22 @@ builder.Services.AddScoped<Application.Interfaces.IPaymentService, Application.S
 //Advertisement
 builder.Services.AddScoped<IAdvertisementService, AdvertisementService>();
 
+//AccountAdmin
+builder.Services.AddScoped<IAdminService, AdminService>();
+
 //Location
 builder.Services.AddScoped<ILocationService, LocationService>();
+
+//Segment
+builder.Services.AddScoped<ITripSegmentService, TripSegmentService>();
+
+//Gemini
+builder.Services.AddHttpClient<IGeminiService, GeminiService>()
+   .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+   {
+       ServerCertificateCustomValidationCallback =
+            HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+   });
 
 //Add repositories
 //Auth
@@ -115,9 +138,6 @@ builder.Services.AddScoped<IPreferenceRepository, PreferenceRepository>();
 
 //POI
 builder.Services.AddScoped<IPOIRepository, POIRepository>();
-
-//AccountAdmin
-builder.Services.AddScoped<IAdminService, AdminService>();
 
 //AdSubscriptionPackage
 builder.Services.AddScoped<IAdSubscriptionPackageRepository, AdSubscriptionPackageRepository>();
@@ -139,16 +159,18 @@ builder.Services.AddScoped<IItineraryDetailRepository, ItineraryDetailRepository
 
 //Segment
 builder.Services.AddScoped<ITripSegmentRepository, TripSegmentRepository>();
-builder.Services.AddScoped<ITripSegmentService, TripSegmentService>();
 
 //Location
 builder.Services.AddScoped<ILocationRepository, LocationRepository>();
 
+
+
 //Cloudinary
 builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
 
-//WeatherMobitorJob
+//BackGroundJob
 builder.Services.AddScoped<IWeatherMonitorJob, WeatherMonitorJob>();
+builder.Services.AddScoped<IWeatherPreloadJob, WeatherPreloadJob>();
 
 //RiskEngine
 builder.Services.AddScoped<IAdaptiveWeatherRiskEngine, AdaptiveWeatherRiskEngine>();
@@ -167,6 +189,8 @@ builder.Services.AddScoped<IWeatherRiskScanService, WeatherRiskScanService>();
 
 //Weatherforecast
 builder.Services.AddScoped<IWeatherForecastRepository, WeatherForecastRepository>();
+builder.Services.AddScoped<IWeatherService, WeatherService>();
+builder.Services.AddScoped<IBackgroundJobService, HangfireJobService>();
 
 //Trip
 builder.Services.AddScoped<ITripRepository, TripRepository>();

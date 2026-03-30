@@ -1,0 +1,79 @@
+﻿using System.Net.Http.Json;
+using System.Text.Json;
+using Application.Interfaces;
+using Microsoft.Extensions.Configuration;
+
+namespace Application.Services
+{
+    public class GeminiService : IGeminiService
+    {
+        private readonly HttpClient _http;
+        private readonly string _apiKey;
+
+        public GeminiService(HttpClient http, IConfiguration config)
+        {
+            _http = http;
+            _apiKey = config["Gemini:ApiKey"]!;
+        }
+
+        public async Task<string> GenerateAsync(string prompt)
+        {
+            var request = new
+            {
+                contents = new[]
+                {
+                new
+                {
+                    parts = new[]
+                    {
+                        new { text = prompt }
+                    }
+                }
+            }
+            };
+
+            var url =
+                $"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={_apiKey}";
+
+            for (int i = 0; i < 3; i++) // 🔥 retry
+            {
+                try
+                {
+                    var response = await _http.PostAsJsonAsync(url, request);
+
+                    response.EnsureSuccessStatusCode();
+
+                    var json = await response.Content.ReadAsStringAsync();
+
+                    return ExtractText(json);
+                }
+                catch
+                {
+                    if (i == 2) throw;
+                    await Task.Delay(500);
+                }
+            }
+
+            return "";
+        }
+
+        private string ExtractText(string raw)
+        {
+            try
+            {
+                using var doc = JsonDocument.Parse(raw);
+
+                return doc.RootElement
+                    .GetProperty("candidates")[0]
+                    .GetProperty("content")
+                    .GetProperty("parts")[0]
+                    .GetProperty("text")
+                    .GetString() ?? "";
+            }
+            catch
+            {
+                return "";
+            }
+        }
+    }
+}

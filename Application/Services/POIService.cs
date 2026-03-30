@@ -96,6 +96,7 @@ namespace Application.Services
                         CloseHour = poi.CloseHour,
                         GoogleMapLink = poi.GoogleMapLink,
                         IsIndoor = poi.IsIndoor,
+                        Type = poi.Type,
                         LocationName = poi.Location?.LocationName ?? "",
                         POIImgUrl = poi.POIImgUrl,
                         Score = score,
@@ -108,8 +109,8 @@ namespace Application.Services
                 .OrderByDescending(x => x.Score)
                 .ToList();
 
-                        return result;
-                    }
+             return result;
+        }
 
         public async Task<List<POI>> GetAllAsync()
         {

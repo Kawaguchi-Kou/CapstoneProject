@@ -1,27 +1,19 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Application.DTOs.Requests;
-using Application.Interfaces;
+﻿using Application.Interfaces;
 using Domain.Entities;
 using Domain.Enums;
 using Domain.Interfaces;
-using Domain.Weather;
 
 namespace Application.Services
 {
     public class TripService : ITripService
     {
         private readonly ITripRepository _tripRepo;
-        private readonly ILocationRepository _locationRepo;
-        private readonly IWeatherForecastRepository _weatherRepo;
-        private readonly IAdaptiveWeatherRiskEngine _riskEngine;
+        private readonly IBackgroundJobService _jobService;
 
-        public TripService(ITripRepository tripRepo)
+        public TripService(ITripRepository tripRepo, IBackgroundJobService jobService)
         {
             _tripRepo = tripRepo;
+            _jobService = jobService;
         }
 
 
@@ -30,6 +22,7 @@ namespace Application.Services
             newTrip.Status = TripStatus.InProgress;
             newTrip.CreatedAt = DateTime.UtcNow;
             await _tripRepo.AddAsync(newTrip);
+            _jobService.EnqueueWeatherPreload(newTrip.TripId);
             return newTrip;
         }
     }
