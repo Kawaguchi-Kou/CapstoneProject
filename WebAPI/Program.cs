@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Security.Claims;
 using System.Text;
 using Application.Hubs;
@@ -28,9 +28,6 @@ using System.Text.Json.Serialization;
 //load .env
 Env.Load();
 
-System.Net.ServicePointManager.SecurityProtocol =
-    System.Net.SecurityProtocolType.Tls12;
-
 var builder = WebApplication.CreateBuilder(args);
 
 ExcelPackage.License.SetNonCommercialPersonal("CapstoneProject");
@@ -47,7 +44,10 @@ builder.Services.AddHangfire(config =>
             builder.Configuration.GetConnectionString("Supabase")
         )
     ));
-builder.Services.AddHangfireServer();
+builder.Services.AddHangfireServer(options =>
+{
+    options.WorkerCount = 2; 
+});
 
 // =====================
 // WEATHER - OPEN METEO

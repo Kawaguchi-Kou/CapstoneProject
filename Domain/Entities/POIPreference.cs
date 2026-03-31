@@ -13,8 +13,5 @@ namespace Domain.Entities
 
         public Guid PreferenceId { get; set; }
         public Preference Preference { get; set; }
-
-        //public double Weight { get; set; } // mức độ phù hợp (0–1 hoặc 0–100)
     }
-
 }
