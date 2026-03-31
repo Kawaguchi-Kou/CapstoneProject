@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Application.DTOs.Requests;
 using Application.DTOs.Responses;
+using Application.Helper;
 using Application.Interfaces;
 using Domain.Entities;
 using Domain.Enums;
@@ -170,6 +171,23 @@ namespace Application.Services
                 poi.GoogleMapLink = request.GoogleMapLink;
 
                 poi.IsIndoor = request.IsIndoor;
+
+            if(request.CloseHour.HasValue && request.OpenHour.HasValue)
+            {
+                poi.VisitRecommendation = GetVisitRecommendation(
+                    request.OpenHour,
+                    request.CloseHour,
+                    request.Is24Hours,
+                    request.IsIndoor);
+
+                poi.CloseHour = request.CloseHour;
+                poi.OpenHour = request.OpenHour;
+            }
+
+            if (request.POIImgUrl != null)
+            {
+                poi.POIImgUrl = request.POIImgUrl;
+            }
 
             await _poiRepository.UpdateAsync(poi);
 
@@ -335,9 +353,12 @@ namespace Application.Services
                 string cityRaw = worksheet.Cells[row, 3].Text.Trim();
 
                 if (string.IsNullOrWhiteSpace(name))
-                    throw new Exception($"Row {row}: Name is empty");
+                    throw new Exception($"Row {row}: POI name is empty");
 
-                // ===== LOCATION =====
+                if (string.IsNullOrWhiteSpace(cityRaw))
+                    throw new Exception($"Row {row}: City is empty");
+
+
                 string cityKey = StringNormalizer.Normalize(cityRaw);
 
                 if (!locations.ContainsKey(cityKey))
@@ -362,7 +383,7 @@ namespace Application.Services
 
                 if (!string.IsNullOrWhiteSpace(openingRaw))
                 {
-                    var parts = openingRaw.Split('~', StringSplitOptions.TrimEntries);
+                    var separators = new[] { "~", "-", "–" };
 
                     if (parts.Length != 2)
                         throw new Exception($"Row {row}: Invalid opening format");
@@ -422,7 +443,6 @@ namespace Application.Services
                 var poi = new POI
                 {
                     Id = Guid.NewGuid(),
-
                     Name = name,
                     Address = address,
                     City = cityRaw,
@@ -439,12 +459,22 @@ namespace Application.Services
                     GoogleMapLink = worksheet.Cells[row, 6].Text,
                     IsIndoor = isIndoor,
 
+                    VisitRecommendation = GetVisitRecommendation(
+                        openHour, closeHour, is24Hours, isIndoor),
+
+                    GoogleMapLink = worksheet.Cells[row, 6].Text,
+
                     LocationId = location.LocationId,
 
                     Latitude = lat,
                     Longitude = lng,
 
-                    POIImgUrl = imageUrl
+                    Latitude = lat != 0 ? lat : location.Latitude,
+                    Longitude = lng != 0 ? lng : location.Longitude,
+
+                    POIImgUrl = _imageMap.TryGetValue(name.ToLower(), out var img)
+                        ? img
+                        : null
                 };
 
                 // 🔥 IMPORTANT: Assign POI Preferences

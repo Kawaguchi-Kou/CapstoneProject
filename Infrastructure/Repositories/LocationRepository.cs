@@ -29,6 +29,12 @@ namespace Infrastructure.Repositories
             await _context.SaveChangesAsync();
         }
 
+        public async Task AddRangeAsync(List<Location> locations)
+        {
+            await _context.Locations.AddRangeAsync(locations);
+            await _context.SaveChangesAsync();
+        }
+
         public async Task UpdateAsync(Location location)
         {
             _context.Locations.Update(location);
