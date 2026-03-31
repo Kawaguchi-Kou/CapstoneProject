@@ -1,10 +1,11 @@
-﻿using Application.DTOs.Requests;
+﻿using System.ComponentModel;
+using Application.DTOs.Requests;
+using Application.Helper;
 using Application.Interfaces;
 using Domain.Entities;
 using Domain.Interfaces;
 using Microsoft.AspNetCore.Http;
 using OfficeOpenXml;
-using System.ComponentModel;
 
 namespace Application.Services
 {
@@ -93,39 +94,50 @@ namespace Application.Services
             await file.CopyToAsync(stream);
 
             using var package = new ExcelPackage(stream);
-
             var worksheet = package.Workbook.Worksheets[0];
             int rowCount = worksheet.Dimension.Rows;
 
-            List<Location> locations = new();
+            var existingLocations = await _locationRepository.GetAllAsync();
 
-            // lấy số lượng record hiện tại
-            var currentCount = (await _locationRepository.GetAllAsync()).Count;
+            var existingKeys = existingLocations
+                .Select(x => StringNormalizer.Normalize(x.LocationName))
+                .ToHashSet();
+
+            List<Location> newLocations = new();
 
             for (int row = 2; row <= rowCount; row++)
             {
-                string name = worksheet.Cells[row, 1].Text;
+                string name = worksheet.Cells[row, 1].Text.Trim();
 
-                if (!double.TryParse(worksheet.Cells[row, 2].Text, out double latitude))
-                    continue;
+                if (string.IsNullOrWhiteSpace(name))
+                    throw new Exception($"Row {row}: Location name is empty");
 
-                if (!double.TryParse(worksheet.Cells[row, 3].Text, out double longitude))
-                    continue;
+                if (!double.TryParse(worksheet.Cells[row, 2].Text, out double lat))
+                    throw new Exception($"Row {row}: Invalid latitude");
+
+                if (!double.TryParse(worksheet.Cells[row, 3].Text, out double lng))
+                    throw new Exception($"Row {row}: Invalid longitude");
+
+                var normalizedKey = StringNormalizer.Normalize(name);
+
+                if (existingKeys.Contains(normalizedKey))
+                    throw new Exception($"Row {row}: Duplicate location '{name}'");
 
                 var location = new Location
                 {
-                    LocationId = Guid.NewGuid(), 
+                    LocationId = Guid.NewGuid(),
                     LocationName = name,
-                    Latitude = latitude,
-                    Longitude = longitude
+                    Latitude = lat,
+                    Longitude = lng
                 };
 
-                locations.Add(location);
+                newLocations.Add(location);
+                existingKeys.Add(normalizedKey);
             }
 
-            foreach (var location in locations)
+            if (newLocations.Any())
             {
-                await _locationRepository.AddAsync(location);
+                await _locationRepository.AddRangeAsync(newLocations);
             }
         }
     }

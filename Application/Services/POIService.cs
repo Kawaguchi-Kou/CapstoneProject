@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Application.DTOs.Requests;
 using Application.DTOs.Responses;
+using Application.Helper;
 using Application.Interfaces;
 using Domain.Entities;
 using Domain.Interfaces;
@@ -166,6 +167,23 @@ namespace Application.Services
 
                 poi.IsIndoor = request.IsIndoor;
 
+            if(request.CloseHour.HasValue && request.OpenHour.HasValue)
+            {
+                poi.VisitRecommendation = GetVisitRecommendation(
+                    request.OpenHour,
+                    request.CloseHour,
+                    request.Is24Hours,
+                    request.IsIndoor);
+
+                poi.CloseHour = request.CloseHour;
+                poi.OpenHour = request.OpenHour;
+            }
+
+            if (request.POIImgUrl != null)
+            {
+                poi.POIImgUrl = request.POIImgUrl;
+            }
+
             await _poiRepository.UpdateAsync(poi);
 
             return poi;
@@ -190,10 +208,9 @@ namespace Application.Services
             var worksheet = package.Workbook.Worksheets[0];
             int rowCount = worksheet.Dimension.Rows;
 
-            // 🔥 Load toàn bộ Location 1 lần (tránh gọi DB trong loop)
             var locations = (await _locationRepository.GetAllAsync())
-              .GroupBy(x => x.LocationName.ToLower())
-              .ToDictionary(g => g.Key, g => g.First());
+                .GroupBy(x => StringNormalizer.Normalize(x.LocationName))
+                .ToDictionary(g => g.Key, g => g.First());
 
             List<POI> pois = new();
 
@@ -202,75 +219,79 @@ namespace Application.Services
                 string name = worksheet.Cells[row, 1].Text.Trim();
                 string address = worksheet.Cells[row, 2].Text.Trim();
                 string cityRaw = worksheet.Cells[row, 3].Text.Trim();
-                var prefRaw = worksheet.Cells[row, 8].Text.Trim();
-                var preferenceIds = new List<Guid>();
-                if (!string.IsNullOrEmpty(prefRaw))
-                {
-                    preferenceIds = prefRaw
-                        .Split(',', StringSplitOptions.RemoveEmptyEntries)
-                        .Select(x => Guid.TryParse(x.Trim(), out var id) ? id : (Guid?)null)
-                        .Where(x => x.HasValue)
-                        .Select(x => x!.Value)
-                        .ToList();
-                }
-                
 
-                string cityKey = cityRaw.ToLower();
+                if (string.IsNullOrWhiteSpace(name))
+                    throw new Exception($"Row {row}: POI name is empty");
+
+                if (string.IsNullOrWhiteSpace(cityRaw))
+                    throw new Exception($"Row {row}: City is empty");
+
+                string cityKey = StringNormalizer.Normalize(cityRaw);
 
                 if (!locations.ContainsKey(cityKey))
-                    continue;
+                    throw new Exception($"Row {row}: Location not found '{cityRaw}'");
 
                 var location = locations[cityKey];
 
-                decimal.TryParse(worksheet.Cells[row, 4].Text, out var cost);
-                bool.TryParse(worksheet.Cells[row, 7].Text, out var isIndoor);
+                if (!decimal.TryParse(worksheet.Cells[row, 4].Text, out var cost))
+                    throw new Exception($"Row {row}: Invalid cost");
 
-                //Opening Hours Parsing
-                var openingRaw = worksheet.Cells[row, 5].Text.Trim();
+                string openingRaw = worksheet.Cells[row, 5].Text.Trim();
 
                 TimeOnly? openHour = null;
                 TimeOnly? closeHour = null;
                 bool is24Hours = false;
 
-                if (!string.IsNullOrWhiteSpace(openingRaw) && openingRaw.Contains("~"))
+                if (!string.IsNullOrWhiteSpace(openingRaw))
                 {
-                    var parts = openingRaw.Split('~', StringSplitOptions.TrimEntries);
+                    var separators = new[] { "~", "-", "–" };
 
-                    if (parts.Length == 2)
+                    var parts = separators
+                        .SelectMany(s => openingRaw.Split(s))
+                        .Select(x => x.Trim())
+                        .ToArray();
+
+                    if (parts.Length < 2)
+                        throw new Exception($"Row {row}: Invalid opening hours format");
+
+                    if (!TimeOnly.TryParse(parts[0], out var open))
+                        throw new Exception($"Row {row}: Invalid open hour");
+
+                    if (!TimeOnly.TryParse(parts[1], out var close))
+                        throw new Exception($"Row {row}: Invalid close hour");
+
+                    openHour = open;
+                    closeHour = close;
+
+                    if (openHour == TimeOnly.MinValue && closeHour == TimeOnly.MinValue)
+                        is24Hours = true;
+                }
+
+                if (!bool.TryParse(worksheet.Cells[row, 7].Text, out var isIndoor))
+                    throw new Exception($"Row {row}: Invalid IsIndoor value");
+
+                // Preferences
+                var prefRaw = worksheet.Cells[row, 8].Text.Trim();
+                var preferenceIds = new List<Guid>();
+
+                if (!string.IsNullOrEmpty(prefRaw))
+                {
+                    foreach (var item in prefRaw.Split(',', StringSplitOptions.RemoveEmptyEntries))
                     {
-                        if (TimeOnly.TryParse(parts[0], out var open))
-                            openHour = open;
+                        if (!Guid.TryParse(item.Trim(), out var id))
+                            throw new Exception($"Row {row}: Invalid PreferenceId '{item}'");
 
-                        if (TimeOnly.TryParse(parts[1], out var close))
-                            closeHour = close;
-
-                        // 24h case
-                        if (openHour == TimeOnly.MinValue && closeHour == TimeOnly.MinValue)
-                        {
-                            is24Hours = true;
-                        }
+                        preferenceIds.Add(id);
                     }
                 }
 
-                // Visit Recommendation
-                string visitRecommendation = GetVisitRecommendation(
-                    openHour,
-                    closeHour,
-                    is24Hours,
-                    isIndoor
-                );
-
-                // LẤY IMAGE TỪ MAP
-                var normalizedName = name.Trim().ToLower();
-
-                string? imageUrl = _imageMap.ContainsKey(normalizedName)
-                    ? _imageMap[normalizedName]
-                    : null;
+                // Coordinates
+                double.TryParse(worksheet.Cells[row, 9].Text, out var lat);
+                double.TryParse(worksheet.Cells[row, 10].Text, out var lng);
 
                 var poi = new POI
                 {
                     Id = Guid.NewGuid(),
-
                     Name = name,
                     Address = address,
                     City = cityRaw,
@@ -279,17 +300,24 @@ namespace Application.Services
                     OpenHour = openHour,
                     CloseHour = closeHour,
                     Is24Hours = is24Hours,
-                    VisitRecommendation = visitRecommendation,
-                    GoogleMapLink = worksheet.Cells[row, 6].Text,
                     IsIndoor = isIndoor,
 
-                    LocationId = location.LocationId,
-                    Latitude = location.Latitude,
-                    Longitude = location.Longitude,
+                    VisitRecommendation = GetVisitRecommendation(
+                        openHour, closeHour, is24Hours, isIndoor),
 
-                    POIImgUrl = imageUrl
+                    GoogleMapLink = worksheet.Cells[row, 6].Text,
+
+                    LocationId = location.LocationId,
+
+                    Latitude = lat != 0 ? lat : location.Latitude,
+                    Longitude = lng != 0 ? lng : location.Longitude,
+
+                    POIImgUrl = _imageMap.TryGetValue(name.ToLower(), out var img)
+                        ? img
+                        : null
                 };
-                var poiPreferences = preferenceIds.Select(prefId => new POIPreference
+
+                poi.PoiPreferences = preferenceIds.Select(prefId => new POIPreference
                 {
                     PoiId = poi.Id,
                     PreferenceId = prefId
@@ -297,7 +325,6 @@ namespace Application.Services
 
                 pois.Add(poi);
             }
-
 
             await _poiRepository.AddRangeAsync(pois);
         }
