@@ -47,14 +47,15 @@ namespace Application.Services
         public async Task<Dictionary<DateOnly, WeatherForecast>>
             GetRangeAsync(Guid locationId, List<DateOnly> dates)
         {
-            var result = new Dictionary<DateOnly, WeatherForecast>();
-
-            foreach (var date in dates)
+            var tasks = dates.Select(async date =>
             {
-                result[date] = await GetAsync(locationId, date);
-            }
+                var forecast = await GetAsync(locationId, date);
+                return (date, forecast);
+            });
 
-            return result;
+            var results = await Task.WhenAll(tasks);
+
+            return results.ToDictionary(x => x.date, x => x.forecast);
         }
 
         public async Task PreloadAsync(Guid locationId, List<DateOnly> dates)

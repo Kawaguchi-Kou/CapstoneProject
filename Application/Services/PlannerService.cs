@@ -25,6 +25,7 @@ namespace Application.Services
         private readonly IUserRepository _userRepository;
         private readonly IAuthService _authService;
         private readonly IGeminiService _gemini;
+        private readonly IWeatherService _weatherService;
 
         public PlannerService(
             IPOIRepository poiRepo,
@@ -35,7 +36,9 @@ namespace Application.Services
             ITripSegmentRepository segmentRepo,
             IOpenMeteoService openMeteoService,
             IAuthService authService,
-            IUserRepository userRepository)
+            IUserRepository userRepository,
+            IWeatherService weatherService,
+            IGeminiService gemini)
         {
             _poiRepo = poiRepo;
             _weatherRepo = weatherRepo;
@@ -46,141 +49,9 @@ namespace Application.Services
             _openMeteoService = openMeteoService;
             _authService = authService;
             _userRepository = userRepository;
+            _weatherService = weatherService;
+            _gemini = gemini;
         }
-
-        //public async Task GenerateAsync(Guid tripId)
-        //{
-        //    var segments = await _segmentRepo.GetByTripIdAsync(tripId);
-
-        //    if (segments == null || segments.Count <= 1)
-        //        throw new Exception("Not enough segments");
-
-        //    segments = segments.OrderBy(x => x.OrderIndex).ToList();
-
-        //    var itineraries = new List<Itinerary>();
-        //    var allDetails = new List<ItineraryDetail>();
-
-        //    // ❌ skip starting segment
-        //    for (int i = 1; i < segments.Count; i++)
-        //    {
-        //        var segment = segments[i];
-        //        var nextSegment = i < segments.Count - 1 ? segments[i + 1] : null;
-
-        //        var pois = await _poiRepo.GetByLocationAsync(segment.LocationId);
-        //        if (pois == null || !pois.Any()) continue;
-
-        //        var itinerary = new Itinerary
-        //        {
-        //            ItineraryId = Guid.NewGuid(),
-        //            SegmentId = segment.SegmentId,
-        //            GeneratedByAI = true
-        //        };
-
-        //        itineraries.Add(itinerary);
-
-        //        var totalDays = (segment.EndDate.Day - segment.StartDate.Day) + 1;
-
-        //        var dates = Enumerable.Range(0, totalDays)
-        //            .Select(d => segment.StartDate.AddDays(d))
-        //            .ToList();
-
-        //        var forecasts = await _weatherRepo
-        //            .GetByLocationAndDates(segment.LocationId, dates);
-
-        //        var forecastDict = forecasts.ToDictionary(x => x.ForecastDate);
-
-        //        foreach (var currentDate in dates)
-        //        {
-        //            // 🔥 Skip travel day
-        //            bool isTravelDay = nextSegment != null &&
-        //                               currentDate == segment.EndDate &&
-        //                               nextSegment.StartDate == segment.EndDate;
-
-        //            if (isTravelDay)
-        //                continue;
-
-
-        //            if (!forecastDict.TryGetValue(currentDate, out var forecast) ||
-        //                forecast.FetchedAt < DateTime.UtcNow.AddHours(-6))
-        //            {
-        //                forecast = await GetOrFetchForecastAsync(segment.LocationId, currentDate);
-        //                forecastDict[currentDate] = forecast;
-        //            }
-
-        //            var usedPoiIds = new HashSet<Guid>();
-        //            var currentTime = new TimeOnly(8, 0);
-        //            var endOfDay = new TimeOnly(21, 0);
-
-        //            int count = 0;
-
-        //            while (currentTime < endOfDay && count < 3) // 🔥 đảm bảo ít nhất 3
-        //            {
-        //                var poi = SelectBestPOI(pois, forecast, usedPoiIds);
-
-        //                if (poi == null)
-        //                {
-        //                    currentTime = currentTime.AddMinutes(30);
-        //                    continue;
-        //                }
-
-        //                if (poi.LocationId != segment.LocationId)
-        //                    continue;
-
-        //                var endTime = currentTime.Add(DefaultDuration);
-
-        //                if (!IsValidTime(poi, currentTime, endTime))
-        //                {
-        //                    currentTime = currentTime.AddMinutes(30);
-        //                    continue;
-        //                }
-
-        //                var risk = _riskEngine.CalculateRisk(forecast, poi.IsIndoor);
-
-        //                allDetails.Add(new ItineraryDetail
-        //                {
-        //                    DetailId = Guid.NewGuid(),
-        //                    ItineraryId = itinerary.ItineraryId,
-        //                    PoiId = poi.Id,
-        //                    VisitDate = currentDate,
-        //                    StartTime = currentTime,
-        //                    EndTime = endTime,
-        //                    WeatherRiskScore = risk
-        //                });
-
-        //                usedPoiIds.Add(poi.Id);
-        //                currentTime = endTime.Add(Buffer);
-        //                count++;
-        //            }
-
-        //            // 🔥 fallback nếu chưa đủ 3 POI
-        //            if (count < 3)
-        //            {
-        //                var extraPois = pois
-        //                    .Where(p => !usedPoiIds.Contains(p.Id))
-        //                    .Take(3 - count);
-
-        //                foreach (var poi in extraPois)
-        //                {
-        //                    allDetails.Add(new ItineraryDetail
-        //                    {
-        //                        DetailId = Guid.NewGuid(),
-        //                        ItineraryId = itinerary.ItineraryId,
-        //                        PoiId = poi.Id,
-        //                        VisitDate = currentDate,
-        //                        StartTime = currentTime,
-        //                        EndTime = currentTime.Add(DefaultDuration),
-        //                        WeatherRiskScore = 0
-        //                    });
-
-        //                    currentTime = currentTime.Add(DefaultDuration + Buffer);
-        //                }
-        //            }
-        //        }
-        //    }
-
-        //    await _itineraryRepo.AddRangeAsync(itineraries);
-        //    await _detailRepo.AddRangeAsync(allDetails);
-        //}
 
         private async Task<WeatherForecast> GetOrFetchForecastAsync(
     Guid locationId,
@@ -257,167 +128,137 @@ namespace Application.Services
 
         public async Task GenerateAsync(Guid tripId)
         {
-            //try
-            //{
-                var segments = await _segmentRepo.GetByTripIdAsync(tripId);
+            var segments = await _segmentRepo.GetByTripIdAsync(tripId);
 
-                if (segments == null || segments.Count <= 1)
-                    throw new Exception("Not enough segments");
+            if (segments == null || segments.Count <= 1)
+                throw new Exception("Not enough segments");
 
-                // 🔥 ORDER FIRST
-                segments = segments.OrderBy(x => x.OrderIndex).ToList();
+            segments = segments.OrderBy(x => x.OrderIndex).ToList();
+            var segmentMap = segments.ToDictionary(s => s.OrderIndex);
 
-                // 🔥 MAP FOR FAST LOOKUP
-                var segmentMap = segments.ToDictionary(s => s.OrderIndex);
+            var account = await _authService.GetCurrentAccount();
 
-                var account = await _authService.GetCurrentAccount();
+            var preferences = (await _userRepository
+                .GetPreferenceByAccountIdAsync(account.Id))
+                .Select(x => x.Preference.Name)
+                .ToList();
 
-                var preferences = (await _userRepository
-                    .GetPreferenceByAccountIdAsync(account.Id))
-                    .Select(x => x.Preference.Name)
+            var itineraries = new List<Itinerary>();
+            var allDetails = new List<ItineraryDetail>();
+
+            var poiDict = new Dictionary<Guid, List<POI>>();
+            var forecastDict = new Dictionary<Guid, Dictionary<DateOnly, WeatherForecast>>();
+
+            // ================= LOAD DATA =================
+            foreach (var segment in segments.Skip(1))
+            {
+                var pois = await _poiRepo.GetByLocationAsync(segment.LocationId);
+
+                if (pois == null || !pois.Any())
+                    continue;
+
+                poiDict[segment.SegmentId] = pois;
+
+                var totalDays = (segment.EndDate.ToDateTime(TimeOnly.MinValue)
+                               - segment.StartDate.ToDateTime(TimeOnly.MinValue)).Days;
+
+                var dates = Enumerable.Range(0, totalDays + 1)
+                    .Select(d => segment.StartDate.AddDays(d))
                     .ToList();
 
-                var itineraries = new List<Itinerary>();
-                var allDetails = new List<ItineraryDetail>();
+                // 🔥 SAFE: WeatherService handles parallel internally
+                var forecasts = await _weatherService.GetRangeAsync(segment.LocationId, dates);
 
-                // 🔥 LOAD DATA
-                var poiDict = new Dictionary<Guid, List<POI>>();
-                var forecastDict = new Dictionary<Guid, Dictionary<DateOnly, WeatherForecast>>();
+                forecastDict[segment.SegmentId] = forecasts;
+            }
 
-                foreach (var segment in segments.Skip(1)) // skip starting point
+            // ================= AI CALL =================
+            var aiPlan = await GenerateFullTripPlanWithAI(
+                segments.Skip(1).ToList(),
+                poiDict,
+                forecastDict,
+                preferences
+            );
+
+            if (aiPlan?.Segments == null || !aiPlan.Segments.Any())
+                throw new Exception("AI failed");
+
+            // ================= MAP AI → DB =================
+            foreach (var segmentPlan in aiPlan.Segments)
+            {
+                if (!segmentMap.TryGetValue(segmentPlan.OrderIndex, out var segment))
                 {
-                    var pois = await _poiRepo.GetByLocationAsync(segment.LocationId);
-
-                    if (pois == null || !pois.Any())
-                    {
-                        Console.WriteLine($"⚠️ No POI for segment {segment.SegmentId}");
-                        continue;
-                    }
-
-                    poiDict[segment.SegmentId] = pois;
-
-                    // ✅ FIX DATE RANGE (no .Day bug)
-                    var totalDays = (segment.EndDate.ToDateTime(TimeOnly.MinValue)
-                                   - segment.StartDate.ToDateTime(TimeOnly.MinValue)).Days;
-
-                    var dates = Enumerable.Range(0, totalDays + 1)
-                        .Select(d => segment.StartDate.AddDays(d))
-                        .ToList();
-
-                    var forecasts = await _weatherRepo
-                        .GetByLocationAndDates(segment.LocationId, dates);
-
-                    if (forecasts == null || !forecasts.Any())
-                    {
-                        Console.WriteLine($"⚠️ No forecast for segment {segment.SegmentId}");
-                        continue;
-                    }
-
-                    forecastDict[segment.SegmentId] =
-                        forecasts.ToDictionary(x => x.ForecastDate);
+                    Console.WriteLine($"❌ Invalid OrderIndex from AI: {segmentPlan.OrderIndex}");
+                    continue;
                 }
 
-                // 🔥 ONE AI CALL
-                var aiPlan = await GenerateFullTripPlanWithAI(
-                    segments.Skip(1).ToList(),
-                    poiDict,
-                    forecastDict,
-                    preferences
-                );
-
-                if (aiPlan?.Segments == null || !aiPlan.Segments.Any())
-                    throw new Exception("AI failed");
-
-                // 🔥 MAP AI → DB
-                foreach (var segmentPlan in aiPlan.Segments)
+                if (!poiDict.TryGetValue(segment.SegmentId, out var pois) ||
+                    !forecastDict.TryGetValue(segment.SegmentId, out var forecasts))
                 {
-                    if (!segmentMap.TryGetValue(segmentPlan.OrderIndex, out var segment))
+                    Console.WriteLine($"❌ Missing data for segment {segment.SegmentId}");
+                    continue;
+                }
+
+                var itinerary = new Itinerary
+                {
+                    ItineraryId = Guid.NewGuid(),
+                    SegmentId = segment.SegmentId,
+                    GeneratedByAI = true
+                };
+
+                itineraries.Add(itinerary);
+
+                foreach (var day in segmentPlan.Days ?? new List<AIDayPlan>())
+                {
+                    if (!ValidateDayPlan(day))
                     {
-                        Console.WriteLine($"❌ Invalid OrderIndex from AI: {segmentPlan.OrderIndex}");
+                        GenerateFallbackPlan(pois, itinerary.ItineraryId, day.Date, allDetails);
                         continue;
                     }
 
-                    // ✅ SAFE DICTIONARY ACCESS
-                    if (!poiDict.TryGetValue(segment.SegmentId, out var pois) ||
-                        !forecastDict.TryGetValue(segment.SegmentId, out var forecasts))
+                    if (!forecasts.TryGetValue(day.Date, out var forecast))
                     {
-                        Console.WriteLine($"❌ Missing data for segment {segment.SegmentId}");
+                        Console.WriteLine($"⚠️ Missing forecast for {day.Date}");
                         continue;
                     }
 
-                    var itinerary = new Itinerary
+                    foreach (var item in day.Plan ?? new List<AIItem>())
                     {
-                        ItineraryId = Guid.NewGuid(),
-                        SegmentId = segment.SegmentId,
-                        GeneratedByAI = true
-                    };
+                        var poi = pois.FirstOrDefault(p =>
+                            p.Name.Equals(item.Poi, StringComparison.OrdinalIgnoreCase));
 
-                    itineraries.Add(itinerary);
-
-                    foreach (var day in segmentPlan.Days ?? new List<AIDayPlan>())
-                    {
-                        // ✅ VALIDATE STRUCTURE
-                        if (!ValidateDayPlan(day))
+                        if (poi == null)
                         {
-                            GenerateFallbackPlan(pois, itinerary.ItineraryId, day.Date, allDetails);
+                            Console.WriteLine($"⚠️ POI not found: {item.Poi}");
                             continue;
                         }
 
-                        // ✅ SAFE FORECAST ACCESS
-                        if (!forecasts.TryGetValue(day.Date, out var forecast))
-                        {
-                            Console.WriteLine($"⚠️ Missing forecast for date {day.Date}");
+                        if (!IsValidType(item.Type, poi.Type))
                             continue;
-                        }
 
-                        foreach (var item in day.Plan ?? new List<AIItem>())
+                        var (start, end) = ParseTime(item.Time);
+
+                        allDetails.Add(new ItineraryDetail
                         {
-                            var poi = pois.FirstOrDefault(p =>
-                                p.Name.Equals(item.Poi, StringComparison.OrdinalIgnoreCase));
-
-                            if (poi == null)
-                            {
-                                Console.WriteLine($"⚠️ POI not found: {item.Poi}");
-                                continue;
-                            }
-
-                            // ✅ VALIDATE TYPE
-                            if (!IsValidType(item.Type, poi.Type))
-                            {
-                                Console.WriteLine($"⚠️ Invalid type match: {item.Type} - {poi.Type}");
-                                continue;
-                            }
-
-                            var (start, end) = ParseTime(item.Time);
-
-                            allDetails.Add(new ItineraryDetail
-                            {
-                                DetailId = Guid.NewGuid(),
-                                ItineraryId = itinerary.ItineraryId,
-                                PoiId = poi.Id,
-                                VisitDate = day.Date,
-                                StartTime = start,
-                                EndTime = end,
-                                WeatherRiskScore = _riskEngine.CalculateRisk(forecast, poi.IsIndoor)
-                            });
-                        }
+                            DetailId = Guid.NewGuid(),
+                            ItineraryId = itinerary.ItineraryId,
+                            PoiId = poi.Id,
+                            VisitDate = day.Date,
+                            StartTime = start,
+                            EndTime = end,
+                            WeatherRiskScore = _riskEngine.CalculateRisk(forecast, poi.IsIndoor)
+                        });
                     }
                 }
+            }
 
-                // ❗ OPTIONAL: tránh save rỗng
-                if (!itineraries.Any() || !allDetails.Any())
-                    throw new Exception("No valid itinerary generated");
+            if (!itineraries.Any() || !allDetails.Any())
+                throw new Exception("No valid itinerary generated");
 
-                // 🔥 SAVE ONCE
-                await _itineraryRepo.AddRangeAsync(itineraries);
-                await _detailRepo.AddRangeAsync(allDetails);
-            //}
-            //catch (Exception ex)
-            //{
-            //    Console.WriteLine("❌ Planner ERROR: " + ex);
-            //    throw;
-            //}
+            await _itineraryRepo.AddRangeAsync(itineraries);
+            await _detailRepo.AddRangeAsync(allDetails);
         }
+
 
 
         private async Task<FullTripAIResponse?> GenerateFullTripPlanWithAI(
