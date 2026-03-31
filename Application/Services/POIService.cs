@@ -353,12 +353,9 @@ namespace Application.Services
                 string cityRaw = worksheet.Cells[row, 3].Text.Trim();
 
                 if (string.IsNullOrWhiteSpace(name))
-                    throw new Exception($"Row {row}: POI name is empty");
+                    throw new Exception($"Row {row}: Name is empty");
 
-                if (string.IsNullOrWhiteSpace(cityRaw))
-                    throw new Exception($"Row {row}: City is empty");
-
-
+                // ===== LOCATION =====
                 string cityKey = StringNormalizer.Normalize(cityRaw);
 
                 if (!locations.ContainsKey(cityKey))
@@ -383,7 +380,7 @@ namespace Application.Services
 
                 if (!string.IsNullOrWhiteSpace(openingRaw))
                 {
-                    var separators = new[] { "~", "-", "–" };
+                    var parts = openingRaw.Split('~', StringSplitOptions.TrimEntries);
 
                     if (parts.Length != 2)
                         throw new Exception($"Row {row}: Invalid opening format");
@@ -443,6 +440,7 @@ namespace Application.Services
                 var poi = new POI
                 {
                     Id = Guid.NewGuid(),
+
                     Name = name,
                     Address = address,
                     City = cityRaw,
@@ -459,22 +457,12 @@ namespace Application.Services
                     GoogleMapLink = worksheet.Cells[row, 6].Text,
                     IsIndoor = isIndoor,
 
-                    VisitRecommendation = GetVisitRecommendation(
-                        openHour, closeHour, is24Hours, isIndoor),
-
-                    GoogleMapLink = worksheet.Cells[row, 6].Text,
-
                     LocationId = location.LocationId,
 
                     Latitude = lat,
                     Longitude = lng,
 
-                    Latitude = lat != 0 ? lat : location.Latitude,
-                    Longitude = lng != 0 ? lng : location.Longitude,
-
-                    POIImgUrl = _imageMap.TryGetValue(name.ToLower(), out var img)
-                        ? img
-                        : null
+                    POIImgUrl = imageUrl
                 };
 
                 // 🔥 IMPORTANT: Assign POI Preferences
