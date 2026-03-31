@@ -4,6 +4,7 @@ using Application.Interfaces;
 using Application.Services;
 using AutoMapper;
 using Domain.Entities;
+using Domain.Enums;
 using Microsoft.AspNetCore.Mvc;
 
 namespace WebAPI.Controllers
@@ -63,7 +64,7 @@ namespace WebAPI.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create([FromForm] CreatePoiRequest request, List<Guid> preferenceIds)
+        public async Task<IActionResult> Create([FromForm] CreatePoiRequest request, List<Guid> preferenceIds, POIType type)
         {
             try
             {
@@ -84,6 +85,7 @@ namespace WebAPI.Controllers
 
                 var poi = _mapper.Map<POI>(request);
                 poi.POIImgUrl = POIImgUrl!;
+                poi.Type = type;
                 var newPoi = await _poiService.CreateAsync(poi, preferenceIds);
 
                 var response = _mapper.Map<PoiResponse>(poi);
