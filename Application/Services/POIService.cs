@@ -13,7 +13,6 @@ using Domain.Entities;
 using Domain.Enums;
 using Domain.Interfaces;
 using Microsoft.AspNetCore.Http;
-using 
 using OfficeOpenXml;
 
 
@@ -461,6 +460,7 @@ namespace Application.Services
 
                     Latitude = lat,
                     Longitude = lng,
+                    Status = POIStatus.Approved,
 
                     POIImgUrl = imageUrl
                 };
