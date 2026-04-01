@@ -111,5 +111,27 @@ namespace WebAPI.Controllers
                 return BadRequest(ex.Message);
             }
         }
+
+        [HttpGet("{tripId}/role")]
+        [Authorize]
+        public async Task<IActionResult> GetUserRoleInTrip(Guid tripId)
+        {
+            try
+            {
+                var account = await _authService.GetCurrentAccount();
+                var role = await _tripService.GetUserRoleInTripAsync(tripId, account.Id);
+
+                if (role == null)
+                {
+                    return Ok(new { role = "None" });
+                }
+
+                return Ok(new { role = role.ToString() });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
     }
 }

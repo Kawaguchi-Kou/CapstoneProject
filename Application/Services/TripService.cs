@@ -86,5 +86,27 @@ namespace Application.Services
             await _participantRepo.AddTripParticipantAsync(participant);
             await _participantRepo.SaveChangesAsync();
         }
+
+        public async Task<ParticipantRole?> GetUserRoleInTripAsync(Guid tripId, Guid userId)
+        {
+            var trip = await _tripRepo.GetByIdAsync(tripId);
+            if (trip == null)
+            {
+                throw new Exception("Trip not found");
+            }
+
+            if (trip.OwnerId == userId)
+            {
+                return ParticipantRole.Owner;
+            }
+
+            var participant = await _participantRepo.GetByUserIdAndTripIdAsync(userId, tripId);
+            if (participant != null && participant.Status == ParticipantStatus.Active)
+            {
+                return participant.Role;
+            }
+
+            return null;
+        }
     }
 }
