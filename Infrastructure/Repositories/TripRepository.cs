@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -48,6 +48,17 @@ namespace Infrastructure.Repositories
         public async Task<Trip?> GetByIdAsync(Guid tripId)
         {
             return await _db.Trips.FindAsync(tripId);
+        }
+
+        public async Task<Trip?> GetByShareTokenAsync(string token)
+        {
+            return await _db.Trips.SingleOrDefaultAsync(t => t.ShareToken == token);
+        }
+
+        public async Task UpdateAsync(Trip trip)
+        {
+            _db.Trips.Update(trip);
+            await _db.SaveChangesAsync();
         }
     }
 }

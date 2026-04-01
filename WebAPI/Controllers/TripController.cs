@@ -1,4 +1,4 @@
-﻿using Application.DTOs.Requests;
+using Application.DTOs.Requests;
 using Application.DTOs.Responses;
 using Application.Interfaces;
 using Application.Services;
@@ -67,6 +67,49 @@ namespace WebAPI.Controllers
             var response = _mapper.Map<List<TripSegmentResponse>>(result);
 
             return Ok(response);
+        }
+
+        [HttpPost("{tripId}/share")]
+        [Authorize]
+        public async Task<IActionResult> GenerateShareLink(Guid tripId, [FromQuery] string frontendBaseUrl)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(frontendBaseUrl))
+                {
+                    return BadRequest("Frontend base URL is required");
+                }
+
+                var account = await _authService.GetCurrentAccount();
+                var result = await _tripService.GenerateShareLinkAsync(frontendBaseUrl, tripId, account.Id);
+
+                return Ok(new
+                {
+                    inviteUrl = result.InviteUrl,
+                    qrCodeBase64 = result.QrCodeBase64
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpPost("join/{token}")]
+        [Authorize]
+        public async Task<IActionResult> JoinTrip(string token)
+        {
+            try
+            {
+                var account = await _authService.GetCurrentAccount();
+                await _tripService.JoinTripAsync(token, account.Id);
+
+                return Ok(new { message = "Successfully joined the trip" });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
     }
 }
