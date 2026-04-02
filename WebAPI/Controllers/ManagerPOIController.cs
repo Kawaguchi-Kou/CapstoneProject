@@ -27,8 +27,16 @@ namespace WebAPI.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
-            var pois = await _poiService.GetAllAsync();
-            return Ok(pois);
+            try
+            {
+                var pois = await _poiService.GetAllAsync();
+                var response = _mapper.Map<List<PoiResponse>>(pois);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
 
         [HttpGet("{id}")]

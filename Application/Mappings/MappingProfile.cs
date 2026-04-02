@@ -70,7 +70,13 @@ namespace Application.Mappings
             //POI
             CreateMap<POI, PoiResponse>()
                 .ForMember(dest => dest.LocationName,
-                opt => opt.MapFrom(src => src.Location.LocationName));
+                opt => opt.MapFrom(src => src.Location.LocationName))
+                .ForMember(dest => dest.Preferences,
+                    opt => opt.MapFrom(src =>
+                        src.PoiPreferences
+                            .Where(x => x.Preference != null)
+                            .Select(x => x.Preference.Name)
+                            .ToList()));
 
             CreateMap<POI, RecommendedPoiResponse>()
                 .ForMember(dest => dest.POIPreferences,

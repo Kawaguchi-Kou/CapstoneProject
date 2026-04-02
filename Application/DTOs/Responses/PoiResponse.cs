@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Domain.Entities;
+using Domain.Enums;
 
 namespace Application.DTOs.Responses
 {
@@ -27,9 +28,9 @@ namespace Application.DTOs.Responses
 
         public bool IsIndoor { get; set; }
 
-        public Domain.Enums.POIType Type { get; set; }
+        public POIType Type { get; set; }
 
-        public Domain.Enums.POIStatus Status { get; set; }
+        public POIStatus Status { get; set; }
 
         public double Latitude { get; set; }
 
@@ -39,6 +40,6 @@ namespace Application.DTOs.Responses
 
         public string LocationName { get; set; } = string.Empty;
 
-        public List<POIPreferenceResponse> Preferences { get; set; } = new List<POIPreferenceResponse>();
+        public List<string> Preferences { get; set; } = new List<string>();
     }
 }

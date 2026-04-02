@@ -74,9 +74,15 @@ namespace Application.Services
                 .ToList();
         }
 
-        public async Task<List<POI>> GetAllAsync() => await _poiRepository.GetAllAsync();
+        public async Task<List<POI>> GetAllAsync() 
+        {
+            return await _poiRepository.GetAllWithPreferencesAsync();  
+        } 
 
-        public async Task<POI?> GetByIdAsync(Guid id) => await _poiRepository.GetByIdAsync(id);
+        public async Task<POI?> GetByIdAsync(Guid id)
+        {
+            return await _poiRepository.GetByIdAsync(id);
+        }
 
         public async Task<POI> CreateAsync(POI request, List<Guid> preferenceIds)
         {
@@ -141,7 +147,10 @@ namespace Application.Services
             return poi;
         }
 
-        public async Task<List<POI>> GetMyPoisAsync(Guid partnerId) => await _poiRepository.GetByPartnerIdAsync(partnerId);
+        public async Task<List<POI>> GetMyPoisAsync(Guid partnerId)
+        {
+            return await _poiRepository.GetByPartnerIdAsync(partnerId);
+        } 
 
         public async Task<PagedResultResponse<POI>> GetMyPoisAsync(Guid partnerId, int page, int pageSize)
         {
