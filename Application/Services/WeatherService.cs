@@ -13,13 +13,16 @@ namespace Application.Services
     {
         private readonly IWeatherForecastRepository _weatherRepo;
         private readonly IOpenMeteoService _openMeteoService;
+        private readonly ILocationRepository _locationRepo;
 
         public WeatherService(
             IWeatherForecastRepository weatherRepo,
-            IOpenMeteoService openMeteoService)
+            IOpenMeteoService openMeteoService,
+            ILocationRepository locationRepo)
         {
             _weatherRepo = weatherRepo;
             _openMeteoService = openMeteoService;
+            _locationRepo = locationRepo;
         }
 
         public async Task<WeatherForecast> GetAsync(Guid locationId, DateOnly date)
@@ -44,18 +47,73 @@ namespace Application.Services
             return newForecast;
         }
 
+        //public async Task<Dictionary<DateOnly, WeatherForecast>>
+        //    GetRangeAsync(Guid locationId, List<DateOnly> dates)
+        //{
+        //    var tasks = dates.Select(async date =>
+        //    {
+        //        var forecast = await GetAsync(locationId, date);
+        //        return (date, forecast);
+        //    });
+
+        //    var results = await Task.WhenAll(tasks);
+
+        //    return results.ToDictionary(x => x.date, x => x.forecast);
+        //}
+
         public async Task<Dictionary<DateOnly, WeatherForecast>>
-            GetRangeAsync(Guid locationId, List<DateOnly> dates)
+    GetRangeAsync(Guid locationId, List<DateOnly> dates)
         {
-            var tasks = dates.Select(async date =>
+            var result = new Dictionary<DateOnly, WeatherForecast>();
+
+            // 1. Load cached sequentially
+            foreach (var date in dates)
             {
-                var forecast = await GetAsync(locationId, date);
-                return (date, forecast);
+                var cached = await GetAsync(locationId, date);
+                if (cached != null)
+                    result[date] = cached;
+            }
+
+            // 2. Find missing dates
+            var missingDates = dates
+                .Where(d => !result.ContainsKey(d))
+                .ToList();
+
+            // 3. Call API in parallel (NO DbContext here)
+            var apiTasks = missingDates.Select(async date =>
+            {
+                var loc = await _locationRepo.GetByIdAsync(locationId); // ⚠ still DB → keep outside if possible
+
+                var apiData = await _openMeteoService.GetDailyAsync(
+                    loc.Latitude,
+                    loc.Longitude,
+                    date,
+                    date);
+
+                var dto = apiData.First();
+
+                return new WeatherForecast
+                {
+                    Id = Guid.NewGuid(),
+                    LocationId = locationId,
+                    ForecastDate = date,
+                    TemperatureCelsius = dto.MaxTemperature,
+                    PrecipitationProbability = dto.PrecipitationProbability,
+                    WindSpeed = dto.MaxWindSpeed,
+                    FetchedAt = DateTime.UtcNow
+                };
             });
 
-            var results = await Task.WhenAll(tasks);
+            var apiResults = await Task.WhenAll(apiTasks);
 
-            return results.ToDictionary(x => x.date, x => x.forecast);
+            // 4. Save sequentially
+            foreach (var forecast in apiResults)
+            {
+                await _weatherRepo.UpsertAsync(new List<WeatherForecast> { forecast });
+                result[forecast.ForecastDate] = forecast;
+            }
+
+            return result;
         }
 
         public async Task PreloadAsync(Guid locationId, List<DateOnly> dates)
