@@ -5,13 +5,13 @@ using Microsoft.AspNetCore.Mvc;
 namespace WebAPI.Controllers
 {
     [ApiController]
-    [Route("api/admin/advertisements")]
-    [Authorize(Roles = "Admin")]
-    public class AdminAdvertisementController : ControllerBase
+    [Route("api/manager/advertisements")]
+    [Authorize(Roles = "Manager")]
+    public class ManagerAdvertisementController : ControllerBase
     {
         private readonly IAdvertisementService _advertisementService;
 
-        public AdminAdvertisementController(IAdvertisementService advertisementService)
+        public ManagerAdvertisementController(IAdvertisementService advertisementService)
         {
             _advertisementService = advertisementService;
         }

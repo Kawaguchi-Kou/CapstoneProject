@@ -28,13 +28,35 @@ namespace Application.Services
             var subscription = await _subscriptionService.GetActiveSubscriptionAsync(accountId);
             if (subscription == null)
             {
-                throw new InvalidOperationException("Không thể tạo quảng cáo. Bạn chưa có subscription active.");
+                throw new InvalidOperationException("Không thể tạo quảng cáo. Bạn chưa có package/subscription còn hiệu lực.");
+            }
+
+            var canCreate = await _subscriptionService.CanCreateAdvertisementAsync(accountId);
+            if (!canCreate)
+            {
+                throw new InvalidOperationException("Không thể tạo quảng cáo. Gói đã hết quota hoặc không còn hiệu lực.");
             }
 
             var poi = await _poiRepository.GetByIdAsync(request.POIId);
+            
             if (poi == null)
             {
                 throw new KeyNotFoundException("POI not found");
+            }
+
+            if (poi.Status != POIStatus.Active)
+            {
+                throw new InvalidOperationException("Chỉ có thể tạo quảng cáo trên POI đang Active.");
+            }
+
+            if (poi.PartnerId == null)
+            {
+                throw new InvalidOperationException("Partner chỉ được tạo quảng cáo trên POI của chính mình.");
+            }
+
+            if (poi.PartnerId != accountId)
+            {
+                throw new InvalidOperationException("Bạn không có quyền tạo quảng cáo trên POI này.");
             }
 
             if (request.StartDate >= request.EndDate)

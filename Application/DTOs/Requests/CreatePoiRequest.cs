@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -26,6 +26,8 @@ namespace Application.DTOs.Requests
         public string VisitRecommendation { get; set; } = string.Empty;
 
         public bool IsIndoor { get; set; }
+        
+        public Domain.Enums.POIType Type { get; set; }
 
         public List<Guid> PoiPreferences { get; set; }
     }

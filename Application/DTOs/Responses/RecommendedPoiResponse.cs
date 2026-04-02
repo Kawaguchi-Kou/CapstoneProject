@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -20,6 +20,7 @@ namespace Application.DTOs.Responses
         public string GoogleMapLink { get; set; } = string.Empty;
         public string POIImgUrl { get; set; } = string.Empty;
         public POIType Type { get; set; }
+        public POIStatus Status { get; set; }
         public bool IsIndoor { get; set; }
         public decimal Latitude { get; set; }
         public decimal Longitude { get; set; }

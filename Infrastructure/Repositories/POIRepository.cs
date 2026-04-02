@@ -1,8 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Domain.Entities;
 using Domain.Enums;
 using Domain.Interfaces;
@@ -23,21 +18,84 @@ namespace Infrastructure.Repositories
         public async Task<POI?> GetByIdAsync(Guid poiId)
         {
             return await _context.POIs
-                .FirstOrDefaultAsync(p => p.Id == poiId && p.Status == POIStatus.Approved);
+                .Include(p => p.Location)
+                .Include(p => p.Partner)
+                .FirstOrDefaultAsync(p => p.Id == poiId);
         }
 
         public async Task<List<POI>> GetAllWithPreferencesAsync()
         {
             return await _context.POIs
+                .Include(p => p.Location)
                 .Include(p => p.PoiPreferences)
                     .ThenInclude(pp => pp.Preference)
-                .Where(p => p.Status == POIStatus.Approved)
+                .Where(p => p.Status == POIStatus.Active)
                 .ToListAsync();
         }
 
         public async Task<List<POI>> GetAllAsync()
         {
-            return await _context.POIs.Where(p => p.Status == POIStatus.Approved).ToListAsync();
+            return await _context.POIs
+                .Include(p => p.Location)
+                .Include(p => p.Partner)
+                .OrderByDescending(p => p.Id)
+                .ToListAsync();
+        }
+
+        public async Task<List<POI>> GetByPartnerIdAsync(Guid partnerId)
+        {
+            return await _context.POIs
+                .Include(p => p.Location)
+                .Where(p => p.PartnerId == partnerId)
+                .OrderByDescending(p => p.Id)
+                .ToListAsync();
+        }
+
+        public async Task<List<POI>> GetByPartnerIdAsync(Guid partnerId, int skip, int take)
+        {
+            return await _context.POIs
+                .Include(p => p.Location)
+                .Where(p => p.PartnerId == partnerId)
+                .OrderByDescending(p => p.Id)
+                .Skip(skip)
+                .Take(take)
+                .ToListAsync();
+        }
+
+        public async Task<int> CountByPartnerIdAsync(Guid partnerId)
+        {
+            return await _context.POIs
+                .Where(p => p.PartnerId == partnerId)
+                .CountAsync();
+        }
+
+        public async Task<List<POI>> GetPendingPartnerPoisAsync()
+        {
+            return await _context.POIs
+                .Include(p => p.Location)
+                .Include(p => p.Partner)
+                .Where(p => p.PartnerId != null && p.Status == POIStatus.Pending)
+                .OrderByDescending(p => p.Id)
+                .ToListAsync();
+        }
+
+        public async Task<List<POI>> GetPendingPartnerPoisAsync(int skip, int take)
+        {
+            return await _context.POIs
+                .Include(p => p.Location)
+                .Include(p => p.Partner)
+                .Where(p => p.PartnerId != null && p.Status == POIStatus.Pending)
+                .OrderByDescending(p => p.Id)
+                .Skip(skip)
+                .Take(take)
+                .ToListAsync();
+        }
+
+        public async Task<int> CountPendingPartnerPoisAsync()
+        {
+            return await _context.POIs
+                .Where(p => p.PartnerId != null && p.Status == POIStatus.Pending)
+                .CountAsync();
         }
 
         public async Task AddAsync(POI poi, List<Guid> preferenceIds)
@@ -46,8 +104,6 @@ namespace Infrastructure.Repositories
 
             try
             {
-                poi.Status = POIStatus.Approved;
-
                 await _context.POIs.AddAsync(poi);
                 await _context.SaveChangesAsync();
 
@@ -73,12 +129,12 @@ namespace Infrastructure.Repositories
                 throw;
             }
         }
+
         public async Task AddRangeAsync(List<POI> pois)
         {
             await _context.POIs.AddRangeAsync(pois);
             await _context.SaveChangesAsync();
         }
-
 
         public async Task<Location?> GetLocationByIdAsync(Guid locationId)
         {
@@ -92,12 +148,6 @@ namespace Infrastructure.Repositories
             await _context.SaveChangesAsync();
         }
 
-        public async Task DeleteAsync(POI poi)
-        {
-            _context.POIs.Remove(poi);
-            await _context.SaveChangesAsync();
-        }
-
         public async Task<POI?> GetByNameAndCityAsync(string name, string city)
         {
             name = name.Trim().ToLower();
@@ -107,17 +157,13 @@ namespace Infrastructure.Repositories
                 .FirstOrDefaultAsync(p =>
                     p.Name.ToLower() == name &&
                     p.City.ToLower() == city &&
-                    p.Status == POIStatus.Approved);
-        }
-        public async Task<List<Location>> GetAllLocationsAsync()
-        {
-            return await _context.Locations.ToListAsync();
+                    p.Status == POIStatus.Active);
         }
 
         public async Task<List<POI>> GetByLocationAsync(Guid locationId)
         {
             return await _context.POIs
-                .Where(x => x.LocationId == locationId && x.Status == POIStatus.Approved)
+                .Where(x => x.LocationId == locationId && x.Status == POIStatus.Active)
                 .ToListAsync();
         }
     }

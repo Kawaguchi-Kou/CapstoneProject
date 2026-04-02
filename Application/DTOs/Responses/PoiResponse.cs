@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -26,6 +26,10 @@ namespace Application.DTOs.Responses
         public string POIImgUrl { get; set; } = string.Empty;
 
         public bool IsIndoor { get; set; }
+
+        public Domain.Enums.POIType Type { get; set; }
+
+        public Domain.Enums.POIStatus Status { get; set; }
 
         public double Latitude { get; set; }
 
