@@ -71,17 +71,17 @@ namespace WebAPI.Controllers
 
         [HttpPost("{tripId}/share")]
         [Authorize]
-        public async Task<IActionResult> GenerateShareLink(Guid tripId, [FromQuery] string frontendBaseUrl)
+        public async Task<IActionResult> GenerateShareLink(Guid tripId, [FromBody] ShareTripRequest request)
         {
             try
             {
-                if (string.IsNullOrEmpty(frontendBaseUrl))
+                if (string.IsNullOrEmpty(request.FrontendBaseUrl))
                 {
                     return BadRequest("Frontend base URL is required");
                 }
 
                 var account = await _authService.GetCurrentAccount();
-                var result = await _tripService.GenerateShareLinkAsync(frontendBaseUrl, tripId, account.Id);
+                var result = await _tripService.GenerateShareLinkAsync(request.FrontendBaseUrl, tripId, account.Id);
 
                 return Ok(new
                 {
