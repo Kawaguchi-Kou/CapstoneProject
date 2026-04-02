@@ -5,12 +5,14 @@ using Application.Services;
 using AutoMapper;
 using Domain.Entities;
 using Domain.Enums;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace WebAPI.Controllers
 {
     [ApiController]
     [Route("api/admin/pois")]
+    [Authorize(Roles = "Admin")]
     public class AdminController : ControllerBase
     {
         private readonly IPOIService _poiService;
@@ -64,7 +66,7 @@ namespace WebAPI.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create([FromForm] CreatePoiRequest request, List<Guid> preferenceIds, POIType type)
+        public async Task<IActionResult> Create([FromForm] CreatePoiRequest request, List<Guid> preferenceIds, POIType type, Guid locationId, Guid districtId)
         {
             try
             {
@@ -86,7 +88,7 @@ namespace WebAPI.Controllers
                 var poi = _mapper.Map<POI>(request);
                 poi.POIImgUrl = POIImgUrl!;
                 poi.Type = type;
-                var newPoi = await _poiService.CreateAsync(poi, preferenceIds);
+                var newPoi = await _poiService.CreateAsync(poi, preferenceIds, locationId, districtId);
 
                 var response = _mapper.Map<PoiResponse>(poi);
 
