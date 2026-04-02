@@ -1,4 +1,4 @@
-﻿using Application.DTOs.Requests;
+using Application.DTOs.Requests;
 using Application.DTOs.Responses;
 using Application.Interfaces;
 using AutoMapper;
@@ -160,6 +160,7 @@ namespace WebAPI.Controllers
         }
 
         [HttpPost("import")]
+        [Authorize(Roles = "Staff")]
         public async Task<IActionResult> ImportExcel(IFormFile file)
         {
             if (file == null || file.Length == 0)

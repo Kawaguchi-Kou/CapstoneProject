@@ -13,8 +13,6 @@ namespace Domain.Interfaces
         Task<List<SavedPromotion>> GetSavedPromotionsByAccountIdAsync(Guid accountId);
         Task<bool> IsPromotionSavedAsync(Guid accountId, Guid promotionId);
         Task SavePromotionAsync(SavedPromotion savedPromotion);
-        Task<int> CountActiveByPoiIdAsync(Guid poiId);
-        Task InactivateActiveByPoiIdAsync(Guid poiId);
 
         Task<List<(Account Account, int PendingAdsCount, DateTime LatestPendingAt)>> GetPendingAccountsAsync(
             int skip,
@@ -28,6 +26,9 @@ namespace Domain.Interfaces
             int take,
             string? keyword = null);
         Task<int> CountPendingByAccountIdAsync(Guid accountId, string? keyword = null);
+
+        Task<int> CountActiveByPoiIdAsync(Guid poiId);
+        Task<int> InactivateActiveByPoiIdAsync(Guid poiId);
 
         Task SaveChangesAsync();
         Task<List<Advertisement>> GetAllAsync();

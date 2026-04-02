@@ -57,7 +57,6 @@ namespace Application.Services
                         CloseHour = poi.CloseHour,
                         GoogleMapLink = poi.GoogleMapLink,
                         IsIndoor = poi.IsIndoor,
-                        Type = poi.Type,
                         LocationName = poi.Location?.LocationName ?? "",
                         POIImgUrl = poi.POIImgUrl,
                         Score = score,
@@ -231,8 +230,7 @@ namespace Application.Services
             var affectedAds = 0;
             if (activeAdsCount > 0)
             {
-                await _advertisementRepository.InactivateActiveByPoiIdAsync(poiId);
-                affectedAds = activeAdsCount;
+                affectedAds = await _advertisementRepository.InactivateActiveByPoiIdAsync(poiId);
             }
 
             return (poi, affectedAds);
@@ -270,19 +268,6 @@ namespace Application.Services
                 string name = worksheet.Cells[row, 1].Text.Trim();
                 string address = worksheet.Cells[row, 2].Text.Trim();
                 string cityRaw = worksheet.Cells[row, 3].Text.Trim();
-                var prefRaw = worksheet.Cells[row, 8].Text.Trim();
-                var preferenceIds = new List<Guid>();
-                if (!string.IsNullOrEmpty(prefRaw))
-                {
-                    preferenceIds = prefRaw
-                        .Split(',', StringSplitOptions.RemoveEmptyEntries)
-                        .Select(x => Guid.TryParse(x.Trim(), out var id) ? id : (Guid?)null)
-                        .Where(x => x.HasValue)
-                        .Select(x => x!.Value)
-                        .ToList();
-                }
-                
-
                 string cityKey = cityRaw.ToLower();
 
                 if (!locations.ContainsKey(cityKey))

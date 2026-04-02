@@ -122,7 +122,7 @@ namespace WebAPI.Controllers
         }
 
         [HttpPost("{id}/approve")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Manager")]
         public async Task<IActionResult> ApproveAdvertisement(Guid id)
         {
             try
@@ -146,7 +146,7 @@ namespace WebAPI.Controllers
         }
 
         [HttpPost("{id}/reject")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Manager")]
         public async Task<IActionResult> RejectAdvertisement(Guid id, [FromBody] RejectAdvertisementRequest? request = null)
         {
             try

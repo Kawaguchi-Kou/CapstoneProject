@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -14,6 +14,7 @@ namespace Application.DTOs.Requests
         public string? OpeningHours { get; set; } = string.Empty;
         public string? GoogleMapLink { get; set; } = string.Empty;
         public bool? IsIndoor { get; set; }
+        public Domain.Enums.POIType? Type { get; set; }
         public IFormFile? POIImgUrl { get; set; }
     }
 }
