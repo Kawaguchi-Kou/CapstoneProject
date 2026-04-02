@@ -223,7 +223,6 @@ namespace WebAPI.Controllers
         [Authorize]
         public IActionResult Logout()
         {
-            HttpContext.Session.Clear();
             return Ok(new { message = "Logout successful" });
         }
 
