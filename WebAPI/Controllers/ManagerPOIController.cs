@@ -75,9 +75,30 @@ namespace WebAPI.Controllers
         [Authorize(Roles = "Manager")]
         public async Task<IActionResult> Update(Guid id, [FromForm] UpdatePoiRequest request)
         {
-            var poi = _mapper.Map<POI>(request);
-            var response = await _poiService.UpdateAsync(id, poi);
-            return Ok(response);
+            try
+            {
+                string? POIImgUrl = null;
+
+                try
+                {
+                    if (request.POIImgUrl != null && request.POIImgUrl.Length > 0)
+                    {
+                        using var stream = request.POIImgUrl.OpenReadStream();
+                        POIImgUrl = await _cloudinaryService.UploadImageAsync(stream, request.POIImgUrl.FileName);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    return BadRequest($"File upload failed: {ex.Message}");
+                }
+                var poi = _mapper.Map<POI>(request);
+                poi.POIImgUrl = POIImgUrl;
+                var response = await _poiService.UpdateAsync(id, poi);
+                return Ok(response);
+            }catch(Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
 
         [HttpPost("{id}/approve")]

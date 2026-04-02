@@ -1,4 +1,5 @@
 using Application.DTOs.Responses;
+using Application.Helper;
 using Application.Interfaces;
 using Domain.Entities;
 using Domain.Enums;
@@ -248,6 +249,127 @@ namespace Application.Services
             return poi;
         }
 
+        //public async Task ImportExcelAsync(IFormFile file)
+        //{
+        //    using var stream = new MemoryStream();
+        //    await file.CopyToAsync(stream);
+
+        //    using var package = new ExcelPackage(stream);
+        //    var worksheet = package.Workbook.Worksheets[0];
+        //    int rowCount = worksheet.Dimension.Rows;
+
+        //    // 🔥 Load toàn bộ Location 1 lần (tránh gọi DB trong loop)
+        //    var locations = (await _locationRepository.GetAllAsync())
+        //      .GroupBy(x => x.LocationName.ToLower())
+        //      .ToDictionary(g => g.Key, g => g.First());
+
+        //    List<POI> pois = new();
+
+        //    for (int row = 2; row <= rowCount; row++)
+        //    {
+        //        string name = worksheet.Cells[row, 1].Text.Trim();
+        //        string address = worksheet.Cells[row, 2].Text.Trim();
+        //        string cityRaw = worksheet.Cells[row, 3].Text.Trim();
+        //        var prefRaw = worksheet.Cells[row, 8].Text.Trim();
+        //        var preferenceIds = new List<Guid>();
+        //        if (!string.IsNullOrEmpty(prefRaw))
+        //        {
+        //            preferenceIds = prefRaw
+        //                .Split(',', StringSplitOptions.RemoveEmptyEntries)
+        //                .Select(x => Guid.TryParse(x.Trim(), out var id) ? id : (Guid?)null)
+        //                .Where(x => x.HasValue)
+        //                .Select(x => x!.Value)
+        //                .ToList();
+        //        }
+
+
+        //        string cityKey = cityRaw.ToLower();
+
+        //        if (!locations.ContainsKey(cityKey))
+        //            continue;
+
+        //        var location = locations[cityKey];
+
+        //        decimal.TryParse(worksheet.Cells[row, 4].Text, out var cost);
+        //        bool.TryParse(worksheet.Cells[row, 7].Text, out var isIndoor);
+
+        //        //Opening Hours Parsing
+        //        var openingRaw = worksheet.Cells[row, 5].Text.Trim();
+
+        //        TimeOnly? openHour = null;
+        //        TimeOnly? closeHour = null;
+        //        bool is24Hours = false;
+
+        //        if (!string.IsNullOrWhiteSpace(openingRaw) && openingRaw.Contains("~"))
+        //        {
+        //            var parts = openingRaw.Split('~', StringSplitOptions.TrimEntries);
+
+        //            if (parts.Length == 2)
+        //            {
+        //                if (TimeOnly.TryParse(parts[0], out var open))
+        //                    openHour = open;
+
+        //                if (TimeOnly.TryParse(parts[1], out var close))
+        //                    closeHour = close;
+
+        //                // 24h case
+        //                if (openHour == TimeOnly.MinValue && closeHour == TimeOnly.MinValue)
+        //                {
+        //                    is24Hours = true;
+        //                }
+        //            }
+        //        }
+
+        //        // Visit Recommendation
+        //        string visitRecommendation = GetVisitRecommendation(
+        //            openHour,
+        //            closeHour,
+        //            is24Hours,
+        //            isIndoor
+        //        );
+
+        //        // LẤY IMAGE TỪ MAP
+        //        var normalizedName = name.Trim().ToLower();
+
+        //        string? imageUrl = _imageMap.ContainsKey(normalizedName)
+        //            ? _imageMap[normalizedName]
+        //            : null;
+
+        //        var poi = new POI
+        //        {
+        //            Id = Guid.NewGuid(),
+
+        //            Name = name,
+        //            Address = address,
+        //            City = cityRaw,
+
+        //            ApproxCost = cost.ToString(),
+        //            OpenHour = openHour,
+        //            CloseHour = closeHour,
+        //            Is24Hours = is24Hours,
+        //            VisitRecommendation = visitRecommendation,
+        //            GoogleMapLink = worksheet.Cells[row, 6].Text,
+        //            IsIndoor = isIndoor,
+
+        //            LocationId = location.LocationId,
+        //            Latitude = location.Latitude,
+        //            Longitude = location.Longitude,
+
+        //            POIImgUrl = imageUrl
+        //        };
+        //        var poiPreferences = preferenceIds.Select(prefId => new POIPreference
+        //        {
+        //            PoiId = poi.Id,
+        //            PreferenceId = prefId
+        //        }).ToList();
+
+        //        pois.Add(poi);
+        //    }
+
+
+        //    await _poiRepository.AddRangeAsync(pois);
+        //}
+
         public async Task ImportExcelAsync(IFormFile file)
         {
             using var stream = new MemoryStream();
@@ -265,13 +387,14 @@ namespace Application.Services
 
             for (int row = 2; row <= rowCount; row++)
             {
+                // ===== BASIC FIELDS =====
                 string name = worksheet.Cells[row, 1].Text.Trim();
                 string address = worksheet.Cells[row, 2].Text.Trim();
                 string cityRaw = worksheet.Cells[row, 3].Text.Trim();
                 string cityKey = cityRaw.ToLower();
 
                 if (!locations.ContainsKey(cityKey))
-                    continue;
+                    throw new Exception($"Row {row}: Location not found '{cityRaw}'");
 
                 var location = locations[cityKey];
                 decimal.TryParse(worksheet.Cells[row, 4].Text, out var cost);
@@ -282,7 +405,7 @@ namespace Application.Services
                 TimeOnly? closeHour = null;
                 bool is24Hours = false;
 
-                if (!string.IsNullOrWhiteSpace(openingRaw) && openingRaw.Contains("~"))
+                if (!string.IsNullOrWhiteSpace(openingRaw))
                 {
                     var parts = openingRaw.Split('~', StringSplitOptions.TrimEntries);
                     if (parts.Length == 2)
@@ -307,7 +430,11 @@ namespace Application.Services
                     OpenHour = openHour,
                     CloseHour = closeHour,
                     Is24Hours = is24Hours,
-                    VisitRecommendation = visitRecommendation,
+                    Type = poiType,
+
+                    VisitRecommendation = GetVisitRecommendation(
+                        openHour, closeHour, is24Hours, isIndoor),
+
                     GoogleMapLink = worksheet.Cells[row, 6].Text,
                     IsIndoor = isIndoor,
                     LocationId = location.LocationId,
