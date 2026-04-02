@@ -21,6 +21,7 @@ namespace Domain.Entities
         public bool IsIndoor { get; set; }
         public double Latitude { get; set; }
         public double Longitude { get; set; }
+        public POIType Type { get; set; }
         public POIStatus Status { get; set; }
         public Guid? PartnerId { get; set; }
         [Required]
