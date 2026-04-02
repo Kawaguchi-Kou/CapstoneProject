@@ -1,4 +1,4 @@
-﻿using Application.DTOs.Requests;
+using Application.DTOs.Requests;
 using Application.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -65,6 +65,12 @@ namespace WebAPI.Controllers
             await _locationService.ImportExcelAsync(file);
 
             return Ok("Import location success");
+        }
+        [HttpGet("export")]
+        public async Task<IActionResult> ExportExcel()
+        {
+            var fileContent = await _locationService.ExportExcelAsync();
+            return File(fileContent, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "Locations_Export.xlsx");
         }
     }
 }

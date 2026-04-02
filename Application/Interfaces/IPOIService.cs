@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -23,6 +23,7 @@ namespace Application.Interfaces
         Task DeleteAsync(Guid id);
 
         Task ImportExcelAsync(IFormFile file);
+        Task<byte[]> ExportExcelAsync();
         void AddImageMapping(string fileName, string url);
 
     }

@@ -1,4 +1,4 @@
-﻿using Application.DTOs.Requests;
+using Application.DTOs.Requests;
 using Application.DTOs.Responses;
 using Application.Interfaces;
 using Application.Services;
@@ -135,6 +135,12 @@ namespace WebAPI.Controllers
             _poiService.AddImageMapping(key, url);
 
             return Ok(new { url });
+        }
+        [HttpGet("export")]
+        public async Task<IActionResult> ExportExcel()
+        {
+            var fileContent = await _poiService.ExportExcelAsync();
+            return File(fileContent, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "POIs_Export.xlsx");
         }
     }
 }
