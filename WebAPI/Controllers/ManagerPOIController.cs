@@ -1,18 +1,16 @@
 ﻿using Application.DTOs.Requests;
 using Application.DTOs.Responses;
 using Application.Interfaces;
-using Application.Services;
 using AutoMapper;
 using Domain.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using OfficeOpenXml;
 
 namespace WebAPI.Controllers
 {
     [ApiController]
     [Route("api/manager/pois")]
-    [Authorize(Roles = "Manager")]
+    [Authorize(Roles = "Manager,Staff")]
     public class ManagerPOIController : ControllerBase
     {
         private readonly IPOIService _poiService;
@@ -37,56 +35,128 @@ namespace WebAPI.Controllers
         public async Task<IActionResult> GetById(Guid id)
         {
             var poi = await _poiService.GetByIdAsync(id);
-
-            if (poi == null)
-                return NotFound();
-
+            if (poi == null) return NotFound();
             return Ok(poi);
         }
 
+        [HttpGet("pending")]
+        public async Task<IActionResult> GetPending([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
+        {
+            var pois = await _poiService.GetPendingPartnerPoisAsync(page, pageSize);
+            return Ok(pois);
+        }
+
         [HttpPost]
-        public async Task<IActionResult> Create(CreatePoiRequest request)
+        [Authorize(Roles = "Manager")]
+        public async Task<IActionResult> Create([FromForm] CreatePoiRequest request)
         {
             try
             {
                 string? poiUrl = null;
+                if (request.POIImgUrl != null && request.POIImgUrl.Length > 0)
+                {
+                    using var stream = request.POIImgUrl.OpenReadStream();
+                    poiUrl = await _cloudinaryService.UploadImageAsync(stream, request.POIImgUrl.FileName);
+                }
 
-                try
-                {
-                    if (request.POIImgUrl != null && request.POIImgUrl.Length > 0)
-                    {
-                        using var stream = request.POIImgUrl.OpenReadStream();
-                        poiUrl = await _cloudinaryService.UploadImageAsync(stream, request.POIImgUrl.FileName);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    return BadRequest($"File upload failed: {ex.Message}");
-                }
                 var poi = _mapper.Map<POI>(request);
                 poi.POIImgUrl = poiUrl;
-                var response = await _poiService.CreateAsync(poi, request.PoiPreferences);
+                var response = await _poiService.CreateAsync(poi, request.PoiPreferences ?? new List<Guid>());
                 var result = _mapper.Map<RecommendedPoiResponse>(response);
                 return Ok(result);
-            }   catch (Exception ex) 
+            }
+            catch (Exception ex)
             {
                 return BadRequest(new { message = ex.Message });
             }
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(Guid id, UpdatePoiRequest request)
+        [Authorize(Roles = "Manager")]
+        public async Task<IActionResult> Update(Guid id, [FromForm] UpdatePoiRequest request)
         {
             var poi = _mapper.Map<POI>(request);
             var response = await _poiService.UpdateAsync(id, poi);
             return Ok(response);
         }
 
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(Guid id)
+        [HttpPost("{id}/approve")]
+        public async Task<IActionResult> Approve(Guid id)
         {
-            await _poiService.DeleteAsync(id);
-            return Ok("Deleted successfully");
+            try
+            {
+                var poi = await _poiService.ApprovePartnerPoiAsync(id);
+                return Ok(poi);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpPost("{id}/reject")]
+        public async Task<IActionResult> Reject(Guid id, [FromBody] RejectPoiRequest? request = null)
+        {
+            try
+            {
+                var poi = await _poiService.RejectPartnerPoiAsync(id);
+                return Ok(new { poi, reason = request?.Reason });
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpPatch("{id}/inactivate")]
+        public async Task<IActionResult> Inactivate(Guid id, [FromQuery] bool confirmCascade = false)
+        {
+            try
+            {
+                var (poi, affectedAds) = await _poiService.InactivatePoiAsync(Guid.Empty, id, true, confirmCascade);
+                return Ok(new
+                {
+                    poi,
+                    affectedAds,
+                    message = affectedAds > 0
+                        ? $"POI đã inactive và {affectedAds} ads liên quan đã được inactive."
+                        : "POI đã inactive thành công."
+                });
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpPatch("{id}/activate")]
+        public async Task<IActionResult> Activate(Guid id)
+        {
+            try
+            {
+                var poi = await _poiService.ActivatePoiAsync(id);
+                return Ok(poi);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
 
         [HttpPost("import")]
@@ -96,20 +166,18 @@ namespace WebAPI.Controllers
                 return BadRequest("File is empty");
 
             await _poiService.ImportExcelAsync(file);
-
             return Ok("Import POI success");
         }
 
         [HttpPost("upload-image")]
+        [Authorize(Roles = "Manager")]
         public async Task<IActionResult> UploadImage(IFormFile file)
         {
             if (file == null || file.Length == 0)
                 return BadRequest("File is empty");
 
             using var stream = file.OpenReadStream();
-
             var url = await _cloudinaryService.UploadImageAsync(stream, file.FileName);
-
             var key = Path.GetFileNameWithoutExtension(file.FileName).Trim().ToLower();
             _poiService.AddImageMapping(key, url);
 

@@ -1,10 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Domain.Enums;
 
 namespace Domain.Entities
@@ -23,7 +18,6 @@ namespace Domain.Entities
         public string? VisitRecommendation { get; set; }
         public string GoogleMapLink { get; set; } = string.Empty;
         public string? POIImgUrl { get; set; }
-        public POIType Type { get; set; }
         public bool IsIndoor { get; set; }
         public double Latitude { get; set; }
         public double Longitude { get; set; }
@@ -32,13 +26,13 @@ namespace Domain.Entities
         [Required]
         public Guid LocationId { get; set; }
 
-        //Navigation
+        // Navigation
         [ForeignKey(nameof(LocationId))]
-        public Location Location { get; set; }
+        public Location Location { get; set; } = null!;
         [ForeignKey(nameof(PartnerId))]
-        public Account Partner { get; set; }
-        public ICollection<POIPreference> PoiPreferences { get; set; }
-        public ICollection<ItineraryDetail> ItineraryDetails { get; set; }
+        public Account? Partner { get; set; }
+        public ICollection<POIPreference> PoiPreferences { get; set; } = new List<POIPreference>();
+        public ICollection<ItineraryDetail> ItineraryDetails { get; set; } = new List<ItineraryDetail>();
         public ICollection<Advertisement> Advertisements { get; set; } = new List<Advertisement>();
     }
 }

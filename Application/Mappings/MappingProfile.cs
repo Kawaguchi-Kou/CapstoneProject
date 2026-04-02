@@ -81,8 +81,10 @@ namespace Application.Mappings
                             .ToList()));
 
             //Location
-            CreateMap<CreatePoiRequest, POI>();
-            CreateMap<UpdatePoiRequest, POI>();
+            CreateMap<CreatePoiRequest, POI>()
+                .ForMember(dest => dest.PoiPreferences, opt => opt.Ignore());
+            CreateMap<UpdatePoiRequest, POI>()
+                .ForMember(dest => dest.PoiPreferences, opt => opt.Ignore());
 
             //Trip Risk Profile
             CreateMap<Trip, TripRiskContextResponse>();
