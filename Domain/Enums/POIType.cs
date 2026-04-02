@@ -9,6 +9,12 @@ namespace Domain.Enums
     public enum POIType
     {
         Restaurant,
-        Attraction
+        Attraction,
+        Cafe,
+        Hotel,
+        Museum,
+        Park,
+        Shopping
+
     }
 }

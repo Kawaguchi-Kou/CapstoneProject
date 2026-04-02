@@ -10,7 +10,7 @@ namespace WebAPI.Controllers
 {
     [ApiController]
     [Route("api/manager/pois")]
-    [Authorize(Roles = "Manager,Staff")]
+    [Authorize(Roles = "Manager")]
     public class ManagerPOIController : ControllerBase
     {
         private readonly IPOIService _poiService;
@@ -56,7 +56,7 @@ namespace WebAPI.Controllers
 
         [HttpPost]
         [Authorize(Roles = "Manager")]
-        public async Task<IActionResult> Create([FromForm] CreatePoiRequest request)
+        public async Task<IActionResult> Create([FromForm] CreatePoiRequest request, Guid locationId, Guid districtId)
         {
             try
             {
@@ -69,7 +69,7 @@ namespace WebAPI.Controllers
 
                 var poi = _mapper.Map<POI>(request);
                 poi.POIImgUrl = poiUrl;
-                var response = await _poiService.CreateAsync(poi, request.PoiPreferences ?? new List<Guid>());
+                var response = await _poiService.CreateAsync(poi, request.PoiPreferences ?? new List<Guid>(), locationId, districtId);
                 var result = _mapper.Map<RecommendedPoiResponse>(response);
                 return Ok(result);
             }
@@ -189,7 +189,6 @@ namespace WebAPI.Controllers
         }
 
         [HttpPost("import")]
-        [Authorize(Roles = "Staff")]
         public async Task<IActionResult> ImportExcel(IFormFile file)
         {
             if (file == null || file.Length == 0)
@@ -200,7 +199,6 @@ namespace WebAPI.Controllers
         }
 
         [HttpPost("upload-image")]
-        [Authorize(Roles = "Manager")]
         public async Task<IActionResult> UploadImage(IFormFile file)
         {
             if (file == null || file.Length == 0)

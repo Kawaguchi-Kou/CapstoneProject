@@ -27,6 +27,7 @@ namespace Infrastructure.Repositories
         {
             return await _context.POIs
                 .Include(p => p.Location)
+                .Include(p => p.District)
                 .Include(p => p.PoiPreferences)
                     .ThenInclude(pp => pp.Preference)
                 .Where(p => p.Status == POIStatus.Active)
@@ -156,7 +157,7 @@ namespace Infrastructure.Repositories
             return await _context.POIs
                 .FirstOrDefaultAsync(p =>
                     p.Name.ToLower() == name &&
-                    p.City.ToLower() == city &&
+                    p.Location.LocationName.ToLower() == city &&
                     p.Status == POIStatus.Active);
         }
 

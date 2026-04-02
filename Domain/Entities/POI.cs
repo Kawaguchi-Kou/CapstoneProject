@@ -10,7 +10,6 @@ namespace Domain.Entities
         public Guid Id { get; set; }
         public string Name { get; set; } = string.Empty;
         public string Address { get; set; } = string.Empty;
-        public string City { get; set; } = string.Empty;
         public string ApproxCost { get; set; } = string.Empty;
         public TimeOnly? OpenHour { get; set; }
         public TimeOnly? CloseHour { get; set; }
@@ -26,10 +25,13 @@ namespace Domain.Entities
         public Guid? PartnerId { get; set; }
         [Required]
         public Guid LocationId { get; set; }
+        public Guid DistrictId { get; set; }
 
         // Navigation
         [ForeignKey(nameof(LocationId))]
         public Location Location { get; set; } = null!;
+        [ForeignKey(nameof(DistrictId))]
+        public District District { get; set; } = null!;
         [ForeignKey(nameof(PartnerId))]
         public Account? Partner { get; set; }
         public ICollection<POIPreference> PoiPreferences { get; set; } = new List<POIPreference>();

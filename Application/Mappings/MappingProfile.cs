@@ -109,6 +109,9 @@ namespace Application.Mappings
             CreateMap<AddTripSegmentRequest, TripSegment>();
 
             CreateMap<TripSegment, TripSegmentResponse>();
+
+            //District
+            CreateMap<District, DistrictResponse>();
         }
     }
 }

@@ -17,7 +17,9 @@ namespace Domain.Entities
         public double Longitude { get; set; }
 
         //Navigation
+        public ICollection<POI> POIs { get; set; }
         public ICollection<WeatherForecast> WeatherForecast { get; set; }
         public ICollection<TripSegment> Segments { get; set; }
+        public ICollection<District> Districts { get; set; }
     }
 }

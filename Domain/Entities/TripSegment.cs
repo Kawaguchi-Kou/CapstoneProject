@@ -18,7 +18,7 @@ namespace Domain.Entities
         public Guid TripId { get; set; }
 
         [Required]
-        public Guid LocationId { get; set; }  
+        public Guid LocationId { get; set; }
 
         [Required]
         public int OrderIndex { get; set; }   // Thứ tự chặng

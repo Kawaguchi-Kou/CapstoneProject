@@ -22,6 +22,7 @@ namespace Infrastructure.EntitiesConfigurations
         public DbSet<Itinerary> Itineraries { get; set; }
         public DbSet<ItineraryDetail> ItineraryDetails { get; set; }
         public DbSet<Location> Locations { get; set; }
+        public DbSet<District> Districts { get; set; }
 
         //Notification
         public DbSet<Notification> Notifications { get; set; }
@@ -283,9 +284,6 @@ namespace Infrastructure.EntitiesConfigurations
                 entity.Property(p => p.ApproxCost)
                       .IsRequired()
                       .HasMaxLength(255);
-                entity.Property(p => p.City)
-                      .IsRequired()
-                      .HasMaxLength(255);
                 entity.Property(p => p.Address)
                       .IsRequired()
                       .HasMaxLength(255);
@@ -294,6 +292,16 @@ namespace Infrastructure.EntitiesConfigurations
                       .WithMany(p => p.POIs)
                       .HasForeignKey(poi => poi.PartnerId)
                       .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(p => p.Location)
+                      .WithMany(l => l.POIs)
+                      .HasForeignKey(p => p.LocationId)
+                      .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(p => p.District)
+                      .WithMany(d => d.POIs)
+                      .HasForeignKey(p => p.DistrictId)
+                      .OnDelete(DeleteBehavior.Restrict);
             });
 
             modelBuilder.Entity<POIPreference>(entity =>
@@ -327,6 +335,17 @@ namespace Infrastructure.EntitiesConfigurations
                       .WithMany(a => a.UserPreferenceVectors)
                       .HasForeignKey(upv => upv.AccountId)
                       .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // =========================
+            // DISTRICT
+            // =========================
+            modelBuilder.Entity<District>(entity =>
+            {
+                entity.ToTable("districts");
+                entity.HasKey(d => d.Id);
+                entity.Property(d => d.Name)
+                      .HasMaxLength(150);
             });
 
             // =========================

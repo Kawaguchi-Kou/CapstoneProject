@@ -92,6 +92,9 @@ builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
 // Preference
 builder.Services.AddScoped<IPreferenceService, PreferenceService>();
 
+//District
+builder.Services.AddScoped<IDistrictService, DistrictService>();
+
 //POI
 builder.Services.AddScoped<IPOIService, POIService>();
 
@@ -135,6 +138,9 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 
 // Preference
 builder.Services.AddScoped<IPreferenceRepository, PreferenceRepository>();
+
+//District
+builder.Services.AddScoped<IDistrictRepository, DistrictRepository>();
 
 //POI
 builder.Services.AddScoped<IPOIRepository, POIRepository>();
