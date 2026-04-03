@@ -127,9 +127,11 @@ namespace Application.Services
             if (poi.Status == POIStatus.Inactive)
                 throw new InvalidOperationException("POI đang inactive, không thể cập nhật.");
 
+            if (!string.IsNullOrWhiteSpace(request.Name)) poi.Name = request.Name;
             if (!string.IsNullOrWhiteSpace(request.Address)) poi.Address = request.Address;
             if (!string.IsNullOrWhiteSpace(request.ApproxCost)) poi.ApproxCost = request.ApproxCost;
             if (!string.IsNullOrWhiteSpace(request.GoogleMapLink)) poi.GoogleMapLink = request.GoogleMapLink;
+            if (!string.IsNullOrWhiteSpace(request.POIImgUrl)) poi.POIImgUrl = request.POIImgUrl;
             poi.OpenHour = request.OpenHour;
             poi.CloseHour = request.CloseHour;
             poi.IsIndoor = request.IsIndoor;
