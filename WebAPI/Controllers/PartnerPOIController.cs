@@ -66,7 +66,17 @@ namespace WebAPI.Controllers
             }
 
             var pois = await _poiService.GetMyPoisAsync(partnerId, page, pageSize);
-            return Ok(pois);
+
+            var mapped = new PagedResultResponse<PoiResponse>
+            {
+                Items = _mapper.Map<List<PoiResponse>>(pois.Items),
+                Page = pois.Page,
+                PageSize = pois.PageSize,
+                TotalItems = pois.TotalItems,
+                TotalPages = pois.TotalPages
+            };
+
+            return Ok(mapped);
         }
 
         [HttpGet("my/{id}")]
@@ -82,7 +92,8 @@ namespace WebAPI.Controllers
             if (poi == null)
                 return NotFound(new { message = "POI not found" });
 
-            return Ok(poi);
+            var mapped = _mapper.Map<PoiResponse>(poi);
+            return Ok(mapped);
         }
 
         [HttpPut("my/{id}")]
@@ -97,8 +108,17 @@ namespace WebAPI.Controllers
                 }
 
                 var poi = _mapper.Map<POI>(request);
+
+                // Upload ảnh mới nếu có
+                if (request.POIImgUrl != null && request.POIImgUrl.Length > 0)
+                {
+                    using var stream = request.POIImgUrl.OpenReadStream();
+                    poi.POIImgUrl = await _cloudinaryService.UploadImageAsync(stream, request.POIImgUrl.FileName);
+                }
+
                 var response = await _poiService.UpdatePartnerPoiAsync(partnerId, id, poi);
-                return Ok(response);
+                var mapped = _mapper.Map<PoiResponse>(response);
+                return Ok(mapped);
             }
             catch (KeyNotFoundException ex)
             {
@@ -122,9 +142,11 @@ namespace WebAPI.Controllers
                 }
 
                 var (poi, affectedAds) = await _poiService.InactivatePoiAsync(partnerId, id, false, confirmCascade);
+                var mapped = _mapper.Map<PoiResponse>(poi);
+
                 return Ok(new
                 {
-                    poi,
+                    poi = mapped,
                     affectedAds,
                     message = affectedAds > 0
                         ? $"POI đã inactive và {affectedAds} ads liên quan đã được inactive."
