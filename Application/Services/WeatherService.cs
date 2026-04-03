@@ -116,6 +116,76 @@ namespace Application.Services
             return result;
         }
 
+        public async Task<Dictionary<DateOnly, WeatherForecast>>
+    GetRangeOptimizedAsync(Guid locationId, List<DateOnly> dates)
+        {
+            var today = DateOnly.FromDateTime(DateTime.Now);
+
+            var validDates = dates
+                .Where(d => d >= today)
+                .Distinct()
+                .OrderBy(d => d)
+                .ToList();
+
+            var result = new Dictionary<DateOnly, WeatherForecast>();
+
+            // ================= LOAD CACHE =================
+            foreach (var date in validDates)
+            {
+                var cached = await _weatherRepo.GetAsync(locationId, date);
+
+                if (cached != null &&
+                    cached.FetchedAt >= DateTime.Now.AddHours(-6))
+                {
+                    result[date] = cached;
+                }
+            }
+
+            // ================= MISSING DATES =================
+            var missingDates = validDates
+                .Where(d => !result.ContainsKey(d))
+                .ToList();
+
+            if (!missingDates.Any())
+                return result;
+
+            var from = missingDates.Min();
+            var to = missingDates.Max();
+
+            // 🔥 ONE API CALL
+            var loc = await _locationRepo.GetByIdAsync(locationId);
+
+            var apiData = await _openMeteoService.GetDailyAsync(
+                loc.Latitude,
+                loc.Longitude,
+                from,
+                to);
+
+            var newForecasts = new List<WeatherForecast>();
+
+            foreach (var dto in apiData)
+            {
+                var entity = new WeatherForecast
+                {
+                    Id = Guid.NewGuid(),
+                    LocationId = locationId,
+                    ForecastDate = dto.Date,
+                    TemperatureCelsius = dto.MaxTemperature,
+                    PrecipitationProbability = dto.PrecipitationProbability,
+                    WindSpeed = dto.MaxWindSpeed,
+                    FetchedAt = DateTime.Now
+                };
+
+                newForecasts.Add(entity);
+                result[dto.Date] = entity;
+            }
+
+            // 🔥 SAVE ONCE
+            await _weatherRepo.UpsertAsync(newForecasts);
+
+            return result;
+        }
+
         public async Task PreloadAsync(Guid locationId, List<DateOnly> dates)
         {
             foreach (var date in dates)

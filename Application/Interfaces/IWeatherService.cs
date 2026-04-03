@@ -14,6 +14,9 @@ namespace Application.Interfaces
         Task<Dictionary<DateOnly, WeatherForecast>>
             GetRangeAsync(Guid locationId, List<DateOnly> dates);
 
+        Task<Dictionary<DateOnly, WeatherForecast>>
+            GetRangeOptimizedAsync(Guid locationId, List<DateOnly> dates);
+
         Task PreloadAsync(Guid locationId, List<DateOnly> dates);
     }
 }

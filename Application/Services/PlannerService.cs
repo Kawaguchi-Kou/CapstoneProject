@@ -167,7 +167,7 @@ namespace Application.Services
                     .ToList();
 
                 // 🔥 SAFE: WeatherService handles parallel internally
-                var forecasts = await _weatherService.GetRangeAsync(segment.LocationId, dates);
+                var forecasts = await _weatherService.GetRangeOptimizedAsync(segment.LocationId, dates);
 
                 forecastDict[segment.SegmentId] = forecasts;
             }

@@ -14,6 +14,7 @@ namespace Infrastructure.ExternalApis.OpenMeteo
         private readonly OpenMeteoOptions _options;
         private readonly IWeatherForecastRepository _repo;
         private readonly ILocationRepository _locationRepo;
+        private static readonly SemaphoreSlim _apiLimiter = new(5); // limit concurrency
 
         public OpenMeteoService(
             HttpClient http,
@@ -25,25 +26,86 @@ namespace Infrastructure.ExternalApis.OpenMeteo
             _locationRepo = locationRepo;
         }
 
-        public async Task<IReadOnlyList<DailyWeatherDto>> GetDailyAsync(
-            double latitude,
-            double longitude,
-            DateOnly from,
-            DateOnly to)
-        {
+        //public async Task<IReadOnlyList<DailyWeatherDto>> GetDailyAsync(
+        //    double latitude,
+        //    double longitude,
+        //    DateOnly from,
+        //    DateOnly to)
+        //{
 
+        //    if (to < from)
+        //        throw new ArgumentException("End date must be after start date.");
+
+        //    var days = to.DayNumber - from.DayNumber + 1;
+
+        //    if (days > 7)
+        //        throw new ArgumentException("Forecast period cannot exceed 7 days.");
+
+        //    var today = DateOnly.FromDateTime(DateTime.UtcNow);
+
+        //    if (from < today)
+        //        throw new ArgumentException("Cannot forecast past dates.");
+
+        //    var url =
+        //        $"{_options.BaseUrl}" +
+        //        $"?latitude={latitude}" +
+        //        $"&longitude={longitude}" +
+        //        $"&daily=temperature_2m_max,precipitation_probability_max,wind_speed_10m_max" +
+        //        $"&start_date={from:yyyy-MM-dd}" +
+        //        $"&end_date={to:yyyy-MM-dd}" +
+        //        $"&timezone=auto";
+
+        //    var response = await _http.GetAsync(url);
+        //    response.EnsureSuccessStatusCode();
+
+        //    var json = await response.Content.ReadAsStringAsync();
+        //    if (!response.IsSuccessStatusCode)
+        //    {
+        //        throw new OpenMeteoApiException(
+        //            response.StatusCode,
+        //            json
+        //        );
+        //    }
+        //    var data = JsonSerializer.Deserialize<OpenMeteoDailyResponse>(json)!;
+
+        //    var result = new List<DailyWeatherDto>();
+
+        //    for (int i = 0; i < data.Daily.Time.Count; i++)
+        //    {
+        //        result.Add(new DailyWeatherDto
+        //        {
+        //            Date = DateOnly.Parse(data.Daily.Time[i]),
+        //            MaxTemperature = data.Daily.TemperatureMax[i],
+        //            PrecipitationProbability = data.Daily.PrecipitationProbabilityMax[i],
+        //            MaxWindSpeed = data.Daily.WindSpeedMax[i]
+        //        });
+        //    }
+
+        //    return result;
+        //}
+
+        public async Task<IReadOnlyList<DailyWeatherDto>> GetDailyAsync(
+    double latitude,
+    double longitude,
+    DateOnly from,
+    DateOnly to)
+        {
             if (to < from)
                 throw new ArgumentException("End date must be after start date.");
 
+            var today = DateOnly.FromDateTime(DateTime.Now); // ✅ LOCAL TIME
+
+            // 🔥 FIX 1: auto-adjust instead of throw
+            if (from < today)
+                from = today;
+
             var days = to.DayNumber - from.DayNumber + 1;
+
+            if (days <= 0)
+                return new List<DailyWeatherDto>();
 
             if (days > 7)
                 throw new ArgumentException("Forecast period cannot exceed 7 days.");
-
-            var today = DateOnly.FromDateTime(DateTime.UtcNow);
-
-            if (from < today)
-                throw new ArgumentException("Cannot forecast past dates.");
 
             var url =
                 $"{_options.BaseUrl}" +
@@ -54,33 +116,55 @@ namespace Infrastructure.ExternalApis.OpenMeteo
                 $"&end_date={to:yyyy-MM-dd}" +
                 $"&timezone=auto";
 
-            var response = await _http.GetAsync(url);
-            response.EnsureSuccessStatusCode();
+            int retry = 0;
 
-            var json = await response.Content.ReadAsStringAsync();
-            if (!response.IsSuccessStatusCode)
+            while (true)
             {
-                throw new OpenMeteoApiException(
-                    response.StatusCode,
-                    json
-                );
-            }
-            var data = JsonSerializer.Deserialize<OpenMeteoDailyResponse>(json)!;
+                await _apiLimiter.WaitAsync(); // 🔥 FIX 2: limit concurrency
 
-            var result = new List<DailyWeatherDto>();
-
-            for (int i = 0; i < data.Daily.Time.Count; i++)
-            {
-                result.Add(new DailyWeatherDto
+                try
                 {
-                    Date = DateOnly.Parse(data.Daily.Time[i]),
-                    MaxTemperature = data.Daily.TemperatureMax[i],
-                    PrecipitationProbability = data.Daily.PrecipitationProbabilityMax[i],
-                    MaxWindSpeed = data.Daily.WindSpeedMax[i]
-                });
-            }
+                    var response = await _http.GetAsync(url);
 
-            return result;
+                    var json = await response.Content.ReadAsStringAsync();
+
+                    if (!response.IsSuccessStatusCode)
+                        throw new OpenMeteoApiException(response.StatusCode, json);
+
+                    var data = JsonSerializer.Deserialize<OpenMeteoDailyResponse>(json)!;
+
+                    var result = new List<DailyWeatherDto>();
+
+                    for (int i = 0; i < data.Daily.Time.Count; i++)
+                    {
+                        result.Add(new DailyWeatherDto
+                        {
+                            Date = DateOnly.Parse(data.Daily.Time[i]),
+                            MaxTemperature = data.Daily.TemperatureMax[i],
+                            PrecipitationProbability = data.Daily.PrecipitationProbabilityMax[i],
+                            MaxWindSpeed = data.Daily.WindSpeedMax[i]
+                        });
+                    }
+
+                    return result;
+                }
+                catch (HttpRequestException ex) when (retry < 3)
+                {
+                    retry++;
+                    Console.WriteLine($"⚠️ Retry {retry}: {ex.Message}");
+                    await Task.Delay(500 * retry);
+                }
+                catch (TaskCanceledException ex) when (retry < 3)
+                {
+                    retry++;
+                    Console.WriteLine($"⚠️ Timeout retry {retry}: {ex.Message}");
+                    await Task.Delay(500 * retry);
+                }
+                finally
+                {
+                    _apiLimiter.Release();
+                }
+            }
         }
 
         public async Task<DailyWeatherDto?> GetSingleDayAsync(
