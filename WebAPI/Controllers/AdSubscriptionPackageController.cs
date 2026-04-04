@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -246,17 +247,25 @@ namespace WebAPI.Controllers
             }
         }
 
+        // ================= IMPORT EXCEL =================
+        public class ImportPackagesExcelForm
+        {
+            [Required]
+            public IFormFile File { get; set; }
+        }
+
         [HttpPost("import")]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> ImportExcel([FromForm] IFormFile file)
+        [Consumes("multipart/form-data")]
+        public async Task<IActionResult> ImportExcel([FromForm] ImportPackagesExcelForm form)
         {
-            if (file == null || file.Length == 0)
+            if (form?.File == null || form.File.Length == 0)
                 return BadRequest("File is empty");
 
             try
             {
-                await _packageService.ImportPackagesExcelAsync(file);
-                return Ok("Import packages success");
+                await _packageService.ImportPackagesExcelAsync(form.File);
+                return Ok(new { message = "Import packages success" });
             }
             catch (Exception ex)
             {
