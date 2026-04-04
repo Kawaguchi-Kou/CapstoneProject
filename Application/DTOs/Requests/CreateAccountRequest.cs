@@ -16,6 +16,9 @@ namespace Application.DTOs.Requests
         public string Name { get; set; } = string.Empty;
 
         [Required]
+        public string Password { get; set; } = string.Empty;
+
+        [Required]
         public int RoleId { get; set; }
 
         public bool IsActive { get; set; }
