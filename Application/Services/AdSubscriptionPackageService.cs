@@ -203,5 +203,57 @@ namespace Application.Services
 
             await _packageRepository.UpdateAsync(package);
         }
+
+        public async Task<List<AdSubscriptionPackage>> ImportPackagesFromCsvAsync(byte[] fileBytes)
+        {
+            var csvContent = Encoding.UTF8.GetString(fileBytes);
+            var lines = csvContent.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+
+            var result = new List<AdSubscriptionPackage>();
+
+            for (int i = 1; i < lines.Length; i++) // Bỏ header
+            {
+                var cols = lines[i].Split(',');
+                if (cols.Length < 8) continue; // đảm bảo đủ cột
+
+                var package = new AdSubscriptionPackage
+                {
+                    PackageId = Guid.NewGuid(),
+                    Title = cols[1].Trim(),
+                    Description = cols[2].Trim(),
+                    Price = decimal.TryParse(cols[3], out var price) ? price : 0,
+                    DurationDays = int.TryParse(cols[4], out var duration) ? duration : 0,
+                    MaxAdsPerPeriod = int.TryParse(cols[5], out var maxAds) ? maxAds : 0,
+                    Status = AllowedStatuses.Contains(cols[6].Trim(), StringComparer.OrdinalIgnoreCase) ? cols[6].Trim().ToLowerInvariant() : "active",
+                    Currency = string.IsNullOrWhiteSpace(cols[7]) ? "VND" : cols[7].Trim(),
+                    CreatedAt = DateTime.UtcNow
+                };
+
+                result.Add(package);
+            }
+
+            foreach (var p in result)
+            {
+                await _packageRepository.CreateAsync(p);
+            }
+
+            return result;
+        }
+
+        public async Task<byte[]> ExportPackagesToCsvAsync()
+        {
+            var packages = await _packageRepository.GetAllAsync();
+
+            var csvBuilder = new StringBuilder();
+            // Header
+            csvBuilder.AppendLine("PackageId,Title,Description,Price,DurationDays,MaxAdsPerPeriod,Status,Currency,CreatedAt");
+
+            foreach (var p in packages)
+            {
+                csvBuilder.AppendLine($"{p.PackageId},{p.Title},{p.Description},{p.Price},{p.DurationDays},{p.MaxAdsPerPeriod},{p.Status},{p.Currency},{p.CreatedAt:O}");
+            }
+
+            return Encoding.UTF8.GetBytes(csvBuilder.ToString());
+        }
     }
 }

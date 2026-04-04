@@ -245,5 +245,56 @@ namespace WebAPI.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
+
+        [HttpPost("import")]
+        [Authorize]
+        public async Task<IActionResult> ImportPackages([FromForm] IFormFile file)
+        {
+            try
+            {
+                var userRole = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value?.Trim();
+                if (userRole != "Admin")
+                {
+                    return StatusCode(403, new { message = "Bạn không có quyền thực hiện thao tác này. Yêu cầu role Admin." });
+                }
+
+                if (file == null || file.Length == 0)
+                    return BadRequest(new { message = "File không hợp lệ" });
+
+                using var stream = new MemoryStream();
+                await file.CopyToAsync(stream);
+                var packages = await _packageService.ImportPackagesFromCsvAsync(stream.ToArray());
+
+                var responses = _mapper.Map<List<AdSubscriptionPackageResponse>>(packages);
+                return Ok(responses);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpGet("export")]
+        [Authorize]
+        public async Task<IActionResult> ExportPackages()
+        {
+            try
+            {
+                var userRole = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value?.Trim();
+                if (userRole != "Admin")
+                {
+                    return StatusCode(403, new { message = "Bạn không có quyền thực hiện thao tác này. Yêu cầu role Admin." });
+                }
+
+                var csvBytes = await _packageService.ExportPackagesToCsvAsync();
+                return File(csvBytes, "text/csv", "ad_subscription_packages.csv");
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+
     }
 }

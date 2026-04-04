@@ -19,5 +19,8 @@ namespace Application.Interfaces
         Task<bool> DeletePackageAsync(Guid packageId);
         Task ActivatePackageAsync(Guid packageId);
         Task DeactivatePackageAsync(Guid packageId);
+
+        Task<List<AdSubscriptionPackage>> ImportPackagesFromCsvAsync(byte[] fileBytes);
+        Task<byte[]> ExportPackagesToCsvAsync();
     }
 }
