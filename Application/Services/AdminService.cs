@@ -11,18 +11,18 @@ using Domain.Entities;
 using Domain.Interfaces;
 using Microsoft.AspNetCore.Http;
 using OfficeOpenXml;
-using System.Security.Cryptography;
-using System.Text;
 
 namespace Application.Services
 {
     public class AdminService : IAdminService
     {
         private readonly IAuthRepository _authRepository;
+        private readonly IRoleRepository _roleRepository;
 
-        public AdminService(IAuthRepository authRepository)
+        public AdminService(IAuthRepository authRepository, IRoleRepository roleRepository)
         {
             _authRepository = authRepository;
+            _roleRepository = roleRepository;
         }
 
         // ================== Read ==================
@@ -55,12 +55,13 @@ namespace Application.Services
             {
                 Id = Guid.NewGuid(),
                 Email = request.Email,
-                PasswordHash = HashPassword(request.Password),
+                PasswordHash = HashPassword(ProvisionedAccountPassword),
                 RoleId = request.RoleId,
-                Name = request.Name,
-                IsActive = false,
-                CreatedAt = DateTime.UtcNow
+                Name = string.IsNullOrWhiteSpace(request.Name) ? request.Email.Split('@')[0] : request.Name,
+                IsActive = request.IsActive,
+                CreatedAt = request.CreatedAt ?? DateTime.UtcNow
             };
+            ApplyPersistenceOnlyDefaults(account);
 
             await _authRepository.AddAsync(account);
             await _authRepository.SaveChangesAsync();
@@ -116,7 +117,8 @@ namespace Application.Services
             await _authRepository.SaveChangesAsync();
         }
 
-        private const string ImportDefaultPassword = "Imported@ChangeMe1";
+        /// <summary>Mật khẩu nội bộ cho tài khoản tạo qua API/Excel (không nằm trong 5 thuộc tính nghiệp vụ).</summary>
+        private const string ProvisionedAccountPassword = "Imported@ChangeMe1";
 
         public async Task<byte[]> ExportAccountsExcelAsync()
         {
@@ -171,16 +173,15 @@ namespace Application.Services
                 if (string.IsNullOrWhiteSpace(roleName))
                     throw new Exception($"Row {row}: Role is required");
 
-                var role = await _authRepository.GetRoleByNameIgnoreCaseAsync(roleName);
+                var role = await _roleRepository.GetByNameIgnoreCaseAsync(roleName);
                 if (role == null)
                     throw new Exception($"Row {row}: Unknown role \"{roleName}\"");
 
                 if (!TryParseExcelBool(ws.Cells[row, 4], out var isActive))
                     throw new Exception($"Row {row}: Invalid IsActive (use true/false, 1/0, yes/no)");
 
-                var createdAt = DateTime.UtcNow;
-                if (TryParseExcelDateTime(ws.Cells[row, 5], out var parsedCreated))
-                    createdAt = parsedCreated;
+                var hasCreatedAt = TryParseExcelDateTime(ws.Cells[row, 5], out var parsedCreated);
+                var createdAt = hasCreatedAt ? parsedCreated : DateTime.UtcNow;
 
                 if (string.IsNullOrWhiteSpace(name))
                     name = email.Split('@')[0];
@@ -191,6 +192,8 @@ namespace Application.Services
                     existing.Name = name;
                     existing.RoleId = role.Id;
                     existing.IsActive = isActive;
+                    if (hasCreatedAt)
+                        existing.CreatedAt = createdAt;
                 }
                 else
                 {
@@ -198,18 +201,13 @@ namespace Application.Services
                     {
                         Id = Guid.NewGuid(),
                         Email = email,
-                        PasswordHash = HashPassword(ImportDefaultPassword),
+                        PasswordHash = HashPassword(ProvisionedAccountPassword),
                         Name = name,
                         RoleId = role.Id,
                         IsActive = isActive,
-                        CreatedAt = createdAt,
-                        DateOfBirth = new DateTime(2000, 1, 1, 0, 0, 0, DateTimeKind.Utc),
-                        Gender = "Unknown",
-                        Address = string.Empty,
-                        PhoneNumber = string.Empty,
-                        AvatarUrl = string.Empty,
-                        ResetToken = string.Empty
+                        CreatedAt = createdAt
                     };
+                    ApplyPersistenceOnlyDefaults(account);
                     await _authRepository.AddAsync(account);
                     byEmail[key] = account;
                 }
@@ -280,6 +278,17 @@ namespace Application.Services
         }
 
         // ================== HELPER ==================
+        /// <summary>Giá trị bắt buộc của DB/EF, không thuộc 5 thuộc tính import/export.</summary>
+        private static void ApplyPersistenceOnlyDefaults(Account account)
+        {
+            account.DateOfBirth = new DateTime(2000, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+            account.Gender = "Unknown";
+            account.Address = string.Empty;
+            account.PhoneNumber = string.Empty;
+            account.AvatarUrl = string.Empty;
+            account.ResetToken = string.Empty;
+        }
+
         private AccountResponse MapToResponse(Account account)
         {
             return new AccountResponse
@@ -288,16 +297,14 @@ namespace Application.Services
                 Email = account.Email,
                 Name = account.Name,
                 RoleName = account.Role?.Name ?? "",
-                IsActive = account.IsActive
+                IsActive = account.IsActive,
+                CreatedAt = account.CreatedAt
             };
         }
 
-        private string HashPassword(string password)
+        private static string HashPassword(string password)
         {
-            using var sha256 = SHA256.Create();
-            var bytes = Encoding.UTF8.GetBytes(password);
-            var hash = sha256.ComputeHash(bytes);
-            return Convert.ToBase64String(hash);
+            return BCrypt.Net.BCrypt.HashPassword(password);
         }
     }
 }

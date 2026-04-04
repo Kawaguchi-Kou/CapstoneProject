@@ -23,5 +23,15 @@ namespace Infrastructure.Repositories
         {
             return await _context.Roles.ToListAsync();
         }
+
+        public async Task<Role?> GetByNameIgnoreCaseAsync(string roleName)
+        {
+            if (string.IsNullOrWhiteSpace(roleName))
+                return null;
+
+            var normalized = roleName.Trim().ToLower();
+            return await _context.Roles
+                .FirstOrDefaultAsync(r => r.Name.ToLower() == normalized);
+        }
     }
 }

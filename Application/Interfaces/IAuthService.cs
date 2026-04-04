@@ -1,7 +1,6 @@
 ﻿using Application.DTOs.Requests;
 using Application.DTOs.Responses;
 using Domain.Entities;
-using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -25,7 +24,5 @@ namespace Application.Interfaces
         Task<(string accessToken, string refreshToken)> RefreshAsync(string refreshToken, Account account);
         Task<Account> GetCurrentAccount();
         Task<List<Account>> GetAllAccountsAsync();
-        Task ImportExcelAsync(IFormFile file);
-        Task<byte[]> ExportExcelAsync();
     }
 }
