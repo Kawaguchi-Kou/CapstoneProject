@@ -1,5 +1,4 @@
 ﻿using Application.Interfaces;
-using Application.Services;
 using Application.DTOs.Responses;
 using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
@@ -124,5 +123,32 @@ namespace WebAPI.Controllers
             }
             
         }
+
+        [HttpPost("import")]
+        public async Task<IActionResult> ImportExcel(IFormFile file)
+        {
+            if (file == null || file.Length == 0)
+                return BadRequest("File is empty");
+
+            try
+            {
+                await _adminService.ImportAccountsExcelAsync(file);
+                return Ok("Import account success");
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpGet("export")]
+        public async Task<IActionResult> ExportExcel()
+        {
+            var fileContent = await _adminService.ExportAccountsExcelAsync();
+            return File(fileContent,
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                "Accounts.xlsx");
+        }
+
     }
 }

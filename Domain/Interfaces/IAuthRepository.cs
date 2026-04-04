@@ -18,6 +18,6 @@ namespace Domain.Interfaces
         Task ChangePasswordAsync(Account account);
         Task<List<Account>> GetAllAccountsAsync();
         Task<List<Account>> GetFilteredAccountsAsync(string? roleName, bool? isActive, string? name);
-
+        Task<Role?> GetRoleByNameIgnoreCaseAsync(string roleName);
     }
 }

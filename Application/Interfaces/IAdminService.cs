@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Application.DTOs.Requests;
 using Application.DTOs.Responses;
 using Domain.Entities;
+using Microsoft.AspNetCore.Http;
 
 namespace Application.Interfaces
 {
@@ -20,5 +21,8 @@ namespace Application.Interfaces
 
         Task ActivateAccount(Guid id);
         Task DeactivateAccount(Guid id);
+
+        Task<byte[]> ExportAccountsExcelAsync();
+        Task ImportAccountsExcelAsync(IFormFile file);
     }
 }

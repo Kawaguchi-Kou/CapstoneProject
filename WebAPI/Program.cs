@@ -168,8 +168,8 @@ builder.Services.AddScoped<ITripSegmentRepository, TripSegmentRepository>();
 
 //Location
 builder.Services.AddScoped<ILocationRepository, LocationRepository>();
-
-
+//Role
+builder.Services.AddScoped<IRoleRepository, RoleRepository>();
 
 //Cloudinary
 builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
