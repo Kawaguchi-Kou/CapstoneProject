@@ -21,8 +21,7 @@ namespace Application.Interfaces
         Task ActivatePackageAsync(Guid packageId);
         Task DeactivatePackageAsync(Guid packageId);
 
-        Task<List<AdSubscriptionPackage>> ImportPackagesFromCsvAsync(byte[] fileBytes);
-        Task<byte[]> ExportPackagesToCsvAsync();
-        Task ImportPackagesFromCsvAsync(IFormFile file);
+        Task ImportPackagesExcelAsync(IFormFile file);
+        Task<byte[]> ExportPackagesExcelAsync();
     }
 }

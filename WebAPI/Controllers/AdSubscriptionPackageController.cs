@@ -248,15 +248,14 @@ namespace WebAPI.Controllers
 
         [HttpPost("import")]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> ImportPackagesExcel(IFormFile file)
+        public async Task<IActionResult> ImportExcel([FromForm] IFormFile file)
         {
             if (file == null || file.Length == 0)
                 return BadRequest("File is empty");
 
             try
             {
-                // Chuyển file thành byte[] hoặc stream tùy service
-                await _packageService.ImportPackagesFromCsvAsync(file);
+                await _packageService.ImportPackagesExcelAsync(file);
                 return Ok("Import packages success");
             }
             catch (Exception ex)
@@ -267,11 +266,11 @@ namespace WebAPI.Controllers
 
         [HttpGet("export")]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> ExportPackagesExcel()
+        public async Task<IActionResult> ExportExcel()
         {
             try
             {
-                var fileContent = await _packageService.ExportPackagesToCsvAsync();
+                var fileContent = await _packageService.ExportPackagesExcelAsync();
                 return File(fileContent,
                     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                     "AdSubscriptionPackages.xlsx");
@@ -281,7 +280,7 @@ namespace WebAPI.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
-
-
     }
+
 }
+

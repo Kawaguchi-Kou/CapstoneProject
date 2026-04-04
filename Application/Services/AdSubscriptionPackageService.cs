@@ -7,6 +7,8 @@ using Application.DTOs.Requests;
 using Application.Interfaces;
 using Domain.Entities;
 using Domain.Interfaces;
+using Microsoft.AspNetCore.Http;
+using OfficeOpenXml;
 
 namespace Application.Services
 {
@@ -204,56 +206,102 @@ namespace Application.Services
             await _packageRepository.UpdateAsync(package);
         }
 
-        public async Task<List<AdSubscriptionPackage>> ImportPackagesFromCsvAsync(byte[] fileBytes)
+        public async Task ImportPackagesExcelAsync(IFormFile file)
         {
-            var csvContent = Encoding.UTF8.GetString(fileBytes);
-            var lines = csvContent.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+            if (file == null || file.Length == 0)
+                throw new Exception("File is empty");
 
-            var result = new List<AdSubscriptionPackage>();
+            using var stream = new MemoryStream();
+            await file.CopyToAsync(stream);
 
-            for (int i = 1; i < lines.Length; i++) // Bỏ header
+            using var package = new ExcelPackage(stream);
+            var worksheet = package.Workbook.Worksheets[0];
+            int rowCount = worksheet.Dimension.Rows;
+
+            var existingPackages = await _packageRepository.GetAllAsync();
+            var existingTitles = existingPackages.Select(p => p.Title.ToLower()).ToHashSet();
+
+            for (int row = 2; row <= rowCount; row++)
             {
-                var cols = lines[i].Split(',');
-                if (cols.Length < 8) continue; // đảm bảo đủ cột
-
-                var package = new AdSubscriptionPackage
+                try
                 {
-                    PackageId = Guid.NewGuid(),
-                    Title = cols[1].Trim(),
-                    Description = cols[2].Trim(),
-                    Price = decimal.TryParse(cols[3], out var price) ? price : 0,
-                    DurationDays = int.TryParse(cols[4], out var duration) ? duration : 0,
-                    MaxAdsPerPeriod = int.TryParse(cols[5], out var maxAds) ? maxAds : 0,
-                    Status = AllowedStatuses.Contains(cols[6].Trim(), StringComparer.OrdinalIgnoreCase) ? cols[6].Trim().ToLowerInvariant() : "active",
-                    Currency = string.IsNullOrWhiteSpace(cols[7]) ? "VND" : cols[7].Trim(),
-                    CreatedAt = DateTime.UtcNow
-                };
+                    string title = worksheet.Cells[row, 1].Text.Trim();
+                    string desc = worksheet.Cells[row, 2].Text.Trim();
+                    decimal price = decimal.TryParse(worksheet.Cells[row, 3].Text.Trim(), out var p) ? p : 0;
+                    int duration = int.TryParse(worksheet.Cells[row, 4].Text.Trim(), out var d) ? d : 0;
+                    int maxAds = int.TryParse(worksheet.Cells[row, 5].Text.Trim(), out var m) ? m : 0;
+                    string statusRaw = worksheet.Cells[row, 6].Text.Trim().ToLower();
+                    string currency = string.IsNullOrWhiteSpace(worksheet.Cells[row, 7].Text.Trim()) ? "VND" : worksheet.Cells[row, 7].Text.Trim();
 
-                result.Add(package);
+                    if (string.IsNullOrWhiteSpace(title))
+                        throw new Exception("Title is empty");
+
+                    if (existingTitles.Contains(title.ToLower()))
+                        throw new Exception("Package title already exists");
+
+                    if (!AllowedStatuses.Contains(statusRaw))
+                        statusRaw = "active";
+
+                    var packageEntity = new AdSubscriptionPackage
+                    {
+                        PackageId = Guid.NewGuid(),
+                        Title = title,
+                        Description = desc,
+                        Price = price,
+                        DurationDays = duration,
+                        MaxAdsPerPeriod = maxAds,
+                        Status = statusRaw,
+                        Currency = currency,
+                        CreatedAt = DateTime.UtcNow
+                    };
+
+                    await _packageRepository.CreateAsync(packageEntity);
+                    existingTitles.Add(title.ToLower());
+                }
+                catch (Exception ex)
+                {
+                    throw new Exception($"Row {row}: {ex.Message}");
+                }
             }
 
-            foreach (var p in result)
-            {
-                await _packageRepository.CreateAsync(p);
-            }
-
-            return result;
+            await _packageRepository.SaveChangesAsync();
         }
 
-        public async Task<byte[]> ExportPackagesToCsvAsync()
+        public async Task<byte[]> ExportPackagesExcelAsync()
         {
             var packages = await _packageRepository.GetAllAsync();
 
-            var csvBuilder = new StringBuilder();
-            // Header
-            csvBuilder.AppendLine("PackageId,Title,Description,Price,DurationDays,MaxAdsPerPeriod,Status,Currency,CreatedAt");
+            using var package = new ExcelPackage();
+            var worksheet = package.Workbook.Worksheets.Add("AdSubscriptionPackages");
 
-            foreach (var p in packages)
+            // Header
+            worksheet.Cells[1, 1].Value = "Title";
+            worksheet.Cells[1, 2].Value = "Description";
+            worksheet.Cells[1, 3].Value = "Price";
+            worksheet.Cells[1, 4].Value = "DurationDays";
+            worksheet.Cells[1, 5].Value = "MaxAdsPerPeriod";
+            worksheet.Cells[1, 6].Value = "Status";
+            worksheet.Cells[1, 7].Value = "Currency";
+            worksheet.Cells[1, 8].Value = "CreatedAt";
+
+            for (int i = 0; i < packages.Count; i++)
             {
-                csvBuilder.AppendLine($"{p.PackageId},{p.Title},{p.Description},{p.Price},{p.DurationDays},{p.MaxAdsPerPeriod},{p.Status},{p.Currency},{p.CreatedAt:O}");
+                var p = packages[i];
+                int row = i + 2;
+
+                worksheet.Cells[row, 1].Value = p.Title;
+                worksheet.Cells[row, 2].Value = p.Description;
+                worksheet.Cells[row, 3].Value = p.Price;
+                worksheet.Cells[row, 4].Value = p.DurationDays;
+                worksheet.Cells[row, 5].Value = p.MaxAdsPerPeriod;
+                worksheet.Cells[row, 6].Value = p.Status;
+                worksheet.Cells[row, 7].Value = p.Currency;
+                worksheet.Cells[row, 8].Value = p.CreatedAt.ToString("yyyy-MM-dd");
             }
 
-            return Encoding.UTF8.GetBytes(csvBuilder.ToString());
+            worksheet.Cells.AutoFitColumns();
+            return await package.GetAsByteArrayAsync();
         }
     }
 }
+
