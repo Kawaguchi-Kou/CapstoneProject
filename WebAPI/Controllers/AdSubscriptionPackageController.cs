@@ -247,26 +247,17 @@ namespace WebAPI.Controllers
         }
 
         [HttpPost("import")]
-        [Authorize]
-        public async Task<IActionResult> ImportPackages([FromForm] IFormFile file)
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> ImportPackagesExcel(IFormFile file)
         {
+            if (file == null || file.Length == 0)
+                return BadRequest("File is empty");
+
             try
             {
-                var userRole = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value?.Trim();
-                if (userRole != "Admin")
-                {
-                    return StatusCode(403, new { message = "Bạn không có quyền thực hiện thao tác này. Yêu cầu role Admin." });
-                }
-
-                if (file == null || file.Length == 0)
-                    return BadRequest(new { message = "File không hợp lệ" });
-
-                using var stream = new MemoryStream();
-                await file.CopyToAsync(stream);
-                var packages = await _packageService.ImportPackagesFromCsvAsync(stream.ToArray());
-
-                var responses = _mapper.Map<List<AdSubscriptionPackageResponse>>(packages);
-                return Ok(responses);
+                // Chuyển file thành byte[] hoặc stream tùy service
+                await _packageService.ImportPackagesFromCsvAsync(file);
+                return Ok("Import packages success");
             }
             catch (Exception ex)
             {
@@ -275,19 +266,15 @@ namespace WebAPI.Controllers
         }
 
         [HttpGet("export")]
-        [Authorize]
-        public async Task<IActionResult> ExportPackages()
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> ExportPackagesExcel()
         {
             try
             {
-                var userRole = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value?.Trim();
-                if (userRole != "Admin")
-                {
-                    return StatusCode(403, new { message = "Bạn không có quyền thực hiện thao tác này. Yêu cầu role Admin." });
-                }
-
-                var csvBytes = await _packageService.ExportPackagesToCsvAsync();
-                return File(csvBytes, "text/csv", "ad_subscription_packages.csv");
+                var fileContent = await _packageService.ExportPackagesToCsvAsync();
+                return File(fileContent,
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    "AdSubscriptionPackages.xlsx");
             }
             catch (Exception ex)
             {

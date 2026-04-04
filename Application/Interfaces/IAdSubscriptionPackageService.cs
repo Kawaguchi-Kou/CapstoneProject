@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Application.DTOs.Requests;
 using Application.DTOs.Responses;
 using Domain.Entities;
+using Microsoft.AspNetCore.Http;
 
 namespace Application.Interfaces
 {
@@ -22,5 +23,6 @@ namespace Application.Interfaces
 
         Task<List<AdSubscriptionPackage>> ImportPackagesFromCsvAsync(byte[] fileBytes);
         Task<byte[]> ExportPackagesToCsvAsync();
+        Task ImportPackagesFromCsvAsync(IFormFile file);
     }
 }
