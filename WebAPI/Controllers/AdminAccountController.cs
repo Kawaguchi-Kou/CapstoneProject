@@ -3,6 +3,8 @@ using Application.Services;
 using Application.DTOs.Responses;
 using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
+using Domain.Entities;
+using Application.DTOs.Requests;
 
 namespace WebAPI.Controllers
 {
@@ -17,6 +19,32 @@ namespace WebAPI.Controllers
         {
             _adminService = adminService;
             _mapper = mapper;
+        }
+
+        // ================== Create ==================
+        [HttpPost]
+        public async Task<IActionResult> Create([FromBody] CreateAccountRequest request)
+        {
+            var created = await _adminService.CreateAccount(request);
+            return Ok(created); // created là AccountResponse
+        }
+
+        // ================== Update ==================
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Update(Guid id, [FromBody] UpdateAccountRequest request)
+        {
+            if (id != request.Id)
+                return BadRequest("Id mismatch");
+
+            var updated = await _adminService.UpdateAccount(request);
+            return Ok(updated); // updated là AccountResponse
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(Guid id)
+        {
+            await _adminService.DeleteAccount(id);
+            return NoContent();
         }
 
         [HttpGet]

@@ -37,6 +37,18 @@ namespace Infrastructure.Repositories
             await _context.Accounts.AddAsync(account);
         }
 
+        public async Task UpdateAsync(Account account)
+        {
+            _context.Accounts.Update(account);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task DeleteAsync(Account account)
+        {
+            _context.Accounts.Remove(account);
+            await _context.SaveChangesAsync();
+        }
+
         public async Task SaveChangesAsync()
         {
             await _context.SaveChangesAsync();

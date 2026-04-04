@@ -1,20 +1,24 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
-using Application.Interfaces;
+using Application.DTOs.Requests;
+using Application.DTOs.Responses;
 using Domain.Entities;
-using Domain.Interfaces;
 
 namespace Application.Interfaces
 {
     public interface IAdminService
     {
-        Task<List<Account>> GetAll();
-        Task<List<Account>> GetFilteredAccountsAsync(string? roleName, bool? isActive, string? name);
+        Task<List<AccountResponse>> GetAll();
+        Task<List<AccountResponse>> GetFilteredAccountsAsync(string? roleName, bool? isActive, string? name);
+
+        Task<AccountResponse> GetById(Guid id);
+
+        Task<AccountResponse> CreateAccount(CreateAccountRequest request);
+        Task<AccountResponse> UpdateAccount(UpdateAccountRequest request);
+        Task DeleteAccount(Guid id);
+
         Task ActivateAccount(Guid id);
         Task DeactivateAccount(Guid id);
     }
-
 }

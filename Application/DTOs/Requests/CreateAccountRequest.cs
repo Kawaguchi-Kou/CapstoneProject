@@ -5,15 +5,20 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Application.DTOs.Responses
+namespace Application.DTOs.Requests
 {
-    public class AccountResponse
+    public class CreateAccountRequest
     {
-        public Guid Id { get; set; }
+        [Required]
+        [EmailAddress]
         public string Email { get; set; } = string.Empty;
+
+        [Required]
+        public string Password { get; set; } = string.Empty;
+
+        [Required]
+        public int RoleId { get; set; }
+
         public string Name { get; set; } = string.Empty;
-        public string RoleName { get; set; } = string.Empty;
-        public bool IsActive { get; set; }
-        public ProfileResponse? Profile { get; set; }
     }
 }
