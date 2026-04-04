@@ -6,6 +6,7 @@ using Domain.Interfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
+using System;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
@@ -20,6 +21,7 @@ namespace Application.Services
         private readonly IEmailService _emailService;
         private readonly IRefreshTokenRepository _refreshTokenRepository;
         private readonly IHttpContextAccessor _httpContextAccessor;
+
 
         public AuthServices(IAuthRepository authRepository, IConfiguration configuration, 
             IOtpRepository optRepository, IEmailService emailService,
