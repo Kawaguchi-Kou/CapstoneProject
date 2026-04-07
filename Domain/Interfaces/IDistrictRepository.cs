@@ -11,5 +11,6 @@ namespace Domain.Interfaces
     {
         Task<District?> GetByIdAsync(Guid id);
         Task<List<District>> GetAllAsync();
+        Task<List<District>> GetByLocationIdAsync(Guid locationId);
     }
 }

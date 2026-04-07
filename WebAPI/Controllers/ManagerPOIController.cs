@@ -56,7 +56,7 @@ namespace WebAPI.Controllers
 
         [HttpPost]
         [Authorize(Roles = "Manager")]
-        public async Task<IActionResult> Create([FromForm] CreatePoiRequest request, Guid locationId, Guid districtId)
+        public async Task<IActionResult> Create([FromForm] CreatePoiRequest request)
         {
             try
             {
@@ -69,7 +69,11 @@ namespace WebAPI.Controllers
 
                 var poi = _mapper.Map<POI>(request);
                 poi.POIImgUrl = poiUrl;
-                var response = await _poiService.CreateAsync(poi, request.PoiPreferences ?? new List<Guid>(), locationId, districtId);
+                var response = await _poiService.CreateAsync(
+                    poi,
+                    request.PoiPreferences ?? new List<Guid>(),
+                    request.LocationId,
+                    request.DistrictId);
                 var result = _mapper.Map<RecommendedPoiResponse>(response);
                 return Ok(result);
             }
@@ -115,7 +119,8 @@ namespace WebAPI.Controllers
             try
             {
                 var poi = await _poiService.ApprovePartnerPoiAsync(id);
-                return Ok(poi);
+                var response = _mapper.Map<PoiResponse>(poi);
+                return Ok(response);
             }
             catch (KeyNotFoundException ex)
             {

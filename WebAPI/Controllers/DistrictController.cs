@@ -36,5 +36,24 @@ namespace WebAPI.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
+
+        [HttpGet]
+        public async Task<IActionResult> GetByLocation([FromQuery] Guid locationId)
+        {
+            try
+            {
+                if (locationId == Guid.Empty)
+                    return BadRequest(new { message = "locationId is required" });
+
+                var districts = await _districtSerivce.GetByLocationIdAsync(locationId);
+                var response = _mapper.Map<List<DistrictResponse>>(districts);
+
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
     }
 }
