@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -16,5 +16,9 @@ namespace Domain.Interfaces
         Task<List<Trip>> GetUpcomingTripsAsync(DateOnly fromDate);
 
         Task<Trip?> GetByIdAsync(Guid tripId);
+
+        Task<Trip?> GetByShareTokenAsync(string token);
+
+        Task UpdateAsync(Trip trip);
     }
 }

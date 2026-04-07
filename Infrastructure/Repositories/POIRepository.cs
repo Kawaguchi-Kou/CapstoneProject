@@ -155,10 +155,17 @@ namespace Infrastructure.Repositories
             city = city.Trim().ToLower();
 
             return await _context.POIs
+                .Include(p => p.Location)
                 .FirstOrDefaultAsync(p =>
                     p.Name.ToLower() == name &&
                     p.Location.LocationName.ToLower() == city &&
                     p.Status == POIStatus.Active);
+
+        }
+        public async Task<List<Location>> GetAllLocationsAsync()
+        {
+            return await _context.Locations.ToListAsync();
+
         }
 
         public async Task<List<POI>> GetByLocationAsync(Guid locationId)

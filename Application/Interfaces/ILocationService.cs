@@ -1,4 +1,4 @@
-﻿using Application.DTOs.Requests;
+using Application.DTOs.Requests;
 using Domain.Entities;
 using Microsoft.AspNetCore.Http;
 using System;
@@ -18,5 +18,6 @@ namespace Application.Interfaces
         Task DeleteAsync(Guid id);
 
         Task ImportExcelAsync(IFormFile file);
+        Task<byte[]> ExportExcelAsync();
     }
 }

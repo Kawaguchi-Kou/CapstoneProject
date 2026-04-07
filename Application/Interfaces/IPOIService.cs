@@ -1,3 +1,10 @@
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
 using Application.DTOs.Requests;
 using Application.DTOs.Responses;
 using Domain.Entities;
@@ -27,6 +34,7 @@ namespace Application.Interfaces
         Task<POI> ActivatePoiAsync(Guid poiId);
 
         Task ImportExcelAsync(IFormFile file);
+        Task<byte[]> ExportExcelAsync();
         void AddImageMapping(string fileName, string url);
     }
 }

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
@@ -19,6 +19,8 @@ namespace Domain.Entities
         
         [MaxLength(255)]
         public string Title { get; set; }
+
+        public string? ShareToken { get; set; }
 
         public DateOnly StartDate { get; set; }
 

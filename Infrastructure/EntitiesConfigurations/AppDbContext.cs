@@ -284,6 +284,10 @@ namespace Infrastructure.EntitiesConfigurations
                 entity.Property(p => p.ApproxCost)
                       .IsRequired()
                       .HasMaxLength(255);
+
+                // City is now sourced from related Location, not pois table column.
+                entity.Ignore(p => p.City);
+
                 entity.Property(p => p.Address)
                       .IsRequired()
                       .HasMaxLength(255);

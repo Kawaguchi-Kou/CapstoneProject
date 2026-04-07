@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Security.Claims;
 using System.Text;
 using Application.Hubs;
@@ -15,6 +15,7 @@ using Infrastructure.EntitiesConfigurations;
 using Infrastructure.ExternalApis.OpenMeteo;
 using Infrastructure.ExternalApis.SePay;
 using Infrastructure.Repositories;
+using Infrastructure.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
@@ -118,6 +119,9 @@ builder.Services.AddScoped<ILocationService, LocationService>();
 
 //Segment
 builder.Services.AddScoped<ITripSegmentService, TripSegmentService>();
+
+//QRCode
+builder.Services.AddScoped<IQRCodeGenerator, QRCodeGeneratorService>();
 
 //Gemini
 builder.Services.AddHttpClient<IGeminiService, GeminiService>()

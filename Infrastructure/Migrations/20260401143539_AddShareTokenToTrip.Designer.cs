@@ -3,6 +3,7 @@ using System;
 using Infrastructure.EntitiesConfigurations;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260401143539_AddShareTokenToTrip")]
+    partial class AddShareTokenToTrip
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -291,27 +294,6 @@ namespace Infrastructure.Migrations
                     b.ToTable("advertisements", (string)null);
                 });
 
-            modelBuilder.Entity("Domain.Entities.District", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("LocationId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(150)
-                        .HasColumnType("character varying(150)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("LocationId");
-
-                    b.ToTable("districts", (string)null);
-                });
-
             modelBuilder.Entity("Domain.Entities.Itinerary", b =>
                 {
                     b.Property<Guid>("ItineraryId")
@@ -529,11 +511,13 @@ namespace Infrastructure.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)");
 
+                    b.Property<string>("City")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
                     b.Property<TimeOnly?>("CloseHour")
                         .HasColumnType("time without time zone");
-
-                    b.Property<Guid>("DistrictId")
-                        .HasColumnType("uuid");
 
                     b.Property<string>("GoogleMapLink")
                         .IsRequired()
@@ -578,8 +562,6 @@ namespace Infrastructure.Migrations
                         .HasColumnType("text");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("DistrictId");
 
                     b.HasIndex("LocationId");
 
@@ -971,17 +953,6 @@ namespace Infrastructure.Migrations
                     b.Navigation("Package");
                 });
 
-            modelBuilder.Entity("Domain.Entities.District", b =>
-                {
-                    b.HasOne("Domain.Entities.Location", "Location")
-                        .WithMany("Districts")
-                        .HasForeignKey("LocationId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Location");
-                });
-
             modelBuilder.Entity("Domain.Entities.Itinerary", b =>
                 {
                     b.HasOne("Domain.Entities.TripSegment", "Segment")
@@ -1051,24 +1022,16 @@ namespace Infrastructure.Migrations
 
             modelBuilder.Entity("Domain.Entities.POI", b =>
                 {
-                    b.HasOne("Domain.Entities.District", "District")
-                        .WithMany("POIs")
-                        .HasForeignKey("DistrictId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
                     b.HasOne("Domain.Entities.Location", "Location")
-                        .WithMany("POIs")
+                        .WithMany()
                         .HasForeignKey("LocationId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("Domain.Entities.Account", "Partner")
                         .WithMany("POIs")
                         .HasForeignKey("PartnerId")
                         .OnDelete(DeleteBehavior.Cascade);
-
-                    b.Navigation("District");
 
                     b.Navigation("Location");
 
@@ -1237,11 +1200,6 @@ namespace Infrastructure.Migrations
                     b.Navigation("Promotion");
                 });
 
-            modelBuilder.Entity("Domain.Entities.District", b =>
-                {
-                    b.Navigation("POIs");
-                });
-
             modelBuilder.Entity("Domain.Entities.Itinerary", b =>
                 {
                     b.Navigation("ItineraryDetails");
@@ -1249,10 +1207,6 @@ namespace Infrastructure.Migrations
 
             modelBuilder.Entity("Domain.Entities.Location", b =>
                 {
-                    b.Navigation("Districts");
-
-                    b.Navigation("POIs");
-
                     b.Navigation("Segments");
 
                     b.Navigation("WeatherForecast");

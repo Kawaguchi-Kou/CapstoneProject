@@ -1,4 +1,15 @@
+
 using System.Net;
+
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Linq;
+using System.Security.Cryptography.Xml;
+using System.Text;
+using System.Threading.Tasks;
+using Application.DTOs.Requests;
+
 using Application.DTOs.Responses;
 using Application.Helper;
 using Application.Interfaces;
@@ -583,6 +594,77 @@ namespace Application.Services
         {
             var key = Path.GetFileNameWithoutExtension(fileName).Trim().ToLower();
             _imageMap[key] = url;
+        }
+        public async Task<byte[]> ExportExcelAsync()
+        {
+            var pois = await _poiRepository.GetAllWithPreferencesAsync();
+
+            using var package = new ExcelPackage();
+            var worksheet = package.Workbook.Worksheets.Add("POIs");
+
+            // Headers
+            worksheet.Cells[1, 1].Value = "Name";
+            worksheet.Cells[1, 2].Value = "Address";
+            worksheet.Cells[1, 3].Value = "City";
+            worksheet.Cells[1, 4].Value = "ApproxCost";
+            worksheet.Cells[1, 5].Value = "Opening Hours";
+            worksheet.Cells[1, 6].Value = "GoogleMapLink";
+            worksheet.Cells[1, 7].Value = "IsIndoor";
+            worksheet.Cells[1, 8].Value = "Preferences";
+            worksheet.Cells[1, 9].Value = "Type";
+            worksheet.Cells[1, 10].Value = "Latitude";
+            worksheet.Cells[1, 11].Value = "Longitude";
+
+            // Header styling
+            using (var range = worksheet.Cells[1, 1, 1, 11])
+            {
+                range.Style.Font.Bold = true;
+                range.Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
+                range.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.LightGray);
+            }
+
+            for (int i = 0; i < pois.Count; i++)
+            {
+                var poi = pois[i];
+                int row = i + 2;
+
+                worksheet.Cells[row, 1].Value = poi.Name;
+                worksheet.Cells[row, 2].Value = poi.Address;
+                worksheet.Cells[row, 3].Value = poi.City;
+                worksheet.Cells[row, 4].Value = poi.ApproxCost;
+
+                string openHours = string.Empty;
+                if (poi.OpenHour.HasValue && poi.CloseHour.HasValue)
+                {
+                    openHours = $"{poi.OpenHour.Value.ToString("HH:mm")} ~ {poi.CloseHour.Value.ToString("HH:mm")}";
+                }
+                else if (poi.Is24Hours)
+                {
+                    openHours = "00:00 ~ 00:00";
+                }
+                worksheet.Cells[row, 5].Value = openHours;
+
+                worksheet.Cells[row, 6].Value = poi.GoogleMapLink;
+                worksheet.Cells[row, 7].Value = poi.IsIndoor ? "TRUE" : "FALSE";
+
+                var prefs = string.Empty;
+                if (poi.PoiPreferences != null)
+                {
+                    var prefNames = poi.PoiPreferences
+                        .Where(pp => pp.Preference != null)
+                        .Select(pp => pp.Preference.Name)
+                        .ToList();
+                    prefs = string.Join(", ", prefNames);
+                }
+                worksheet.Cells[row, 8].Value = prefs;
+
+                worksheet.Cells[row, 9].Value = poi.Type.ToString();
+                worksheet.Cells[row, 10].Value = poi.Latitude;
+                worksheet.Cells[row, 11].Value = poi.Longitude;
+            }
+
+            worksheet.Cells.AutoFitColumns();
+            return await package.GetAsByteArrayAsync();
         }
 
         private string GetVisitRecommendation(TimeOnly? openHour, TimeOnly? closeHour, bool is24Hours, bool isIndoor)

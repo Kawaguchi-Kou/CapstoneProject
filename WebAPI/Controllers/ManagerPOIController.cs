@@ -211,5 +211,11 @@ namespace WebAPI.Controllers
 
             return Ok(new { url });
         }
+        [HttpGet("export")]
+        public async Task<IActionResult> ExportExcel()
+        {
+            var fileContent = await _poiService.ExportExcelAsync();
+            return File(fileContent, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "POIs_Export.xlsx");
+        }
     }
 }
