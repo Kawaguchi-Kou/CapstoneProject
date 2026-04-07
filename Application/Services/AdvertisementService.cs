@@ -69,6 +69,9 @@ namespace Application.Services
                 throw new ArgumentException("Promotion payload is required");
             }
 
+            var startDateUtc = EnsureUtc(request.StartDate);
+            var endDateUtc = EnsureUtc(request.EndDate);
+
             var advertisement = new Advertisement
             {
                 AccountId = accountId,
@@ -78,8 +81,8 @@ namespace Application.Services
                 VideoUrl = request.VideoUrl,
                 Content = request.Content,
                 ImageUrl = request.ImageUrl,
-                StartDate = request.StartDate,
-                EndDate = request.EndDate,
+                StartDate = startDateUtc,
+                EndDate = endDateUtc,
                 Status = AdStatus.PendingApproval,
                 CreatedAt = DateTime.UtcNow
             };
@@ -301,6 +304,16 @@ namespace Application.Services
         public async Task<List<Advertisement>> GetActiveAsync()
         {
             return await _advertisementRepository.GetActiveAsync();
+        }
+
+        private static DateTime EnsureUtc(DateTime value)
+        {
+            return value.Kind switch
+            {
+                DateTimeKind.Utc => value,
+                DateTimeKind.Local => value.ToUniversalTime(),
+                _ => DateTime.SpecifyKind(value, DateTimeKind.Utc)
+            };
         }
     }
 }
