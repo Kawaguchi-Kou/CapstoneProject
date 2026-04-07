@@ -140,6 +140,7 @@ namespace Application.Services
         {
             using var stream = new MemoryStream();
             await file.CopyToAsync(stream);
+            stream.Position = 0;
 
             using var package = new ExcelPackage(stream);
             var worksheet = package.Workbook.Worksheets[0];
