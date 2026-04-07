@@ -145,6 +145,28 @@ namespace Application.Services
             using var package = new ExcelPackage(stream);
             var worksheet = package.Workbook.Worksheets[0];
             int rowCount = worksheet.Dimension.Rows;
+            int colCount = worksheet.Dimension.Columns;
+
+            var headerMap = new Dictionary<string, int>();
+            for (int col = 1; col <= colCount; col++)
+            {
+                var header = worksheet.Cells[1, col].Text.Trim().ToLower().Replace(" ", "");
+                if (!string.IsNullOrWhiteSpace(header) && !headerMap.ContainsKey(header))
+                {
+                    headerMap[header] = col;
+                }
+            }
+
+            int emailCol = headerMap.TryGetValue("email", out var tmpEmailCol) ? tmpEmailCol : 1;
+            int nameCol = headerMap.TryGetValue("name", out var tmpNameCol) ? tmpNameCol : 3;
+            int roleCol = headerMap.TryGetValue("role", out var tmpRoleCol) ? tmpRoleCol : 4;
+            int isActiveCol = headerMap.TryGetValue("isactive", out var tmpIsActiveCol) ? tmpIsActiveCol : 5;
+            int passwordCol = headerMap.TryGetValue("password", out var tmpPasswordCol) ? tmpPasswordCol : -1;
+
+            if (!headerMap.ContainsKey("role") && !headerMap.ContainsKey("isactive"))
+            {
+                throw new Exception("Import file must include Role and IsActive columns.");
+            }
 
             // FIX 1: đúng cách lấy roles
             var roles = await _roleRepository.GetAllAsync();
@@ -164,14 +186,19 @@ namespace Application.Services
             {
                 try
                 {
-                    string email = worksheet.Cells[row, 1].Text.Trim();
-                    string password = worksheet.Cells[row, 2].Text.Trim();
-                    string name = worksheet.Cells[row, 3].Text.Trim();
-                    string roleRaw = worksheet.Cells[row, 4].Text.Trim().ToLower();
-                    string isActiveRaw = worksheet.Cells[row, 5].Text.Trim();
+                    string email = worksheet.Cells[row, emailCol].Text.Trim();
+                    string name = worksheet.Cells[row, nameCol].Text.Trim();
+                    string roleRaw = worksheet.Cells[row, roleCol].Text.Trim().ToLower();
+                    string isActiveRaw = worksheet.Cells[row, isActiveCol].Text.Trim();
+                    string password = passwordCol > 0
+                        ? worksheet.Cells[row, passwordCol].Text.Trim()
+                        : "123456";
 
                     if (string.IsNullOrWhiteSpace(email))
                         throw new Exception("Email is empty");
+
+                    if (string.IsNullOrWhiteSpace(password))
+                        password = "123456";
 
                     if (existingEmails.Contains(email.ToLower()))
                         throw new Exception("Email already exists");
