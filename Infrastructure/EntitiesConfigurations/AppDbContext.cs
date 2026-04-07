@@ -49,6 +49,19 @@ namespace Infrastructure.EntitiesConfigurations
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+            {
+                var properties = entityType.GetProperties()
+                    .Where(p => p.ClrType == typeof(DateTime) || p.ClrType == typeof(DateTime?));
+
+                foreach (var property in properties)
+                {
+                    property.SetValueConverter(new Microsoft.EntityFrameworkCore.Storage.ValueConversion.ValueConverter<DateTime, DateTime>(
+                        v => v.Kind == DateTimeKind.Utc ? v : DateTime.SpecifyKind(v, DateTimeKind.Utc),
+                        v => v.Kind == DateTimeKind.Utc ? v : DateTime.SpecifyKind(v, DateTimeKind.Utc)));
+                }
+            }
+
             // =========================
             // AUTH
             // =========================
@@ -536,7 +549,7 @@ namespace Infrastructure.EntitiesConfigurations
                 {
                     entity.ToTable("weather_forecast");
 
-                    entity.HasIndex(x => x.City)
+                    entity.HasIndex(x => new { x.City, x.ForecastDate})
                             .IsUnique();
                 });
 

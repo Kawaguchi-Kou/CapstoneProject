@@ -17,8 +17,8 @@ namespace Application.Interfaces
         Task<IReadOnlyList<DailyWeatherDto>> GetDailyAsync(
             double latitude,
             double longitude,
-            DateOnly from,
-            DateOnly to);
+            DateTime from,
+            DateTime to);
 
         /// <summary>
         /// Lấy dữ liệu thời tiết cho 1 NGÀY
@@ -27,10 +27,10 @@ namespace Application.Interfaces
         Task<DailyWeatherDto?> GetSingleDayAsync(
             double lat,
             double lng,
-            DateOnly date);
+            DateTime date);
 
         Task<WeatherForecast> GetAsync(
             Guid locationId,
-            DateOnly date);
+            DateTime date);
     }
 }

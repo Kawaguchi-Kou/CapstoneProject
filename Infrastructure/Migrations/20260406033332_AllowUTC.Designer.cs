@@ -3,6 +3,7 @@ using System;
 using Infrastructure.EntitiesConfigurations;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260406033332_AllowUTC")]
+    partial class AllowUTC
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -375,8 +378,8 @@ namespace Infrastructure.Migrations
                     b.Property<TimeOnly>("StartTime")
                         .HasColumnType("time without time zone");
 
-                    b.Property<DateTime>("VisitDate")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<DateOnly>("VisitDate")
+                        .HasColumnType("date");
 
                     b.Property<double>("WeatherRiskScore")
                         .ValueGeneratedOnAdd()
@@ -818,8 +821,8 @@ namespace Infrastructure.Migrations
                     b.Property<double?>("DistanceKm")
                         .HasColumnType("double precision");
 
-                    b.Property<DateTime>("EndDate")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<DateOnly>("EndDate")
+                        .HasColumnType("date");
 
                     b.Property<Guid>("LocationId")
                         .HasColumnType("uuid");
@@ -827,8 +830,8 @@ namespace Infrastructure.Migrations
                     b.Property<int>("OrderIndex")
                         .HasColumnType("integer");
 
-                    b.Property<DateTime>("StartDate")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<DateOnly>("StartDate")
+                        .HasColumnType("date");
 
                     b.Property<Guid>("TripId")
                         .HasColumnType("uuid");
@@ -876,8 +879,8 @@ namespace Infrastructure.Migrations
                     b.Property<DateTime>("FetchedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<DateTime>("ForecastDate")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<DateOnly>("ForecastDate")
+                        .HasColumnType("date");
 
                     b.Property<Guid>("LocationId")
                         .HasColumnType("uuid");
@@ -893,10 +896,10 @@ namespace Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("LocationId");
-
-                    b.HasIndex("City", "ForecastDate")
+                    b.HasIndex("City")
                         .IsUnique();
+
+                    b.HasIndex("LocationId");
 
                     b.ToTable("weather_forecast", (string)null);
                 });

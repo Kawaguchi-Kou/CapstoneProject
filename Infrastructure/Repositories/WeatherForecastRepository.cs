@@ -49,7 +49,7 @@ namespace Infrastructure.Repositories
 
         public async Task<WeatherForecast?> GetAsync(
         Guid locationId,
-        DateOnly date)
+        DateTime date)
         {
             return await _context.WeatherForecasts
                 .FirstOrDefaultAsync(x =>
@@ -59,8 +59,8 @@ namespace Infrastructure.Repositories
 
         public async Task<List<WeatherForecast>> GetRangeAsync(
             Guid locationId,
-            DateOnly from,
-            DateOnly to)
+            DateTime from,
+            DateTime to)
         {
             return await _context.WeatherForecasts
                 .Where(x =>
@@ -107,9 +107,49 @@ namespace Infrastructure.Repositories
             }
         }
 
+        //public async Task UpsertAsync(WeatherForecast forecast)
+        //{
+        //    // 1. Normalize DateTimes for PostgreSQL (CRITICAL)
+        //    // Ensure ForecastDate is UTC and stripped of time components for consistent lookup
+        //    forecast.ForecastDate = DateTime.SpecifyKind(forecast.ForecastDate, DateTimeKind.Utc);
+        //    // Ensure FetchedAt is UTC
+        //    forecast.FetchedAt = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc);
+
+        //    // 2. Check for existing record based on your LocationId + ForecastDate logic
+        //    var existing = await _context.WeatherForecasts
+        //        .FirstOrDefaultAsync(x =>
+        //            x.LocationId == forecast.LocationId &&
+        //            x.ForecastDate == forecast.ForecastDate);
+
+        //    if (existing == null)
+        //    {
+        //        // 3. New record
+        //        await _context.WeatherForecasts.AddAsync(forecast);
+        //    }
+        //    else
+        //    {
+        //        // 4. Update existing using your preferred SetValues method
+        //        // Note: SetValues updates all mapped properties from the input object
+        //        _context.Entry(existing).CurrentValues.SetValues(forecast);
+
+        //        // Ensure the ID of the existing tracked entity isn't overwritten if forecast.Id is empty
+        //        _context.Entry(existing).Property(x => x.Id).IsModified = false;
+        //    }
+
+        //    try
+        //    {
+        //        await _context.SaveChangesAsync();
+        //    }
+        //    catch (DbUpdateException ex)
+        //    {
+        //        // If you get a 23505 error here, ensure your DB index matches (LocationId, ForecastDate)
+        //        throw new Exception($"Failed to upsert weather for Location {forecast.LocationId} on {forecast.ForecastDate:yyyy-MM-dd}", ex);
+        //    }
+        //}
+
         public async Task<List<WeatherForecast>> GetByLocationAndDates(
         Guid locationId,
-        List<DateOnly> dates)
+        List<DateTime> dates)
         {
             if (dates == null || !dates.Any())
                 return new List<WeatherForecast>();
@@ -122,12 +162,12 @@ namespace Infrastructure.Repositories
                 .ToListAsync();
         }
 
-        public async Task<Dictionary<DateOnly, WeatherForecast>> GetByLocationAndDatesDict(
+        public async Task<Dictionary<DateTime, WeatherForecast>> GetByLocationAndDatesDict(
     Guid locationId,
-    List<DateOnly> dates)
+    List<DateTime> dates)
         {
             if (dates == null || !dates.Any())
-                return new Dictionary<DateOnly, WeatherForecast>();
+                return new Dictionary<DateTime, WeatherForecast>();
 
             dates = dates.Distinct().ToList();
 

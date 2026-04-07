@@ -23,8 +23,12 @@ using Microsoft.OpenApi.Models;
 using OfficeOpenXml;
 using WebAPI.Converters;
 using System.Text.Json.Serialization;
+using System.Net;
+using Polly;
+using Polly.Extensions.Http;
 
 
+AppContext.SetSwitch("System.Net.DisableIPv6", true);
 //load .env
 Env.Load();
 
@@ -55,7 +59,31 @@ builder.Services.AddHangfireServer(options =>
 builder.Services.Configure<OpenMeteoOptions>(
     builder.Configuration.GetSection(OpenMeteoOptions.SectionName));
 
-builder.Services.AddHttpClient<IOpenMeteoService, OpenMeteoService>();
+builder.Services.AddHttpClient<IOpenMeteoService, OpenMeteoService>()
+    .ConfigurePrimaryHttpMessageHandler(() =>
+        new SocketsHttpHandler
+        {
+            // 🔥 FIX SSL / EOF issue
+            SslOptions = new System.Net.Security.SslClientAuthenticationOptions
+            {
+                EnabledSslProtocols = System.Security.Authentication.SslProtocols.Tls12
+            },
+
+            // 🔥 FIX VN network instability
+            PooledConnectionLifetime = TimeSpan.FromMinutes(2),
+            MaxConnectionsPerServer = 5,
+
+            // 🔥 avoid weird decompression bugs
+            AutomaticDecompression = System.Net.DecompressionMethods.All
+        })
+    .ConfigureHttpClient(client =>
+    {
+        // 🔥 CRITICAL: disable HTTP/2 (causes EOF a lot)
+        client.DefaultRequestVersion = HttpVersion.Version11;
+
+        // 🔥 timeout
+        client.Timeout = TimeSpan.FromSeconds(10);
+    });
 
 //======================
 //GEMINI - GENERATIVE AI
@@ -125,7 +153,10 @@ builder.Services.AddHttpClient<IGeminiService, GeminiService>()
    {
        ServerCertificateCustomValidationCallback =
             HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
-   });
+   })
+   .AddTransientHttpErrorPolicy(policyBuilder =>
+    // Retries 3 times. Wait 500ms, then 1s, then 2s.
+    policyBuilder.WaitAndRetryAsync(3, retryAttempt => TimeSpan.FromMilliseconds(500 * Math.Pow(2, retryAttempt - 1))));
 
 //Add repositories
 //Auth

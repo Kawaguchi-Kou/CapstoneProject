@@ -11,12 +11,12 @@ namespace Domain.Interfaces
     {
         //Task UpsertCityForecastAsync(string city, IEnumerable<WeatherForecast> newForecasts);
 
-        Task<WeatherForecast?> GetAsync(Guid locationId, DateOnly date);
+        Task<WeatherForecast?> GetAsync(Guid locationId, DateTime date);
 
         Task<List<WeatherForecast>> GetRangeAsync(
             Guid locationId,
-            DateOnly from,
-            DateOnly to);
+            DateTime from,
+            DateTime to);
 
         Task UpsertAsync(List<WeatherForecast> forecasts);
 
@@ -24,10 +24,10 @@ namespace Domain.Interfaces
 
         Task<List<WeatherForecast>> GetByLocationAndDates(
         Guid locationId,
-        List<DateOnly> dates);
+        List<DateTime> dates);
 
-        Task<Dictionary<DateOnly, WeatherForecast>> GetByLocationAndDatesDict(
+        Task<Dictionary<DateTime, WeatherForecast>> GetByLocationAndDatesDict(
     Guid locationId,
-    List<DateOnly> dates);
+    List<DateTime> dates);
     }
 }

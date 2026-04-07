@@ -33,8 +33,8 @@ namespace Application.Services
         }
 
         public async Task<List<Location>> RecommendSegmentsAsync(
-            DateOnly startDate,
-            DateOnly endDate,
+            DateTime startDate,
+            DateTime endDate,
             int maxStops)
         {
             var locations = await _locationRepo.GetAllAsync();
