@@ -16,6 +16,7 @@ namespace Domain.Interfaces
         Task UpdateAsync(Location location);
         Task DeleteAsync(Location location);
         Task AddRangeAsync(List<Location> locations);
+        Task<Location> GetByNameAsync(string locationName);
 
         Task<Location> GetByIdAsync(Guid locationId);
         Task<List<Location>> GetAllAsync();

@@ -38,7 +38,7 @@ namespace Infrastructure.Repositories
             await _db.SaveChangesAsync();
         }
 
-        public async Task<List<Trip>> GetUpcomingTripsAsync(DateOnly fromDate)
+        public async Task<List<Trip>> GetUpcomingTripsAsync(DateTime fromDate)
         {
             return await _db.Trips
                 .Where(t => t.StartDate >= fromDate)

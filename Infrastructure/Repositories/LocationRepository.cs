@@ -57,6 +57,18 @@ namespace Infrastructure.Repositories
             return location;
         }
 
+        public async Task<Location> GetByNameAsync(string locationName)
+        {
+            var location = await _context.Locations.FirstOrDefaultAsync(x => x.LocationName == locationName);
+
+            if (location == null)
+            {
+                throw new KeyNotFoundException($"Location not found.");
+            }
+
+            return location;
+        }
+
         public async Task<List<Location>> GetAllAsync()
         {
             return await _context.Locations.ToListAsync();

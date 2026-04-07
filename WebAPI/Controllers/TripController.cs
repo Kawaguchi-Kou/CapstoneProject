@@ -55,18 +55,35 @@ namespace WebAPI.Controllers
         [HttpPost("{tripId}/segments")]
         public async Task<IActionResult> AddSegments(
         Guid tripId,
+        [FromQuery] int insertAt,
         [FromBody] List<AddTripSegmentRequest> requests)
         {
-            // DTO → Entity
-            var segments = _mapper.Map<List<TripSegment>>(requests);
+            //// DTO → Entity
+            //var segments = _mapper.Map<List<TripSegment>>(requests);
 
-            // Call service
-            var result = await _tripSegmentService.AddSegmentsToTripAsync(tripId, segments);
+            //// Call service
+            //var result = await _tripSegmentService.AddSegmentsToTripAsync(tripId, segments);
 
-            // Entity → DTO
-            var response = _mapper.Map<List<TripSegmentResponse>>(result);
+            //// Entity → DTO
+            //var response = _mapper.Map<List<TripSegmentResponse>>(result);
 
-            return Ok(response);
+            //return Ok(response);
+
+            try
+            {
+                var segments = _mapper.Map<List<TripSegment>>(requests);
+
+                var result = await _tripSegmentService
+                    .InsertSegmentsAsync(tripId, insertAt, segments);
+
+                var response = _mapper.Map<List<TripSegmentResponse>>(result);
+
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
     }
 }

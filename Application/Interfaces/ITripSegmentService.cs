@@ -17,5 +17,10 @@ namespace Application.Interfaces
             int maxStops);
 
         Task<List<TripSegment>> AddSegmentsToTripAsync(Guid tripId, List<TripSegment> segments);
+
+        Task<List<TripSegment>> InsertSegmentsAsync(
+    Guid tripId,
+    int insertAt,
+    List<TripSegment> newSegments);
     }
 }
