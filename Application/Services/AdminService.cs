@@ -9,6 +9,7 @@ using Domain.Entities;
 using Domain.Interfaces;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Http;
 using OfficeOpenXml;
 
@@ -147,25 +148,63 @@ namespace Application.Services
             int rowCount = worksheet.Dimension.Rows;
             int colCount = worksheet.Dimension.Columns;
 
-            var headerMap = new Dictionary<string, int>();
-            for (int col = 1; col <= colCount; col++)
+            // Normalize header text: lowercase + keep only [a-z0-9] so "Is Active", "IsActive", etc map consistently.
+            string NormalizeHeader(string s)
             {
-                var header = worksheet.Cells[1, col].Text.Trim().ToLower().Replace(" ", "");
-                if (!string.IsNullOrWhiteSpace(header) && !headerMap.ContainsKey(header))
+                var normalized = (s ?? "").Trim().ToLowerInvariant();
+                normalized = Regex.Replace(normalized, @"[^a-z0-9]", "");
+                return normalized;
+            }
+
+            // Some files may have a blank row above the header; scan the first few rows to find a valid header.
+            Dictionary<string, int> headerMap = new Dictionary<string, int>();
+            int headerRow = -1;
+            for (int candidateRow = 1; candidateRow <= Math.Min(5, rowCount); candidateRow++)
+            {
+                var temp = new Dictionary<string, int>();
+                for (int col = 1; col <= colCount; col++)
                 {
-                    headerMap[header] = col;
+                    var header = NormalizeHeader(worksheet.Cells[candidateRow, col].Text);
+                    if (!string.IsNullOrWhiteSpace(header) && !temp.ContainsKey(header))
+                    {
+                        temp[header] = col;
+                    }
+                }
+
+                // We must at least find Role + IsActive (and usually Email).
+                if (temp.ContainsKey("role") && temp.ContainsKey("isactive"))
+                {
+                    headerMap = temp;
+                    headerRow = candidateRow;
+                    break;
+                }
+            }
+
+            if (headerRow == -1)
+            {
+                // Fall back to row 1 if we couldn't find a header; defaults match your exported layout:
+                // Email (1), Name (2), Role (3), IsActive (4), CreatedAt (5)
+                headerRow = 1;
+                for (int col = 1; col <= colCount; col++)
+                {
+                    var header = NormalizeHeader(worksheet.Cells[headerRow, col].Text);
+                    if (!string.IsNullOrWhiteSpace(header) && !headerMap.ContainsKey(header))
+                    {
+                        headerMap[header] = col;
+                    }
                 }
             }
 
             int emailCol = headerMap.TryGetValue("email", out var tmpEmailCol) ? tmpEmailCol : 1;
-            int nameCol = headerMap.TryGetValue("name", out var tmpNameCol) ? tmpNameCol : 3;
-            int roleCol = headerMap.TryGetValue("role", out var tmpRoleCol) ? tmpRoleCol : 4;
-            int isActiveCol = headerMap.TryGetValue("isactive", out var tmpIsActiveCol) ? tmpIsActiveCol : 5;
+            int nameCol = headerMap.TryGetValue("name", out var tmpNameCol) ? tmpNameCol : 2;
+            int roleCol = headerMap.TryGetValue("role", out var tmpRoleCol) ? tmpRoleCol : 3;
+            int isActiveCol = headerMap.TryGetValue("isactive", out var tmpIsActiveCol) ? tmpIsActiveCol : 4;
             int passwordCol = headerMap.TryGetValue("password", out var tmpPasswordCol) ? tmpPasswordCol : -1;
 
-            if (!headerMap.ContainsKey("role") && !headerMap.ContainsKey("isactive"))
+            if (!headerMap.ContainsKey("role") || !headerMap.ContainsKey("isactive"))
             {
-                throw new Exception("Import file must include Role and IsActive columns.");
+                // If the header still isn't detected, at least ensure defaults will point to valid columns.
+                throw new Exception("Import file must include Role and IsActive columns in the header row.");
             }
 
             // FIX 1: đúng cách lấy roles
@@ -182,7 +221,7 @@ namespace Application.Services
                 .Select(x => x.Email.ToLower())
                 .ToHashSet();
 
-            for (int row = 2; row <= rowCount; row++)
+            for (int row = headerRow + 1; row <= rowCount; row++)
             {
                 try
                 {
