@@ -53,42 +53,42 @@ namespace Application.Services
             _gemini = gemini;
         }
 
-        private async Task<WeatherForecast> GetOrFetchForecastAsync(
-    Guid locationId,
-    DateOnly date)
-        {
-            var forecast = await _weatherRepo.GetAsync(locationId, date);
+    //    private async Task<WeatherForecast> GetOrFetchForecastAsync(
+    //Guid locationId,
+    //DateOnly date)
+    //    {
+    //        var forecast = await _weatherRepo.GetAsync(locationId, date);
 
-            bool needFetch = forecast == null ||
-                             forecast.FetchedAt < DateTime.UtcNow.AddHours(-6);
+    //        bool needFetch = forecast == null ||
+    //                         forecast.FetchedAt < DateTime.UtcNow.AddHours(-6);
 
-            if (!needFetch)
-                return forecast!;
+    //        if (!needFetch)
+    //            return forecast!;
 
-            // 🔥 gọi OpenMeteo
-            var newForecast = await _openMeteoService.GetAsync(locationId, date);
+    //        // 🔥 gọi OpenMeteo
+    //        var newForecast = await _openMeteoService.GetAsync(locationId, date);
 
-            if (newForecast == null)
-                throw new Exception("Failed to fetch weather from OpenMeteo");
+    //        if (newForecast == null)
+    //            throw new Exception("Failed to fetch weather from OpenMeteo");
 
-            // 🔥 map sang entity nếu cần
-            newForecast.LocationId = locationId;
-            newForecast.ForecastDate = date;
-            newForecast.FetchedAt = DateTime.UtcNow;
+    //        // 🔥 map sang entity nếu cần
+    //        newForecast.LocationId = locationId;
+    //        newForecast.ForecastDate = date;
+    //        newForecast.FetchedAt = DateTime.UtcNow;
 
-            // 🔥 upsert (quan trọng)
-            await _weatherRepo.UpsertAsync(newForecast);
+    //        // 🔥 upsert (quan trọng)
+    //        await _weatherRepo.UpsertAsync(newForecast);
 
-            return newForecast;
-        }
+    //        return newForecast;
+    //    }
 
-        private bool IsValidTime(POI poi, TimeOnly start, TimeOnly end)
-        {
-            if (poi.OpenHour == null || poi.CloseHour == null)
-                return true;
+        //private bool IsValidTime(POI poi, TimeOnly start, TimeOnly end)
+        //{
+        //    if (poi.OpenHour == null || poi.CloseHour == null)
+        //        return true;
 
-            return start >= poi.OpenHour && end <= poi.CloseHour;
-        }
+        //    return start >= poi.OpenHour && end <= poi.CloseHour;
+        //}
 
         //private TimeSpan EstimateDuration(POI poi)
         //{
@@ -101,30 +101,30 @@ namespace Application.Services
         //    };
         //}
 
-        private POI? SelectBestPOI(
-            List<POI> pois,
-            WeatherForecast forecast,
-            HashSet<Guid> used)
-        {
-            var candidates = pois
-                .Where(p => !used.Contains(p.Id))
-                .ToList();
+        //private POI? SelectBestPOI(
+        //    List<POI> pois,
+        //    WeatherForecast forecast,
+        //    HashSet<Guid> used)
+        //{
+        //    var candidates = pois
+        //        .Where(p => !used.Contains(p.Id))
+        //        .ToList();
 
-            if (!candidates.Any()) return null;
+        //    if (!candidates.Any()) return null;
 
-            var best = candidates
-                .Select(p => new
-                {
-                    Poi = p,
-                    Score = _riskEngine.CalculateRisk(forecast, p.IsIndoor)
-                })
-                .OrderByDescending(x => x.Score)
-                .First();
+        //    var best = candidates
+        //        .Select(p => new
+        //        {
+        //            Poi = p,
+        //            Score = _riskEngine.CalculateRisk(forecast, p.IsIndoor)
+        //        })
+        //        .OrderByDescending(x => x.Score)
+        //        .First();
 
-            used.Add(best.Poi.Id);
+        //    used.Add(best.Poi.Id);
 
-            return best.Poi;
-        }
+        //    return best.Poi;
+        //}
 
         public async Task GenerateAsync(Guid tripId)
         {
@@ -147,7 +147,7 @@ namespace Application.Services
             var allDetails = new List<ItineraryDetail>();
 
             var poiDict = new Dictionary<Guid, List<POI>>();
-            var forecastDict = new Dictionary<Guid, Dictionary<DateOnly, WeatherForecast>>();
+            var forecastDict = new Dictionary<Guid, Dictionary<DateTime, WeatherForecast>>();
 
             // ================= LOAD DATA =================
             foreach (var segment in segments.Skip(1))
@@ -159,17 +159,25 @@ namespace Application.Services
 
                 poiDict[segment.SegmentId] = pois;
 
-                var totalDays = (segment.EndDate.ToDateTime(TimeOnly.MinValue)
-                               - segment.StartDate.ToDateTime(TimeOnly.MinValue)).Days;
+                var totalDays = (segment.EndDate - segment.StartDate).Days;
 
                 var dates = Enumerable.Range(0, totalDays + 1)
                     .Select(d => segment.StartDate.AddDays(d))
                     .ToList();
 
                 // 🔥 SAFE: WeatherService handles parallel internally
-                var forecasts = await _weatherService.GetRangeAsync(segment.LocationId, dates);
+                try
+                {
+                    var forecasts = await _weatherService.GetRangeOptimizedAsync(segment.LocationId, dates);
 
-                forecastDict[segment.SegmentId] = forecasts;
+                    forecastDict[segment.SegmentId] = forecasts;
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("🔥 WEATHER ERROR:");
+                    Console.WriteLine(ex.ToString());
+                    throw;
+                }
             }
 
             // ================= AI CALL =================
@@ -264,7 +272,7 @@ namespace Application.Services
         private async Task<FullTripAIResponse?> GenerateFullTripPlanWithAI(
         List<TripSegment> segments,
         Dictionary<Guid, List<POI>> poiDict,
-        Dictionary<Guid, Dictionary<DateOnly, WeatherForecast>> forecastDict,
+        Dictionary<Guid, Dictionary<DateTime, WeatherForecast>> forecastDict,
         List<string> preferences)
         {
             var prompt = new StringBuilder();
@@ -332,27 +340,42 @@ namespace Application.Services
                 - Use ONLY given POIs
                 ");
 
-            var raw = await _gemini.GenerateAsync(prompt.ToString());
-            return ParseFullTripResponse(raw);
+            try
+            {
+                var raw = await _gemini.GenerateAsync(prompt.ToString());
+                return ParseFullTripResponse(raw);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("🔥 GEMINI ERROR:");
+                Console.WriteLine(ex.ToString());
+                throw;
+            }
         }
 
         private FullTripAIResponse? ParseFullTripResponse(string raw)
         {
             try
             {
-                using var doc = JsonDocument.Parse(raw);
+                // Strip markdown formatting if Gemini includes it
+                var cleanJson = raw.Trim();
+                if (cleanJson.StartsWith("```json", StringComparison.OrdinalIgnoreCase))
+                {
+                    cleanJson = cleanJson.Substring(7);
+                    if (cleanJson.EndsWith("```"))
+                    {
+                        cleanJson = cleanJson.Substring(0, cleanJson.Length - 3);
+                    }
+                }
 
-                var text = doc.RootElement
-                    .GetProperty("candidates")[0]
-                    .GetProperty("content")
-                    .GetProperty("parts")[0]
-                    .GetProperty("text")
-                    .GetString();
-
-                return JsonSerializer.Deserialize<FullTripAIResponse>(text!);
+                return JsonSerializer.Deserialize<FullTripAIResponse>(cleanJson, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true // Highly recommended for AI outputs
+                });
             }
-            catch
+            catch (Exception ex)
             {
+                Console.WriteLine($"Failed to parse JSON: {ex.Message}");
                 return null;
             }
         }
@@ -389,7 +412,7 @@ namespace Application.Services
         private void GenerateFallbackPlan(
             List<POI> pois,
             Guid itineraryId,
-            DateOnly date,
+            DateTime date,
             List<ItineraryDetail> details)
         {
             var food = pois.Where(p => p.PoiPreferences.Any(x => x.Preference.Name == "Food")).ToList();

@@ -18,8 +18,8 @@ namespace WebAPI.Controllers
         public async Task<IActionResult> Get(
             double latitude,
             double longitude,
-            DateOnly from,
-            DateOnly to)
+            DateTime from,
+            DateTime to)
         {
             try
             {

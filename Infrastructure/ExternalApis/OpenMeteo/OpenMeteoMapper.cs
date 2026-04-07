@@ -13,7 +13,7 @@ public static class OpenMeteoMapper
         {
             result.Add(new DailyWeatherDto
             {
-                Date = DateOnly.Parse(d.Time[i]),
+                Date = DateTime.Parse(d.Time[i]),
                 MaxTemperature = d.TemperatureMax[i],
                 MaxWindSpeed = d.WindSpeedMax[i],
                 PrecipitationProbability = d.PrecipitationProbabilityMax[i]
