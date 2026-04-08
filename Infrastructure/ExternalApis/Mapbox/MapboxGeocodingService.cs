@@ -35,7 +35,6 @@ namespace Application.Services
                 $"{Uri.EscapeDataString(searchQuery)}.json" +
                 $"?limit=1" +
                 $"&country=vn" +
-                //$"&proximity=108,16" +   // longitude,latitude
                 $"&access_token={token}";
 
             var response = await _httpClient.GetAsync(url);

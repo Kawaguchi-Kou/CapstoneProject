@@ -89,7 +89,8 @@ namespace Application.Services
 
         public async Task<POI> CreateAsync(POI request, List<Guid> preferenceIds, Guid locationId, Guid districtId)
         {
-            var (lat, lon) = await _geocodingService.GetCoordinatesAsync(request.Name, request.Location.LocationName);
+            var location = _locationRepository.GetByIdAsync(locationId).Result;
+            var (lat, lon) = await _geocodingService.GetCoordinatesAsync(request.Name, location.LocationName);
             request.Latitude = lat;
             request.Longitude = lon;
             request.Status = POIStatus.Active;
@@ -103,7 +104,8 @@ namespace Application.Services
 
         public async Task<POI> CreatePartnerPoiAsync(Guid partnerId, POI request, List<Guid> preferenceIds)
         {
-            var (lat, lon) = await _geocodingService.GetCoordinatesAsync(request.Name, request.Location.LocationName);
+            var location = _locationRepository.GetByIdAsync(request.LocationId).Result;
+            var (lat, lon) = await _geocodingService.GetCoordinatesAsync(request.Name, location.LocationName);
             request.Latitude = lat;
             request.Longitude = lon;
             request.PartnerId = partnerId;
