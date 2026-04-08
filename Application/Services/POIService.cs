@@ -630,7 +630,7 @@ namespace Application.Services
 
                 worksheet.Cells[row, 1].Value = poi.Name;
                 worksheet.Cells[row, 2].Value = poi.Address;
-                worksheet.Cells[row, 3].Value = poi.City;
+                worksheet.Cells[row, 3].Value = "";
                 worksheet.Cells[row, 4].Value = poi.ApproxCost;
 
                 string openHours = string.Empty;
