@@ -309,12 +309,12 @@ namespace Infrastructure.EntitiesConfigurations
                 entity.HasOne(p => p.Location)
                       .WithMany(l => l.POIs)
                       .HasForeignKey(p => p.LocationId)
-                      .OnDelete(DeleteBehavior.Restrict);
+                      .OnDelete(DeleteBehavior.Cascade);
 
                 entity.HasOne(p => p.District)
                       .WithMany(d => d.POIs)
                       .HasForeignKey(p => p.DistrictId)
-                      .OnDelete(DeleteBehavior.Restrict);
+                      .OnDelete(DeleteBehavior.Cascade);
             });
 
             modelBuilder.Entity<POIPreference>(entity =>
