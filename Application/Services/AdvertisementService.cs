@@ -219,26 +219,24 @@ namespace Application.Services
             return await _advertisementRepository.GetSavedPromotionsByAccountIdAsync(accountId);
         }
 
-        public async Task<PagedResultResponse<PendingAdvertisementAccountItemResponse>> GetPendingAdvertisementAccountsAsync(
+        public async Task<PagedResultResponse<PendingAdvertisementAccountItemResponse>> GetManagerAccountsAsync(
             int page,
             int pageSize,
-            string? search = null)
+            string? keyword = null)
         {
             page = page <= 0 ? 1 : page;
             pageSize = pageSize <= 0 ? 10 : pageSize;
 
             var skip = (page - 1) * pageSize;
-            var totalItems = await _advertisementRepository.CountPendingAccountsAsync(search);
-            var rows = await _advertisementRepository.GetPendingAccountsAsync(skip, pageSize, search);
+            var totalItems = await _advertisementRepository.CountManagerAccountsAsync(keyword);
+            var rows = await _advertisementRepository.GetManagerAccountsAsync(skip, pageSize, keyword);
 
             var items = rows.Select(x => new PendingAdvertisementAccountItemResponse
             {
-                AccountId = x.Account.Id,
-                Email = x.Account.Email,
-                Name = x.Account.Name,
-                AvatarUrl = x.Account.AvatarUrl,
-                PendingAdsCount = x.PendingAdsCount,
-                LatestPendingAt = x.LatestPendingAt
+                AccountId = x.AccountId,
+                Email = x.Email,
+                Name = x.Name,
+                PendingAdsCount = x.PendingAdsCount
             }).ToList();
 
             return new PagedResultResponse<PendingAdvertisementAccountItemResponse>
@@ -251,18 +249,23 @@ namespace Application.Services
             };
         }
 
-        public async Task<PagedResultResponse<PendingAdvertisementItemResponse>> GetPendingAdvertisementsByAccountAsync(
+        public async Task<PagedResultResponse<PendingAdvertisementItemResponse>> GetManagerAdvertisementsByAccountAsync(
             Guid accountId,
+            string? status,
             int page,
-            int pageSize,
-            string? keyword = null)
+            int pageSize)
         {
             page = page <= 0 ? 1 : page;
             pageSize = pageSize <= 0 ? 10 : pageSize;
 
+            if (!Enum.TryParse<AdStatus>(status, true, out var adStatus))
+            {
+                adStatus = AdStatus.PendingApproval;
+            }
+
             var skip = (page - 1) * pageSize;
-            var totalItems = await _advertisementRepository.CountPendingByAccountIdAsync(accountId, keyword);
-            var ads = await _advertisementRepository.GetPendingByAccountIdAsync(accountId, skip, pageSize, keyword);
+            var totalItems = await _advertisementRepository.CountByAccountIdAndStatusAsync(accountId, adStatus);
+            var ads = await _advertisementRepository.GetByAccountIdAndStatusAsync(accountId, adStatus, skip, pageSize);
 
             var items = ads.Select(a => new PendingAdvertisementItemResponse
             {

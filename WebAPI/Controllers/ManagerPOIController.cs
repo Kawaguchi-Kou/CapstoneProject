@@ -51,7 +51,17 @@ namespace WebAPI.Controllers
         public async Task<IActionResult> GetPending([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
         {
             var pois = await _poiService.GetPendingPartnerPoisAsync(page, pageSize);
-            return Ok(pois);
+
+            var mapped = new PagedResultResponse<PoiResponse>
+            {
+                Items = _mapper.Map<List<PoiResponse>>(pois.Items),
+                Page = pois.Page,
+                PageSize = pois.PageSize,
+                TotalItems = pois.TotalItems,
+                TotalPages = pois.TotalPages
+            };
+
+            return Ok(mapped);
         }
 
         [HttpPost]

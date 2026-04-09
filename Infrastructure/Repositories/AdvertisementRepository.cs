@@ -95,113 +95,85 @@ namespace Infrastructure.Repositories
             await _context.SaveChangesAsync();
         }
 
-        public async Task<List<(Account Account, int PendingAdsCount, DateTime LatestPendingAt)>> GetPendingAccountsAsync(
-            int skip,
-            int take,
-            string? search = null)
-        {
-            var pendingAds = _context.Advertisements
-                .Where(a => a.Status == AdStatus.PendingApproval)
-                .AsQueryable();
-
-            if (!string.IsNullOrWhiteSpace(search))
-            {
-                var keyword = search.Trim().ToLower();
-                pendingAds = pendingAds.Where(a =>
-                    a.Account.Email.ToLower().Contains(keyword) ||
-                    a.Account.Name.ToLower().Contains(keyword));
-            }
-
-            var grouped = await pendingAds
-                .GroupBy(a => a.AccountId)
-                .Select(g => new
-                {
-                    AccountId = g.Key,
-                    PendingAdsCount = g.Count(),
-                    LatestPendingAt = g.Max(x => x.CreatedAt)
-                })
-                .OrderByDescending(x => x.LatestPendingAt)
-                .Skip(skip)
-                .Take(take)
-                .ToListAsync();
-
-            var accountIds = grouped.Select(x => x.AccountId).ToList();
-            var accounts = await _context.Accounts
-                .Where(a => accountIds.Contains(a.Id))
-                .ToDictionaryAsync(a => a.Id);
-
-            return grouped
-                .Where(x => accounts.ContainsKey(x.AccountId))
-                .Select(x => (accounts[x.AccountId], x.PendingAdsCount, x.LatestPendingAt))
-                .ToList();
-        }
-
-        public async Task<int> CountPendingAccountsAsync(string? search = null)
-        {
-            var pendingAds = _context.Advertisements
-                .Where(a => a.Status == AdStatus.PendingApproval)
-                .Include(a => a.Account)
-                .AsQueryable();
-
-            if (!string.IsNullOrWhiteSpace(search))
-            {
-                var keyword = search.Trim().ToLower();
-                pendingAds = pendingAds.Where(a =>
-                    a.Account.Email.ToLower().Contains(keyword) ||
-                    a.Account.Name.ToLower().Contains(keyword));
-            }
-
-            return await pendingAds
-                .Select(a => a.AccountId)
-                .Distinct()
-                .CountAsync();
-        }
-
-        public async Task<List<Advertisement>> GetPendingByAccountIdAsync(
-            Guid accountId,
+        public async Task<List<(Guid AccountId, string Email, string Name, int PendingAdsCount)>> GetManagerAccountsAsync(
             int skip,
             int take,
             string? keyword = null)
         {
-            var query = _context.Advertisements
-                .Include(a => a.POI)
-                .Include(a => a.Promotion)
-                .Where(a => a.AccountId == accountId && a.Status == AdStatus.PendingApproval)
+            var query = _context.Accounts
+                .AsNoTracking()
+                .Where(a => a.Role != null && a.Role.Name == "Partner")
+                .Where(a => a.Advertisements.Any(ad => ad.Status == AdStatus.PendingApproval))
                 .AsQueryable();
 
             if (!string.IsNullOrWhiteSpace(keyword))
             {
-                var k = keyword.Trim().ToLower();
+                var normalizedKeyword = keyword.Trim().ToLower();
                 query = query.Where(a =>
-                    a.Title.ToLower().Contains(k) ||
-                    a.Content.ToLower().Contains(k) ||
-                    (a.POI != null && a.POI.Name.ToLower().Contains(k)));
+                    a.Email.ToLower().Contains(normalizedKeyword) ||
+                    a.Name.ToLower().Contains(normalizedKeyword));
             }
 
-            return await query
+            var rows = await query
+                .OrderBy(a => a.Name)
+                .ThenBy(a => a.Email)
+                .Skip(skip)
+                .Take(take)
+                .Select(a => new
+                {
+                    a.Id,
+                    a.Email,
+                    a.Name,
+                    PendingAdsCount = a.Advertisements.Count(ad => ad.Status == AdStatus.PendingApproval)
+                })
+                .ToListAsync();
+
+            return rows
+                .Select(x => (x.Id, x.Email, x.Name, x.PendingAdsCount))
+                .ToList();
+        }
+
+        public async Task<int> CountManagerAccountsAsync(string? keyword = null)
+        {
+            var query = _context.Accounts
+                .AsNoTracking()
+                .Where(a => a.Role != null && a.Role.Name == "Partner")
+                .Where(a => a.Advertisements.Any(ad => ad.Status == AdStatus.PendingApproval))
+                .AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(keyword))
+            {
+                var normalizedKeyword = keyword.Trim().ToLower();
+                query = query.Where(a =>
+                    a.Email.ToLower().Contains(normalizedKeyword) ||
+                    a.Name.ToLower().Contains(normalizedKeyword));
+            }
+
+            return await query.CountAsync();
+        }
+
+        public async Task<List<Advertisement>> GetByAccountIdAndStatusAsync(
+            Guid accountId,
+            AdStatus status,
+            int skip,
+            int take)
+        {
+            return await _context.Advertisements
+                .AsNoTracking()
+                .Include(a => a.POI)
+                .Include(a => a.Promotion)
+                .Where(a => a.AccountId == accountId && a.Status == status)
                 .OrderByDescending(a => a.CreatedAt)
                 .Skip(skip)
                 .Take(take)
                 .ToListAsync();
         }
 
-        public async Task<int> CountPendingByAccountIdAsync(Guid accountId, string? keyword = null)
+        public async Task<int> CountByAccountIdAndStatusAsync(Guid accountId, AdStatus status)
         {
-            var query = _context.Advertisements
-                .Include(a => a.POI)
-                .Where(a => a.AccountId == accountId && a.Status == AdStatus.PendingApproval)
-                .AsQueryable();
-
-            if (!string.IsNullOrWhiteSpace(keyword))
-            {
-                var k = keyword.Trim().ToLower();
-                query = query.Where(a =>
-                    a.Title.ToLower().Contains(k) ||
-                    a.Content.ToLower().Contains(k) ||
-                    (a.POI != null && a.POI.Name.ToLower().Contains(k)));
-            }
-
-            return await query.CountAsync();
+            return await _context.Advertisements
+                .AsNoTracking()
+                .CountAsync(a => a.AccountId == accountId && a.Status == status);
         }
 
         public async Task<int> CountActiveByPoiIdAsync(Guid poiId)
