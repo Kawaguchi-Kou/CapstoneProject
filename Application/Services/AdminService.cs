@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -52,6 +52,16 @@ namespace Application.Services
         // ================== CREATE ==================
         public async Task<AccountResponse> CreateAccount(CreateAccountRequest request)
         {
+            if (string.IsNullOrWhiteSpace(request.Email) || !Regex.IsMatch(request.Email, @"^[^@\s]+@[^@\s]+\.[^@\s]+$"))
+                throw new ArgumentException("Invalid email format");
+
+            if (string.IsNullOrWhiteSpace(request.Name) || request.Name.Length < 2)
+                throw new ArgumentException("Name must be at least 2 characters");
+
+            var accounts = await _authRepository.GetAllAccountsAsync();
+            if (accounts.Any(a => a.Email.Equals(request.Email, StringComparison.OrdinalIgnoreCase)))
+                throw new ArgumentException("Email already exists");
+
             var account = new Account
             {
                 Id = Guid.NewGuid(),
@@ -72,6 +82,9 @@ namespace Application.Services
         // ================== UPDATE ==================
         public async Task<AccountResponse> UpdateAccount(UpdateAccountRequest request)
         {
+            if (string.IsNullOrWhiteSpace(request.Name) || request.Name.Length < 2)
+                throw new ArgumentException("Name must be at least 2 characters");
+
             var account = await _authRepository.GetByIdAsync(request.Id);
 
             if (account == null)
@@ -233,20 +246,41 @@ namespace Application.Services
                         ? worksheet.Cells[row, passwordCol].Text.Trim()
                         : "123456";
 
+                    if (string.IsNullOrWhiteSpace(email) && string.IsNullOrWhiteSpace(name))
+                        continue;
+
                     if (string.IsNullOrWhiteSpace(email))
                         throw new Exception("Email is empty");
+
+                    if (!Regex.IsMatch(email, @"^[^@\s]+@[^@\s]+\.[^@\s]+$"))
+                        throw new Exception("Invalid email format");
+
+                    if (string.IsNullOrWhiteSpace(name) || name.Length < 2)
+                        throw new Exception("Fullname must be at least 2 characters");
 
                     if (string.IsNullOrWhiteSpace(password))
                         password = "123456";
 
                     if (existingEmails.Contains(email.ToLower()))
-                        throw new Exception("Email already exists");
+                    {
+                        continue; // Bỏ qua nếu đã tồn tại thay vì throw
+                    }
 
                     if (!roleDict.TryGetValue(roleRaw, out var role))
-                        throw new Exception($"Role '{roleRaw}' not found");
+                    {
+                        if (roleDict.TryGetValue("user", out var defaultRole))
+                            role = defaultRole;
+                        else
+                            continue; // Bỏ qua nếu không có role hợp lệ
+                    }
+
+                    if (string.IsNullOrWhiteSpace(isActiveRaw) || isActiveRaw == "1" || isActiveRaw.ToLower() == "active" || isActiveRaw.ToLower() == "yes" || isActiveRaw.ToLower() == "true") 
+                        isActiveRaw = "true";
+                    else if (isActiveRaw == "0" || isActiveRaw.ToLower() == "inactive" || isActiveRaw.ToLower() == "no" || isActiveRaw.ToLower() == "false") 
+                        isActiveRaw = "false";
 
                     if (!bool.TryParse(isActiveRaw, out var isActive))
-                        throw new Exception("Invalid IsActive");
+                        isActive = true;
 
                     var account = new Account
                     {

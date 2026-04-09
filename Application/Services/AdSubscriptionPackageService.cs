@@ -73,8 +73,8 @@ namespace Application.Services
         public async Task<AdSubscriptionPackage> CreatePackageAsync(CreateAdSubscriptionPackageRequest request)
         {
             // Validate request
-            if (string.IsNullOrWhiteSpace(request.Title))
-                throw new ArgumentException("Title is required");
+            if (string.IsNullOrWhiteSpace(request.Title) || request.Title.Length < 2)
+                throw new ArgumentException("Title must be at least 2 characters");
 
             if (request.Price < 0)
                 throw new ArgumentException("Price cannot be negative");
@@ -147,8 +147,8 @@ namespace Application.Services
                 throw new KeyNotFoundException("Package not found");
 
             // Validate request
-            if (string.IsNullOrWhiteSpace(request.Title))
-                throw new ArgumentException("Title is required");
+            if (string.IsNullOrWhiteSpace(request.Title) || request.Title.Length < 2)
+                throw new ArgumentException("Title must be at least 2 characters");
 
             if (request.Price < 0)
                 throw new ArgumentException("Price cannot be negative");
@@ -233,11 +233,16 @@ namespace Application.Services
                     string statusRaw = worksheet.Cells[row, 6].Text.Trim().ToLower();
                     string currency = string.IsNullOrWhiteSpace(worksheet.Cells[row, 7].Text.Trim()) ? "VND" : worksheet.Cells[row, 7].Text.Trim();
 
-                    if (string.IsNullOrWhiteSpace(title))
-                        throw new Exception("Title is empty");
+                    if (string.IsNullOrWhiteSpace(title) && string.IsNullOrWhiteSpace(desc))
+                        continue;
+
+                    if (string.IsNullOrWhiteSpace(title) || title.Length < 2)
+                        throw new Exception("Package title must be at least 2 characters");
 
                     if (existingTitles.Contains(title.ToLower()))
-                        throw new Exception("Package title already exists");
+                    {
+                        continue; // Bỏ qua thay vì ném ra Exception
+                    }
 
                     if (!AllowedStatuses.Contains(statusRaw))
                         statusRaw = "active";
