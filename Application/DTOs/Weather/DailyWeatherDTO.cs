@@ -8,7 +8,7 @@ namespace Application.DTOs.Weather
 {
     public class DailyWeatherDto
     {
-        public DateOnly Date { get; init; }
+        public DateTime Date { get; init; }
 
         /// <summary>
         /// °C

@@ -12,10 +12,15 @@ namespace Application.Interfaces
     public interface ITripSegmentService
     {
         Task<List<Location>> RecommendSegmentsAsync(
-            DateOnly startDate,
-            DateOnly endDate,
+            DateTime startDate,
+            DateTime endDate,
             int maxStops);
 
         Task<List<TripSegment>> AddSegmentsToTripAsync(Guid tripId, List<TripSegment> segments);
+
+        Task<List<TripSegment>> InsertSegmentsAsync(
+    Guid tripId,
+    int insertAt,
+    List<TripSegment> newSegments);
     }
 }

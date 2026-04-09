@@ -15,10 +15,10 @@ public class WeatherRequest
     /// <summary>
     /// Ngày bắt đầu (YYYY-MM-DD)
     /// </summary>
-    public DateOnly StartDate { get; set; }
+    public DateTime StartDate { get; set; }
 
     /// <summary>
     /// Ngày kết thúc (YYYY-MM-DD)
     /// </summary>
-    public DateOnly EndDate { get; set; }
+    public DateTime EndDate { get; set; }
 }

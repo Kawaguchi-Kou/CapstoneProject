@@ -9,11 +9,14 @@ namespace Application.Interfaces
 {
     public interface IWeatherService
     {
-        Task<WeatherForecast> GetAsync(Guid locationId, DateOnly date);
+        Task<WeatherForecast> GetAsync(Guid locationId, DateTime date);
 
-        Task<Dictionary<DateOnly, WeatherForecast>>
-            GetRangeAsync(Guid locationId, List<DateOnly> dates);
+        Task<Dictionary<DateTime, WeatherForecast>>
+            GetRangeAsync(Guid locationId, List<DateTime> dates);
 
-        Task PreloadAsync(Guid locationId, List<DateOnly> dates);
+        Task<Dictionary<DateTime, WeatherForecast>>
+            GetRangeOptimizedAsync(Guid locationId, List<DateTime> dates);
+
+        Task PreloadAsync(Guid locationId, List<DateTime> dates);
     }
 }

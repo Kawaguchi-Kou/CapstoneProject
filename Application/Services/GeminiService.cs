@@ -22,39 +22,30 @@ namespace Application.Services
             {
                 contents = new[]
                 {
-                new
-                {
-                    parts = new[]
+                    new
                     {
-                        new { text = prompt }
+                        parts = new[]
+                        {
+                            new { text = prompt }
+                        }
                     }
+                },
+                generationConfig = new
+                {
+                    responseMimeType = "application/json"
                 }
-            }
             };
 
             var url =
                 $"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={_apiKey}";
 
-            for (int i = 0; i < 3; i++) // 🔥 retry
-            {
-                try
-                {
-                    var response = await _http.PostAsJsonAsync(url, request);
+            var response = await _http.PostAsJsonAsync(url, request);
 
-                    response.EnsureSuccessStatusCode();
+            response.EnsureSuccessStatusCode();
 
-                    var json = await response.Content.ReadAsStringAsync();
+            var json = await response.Content.ReadAsStringAsync();
 
-                    return ExtractText(json);
-                }
-                catch
-                {
-                    if (i == 2) throw;
-                    await Task.Delay(500);
-                }
-            }
-
-            return "";
+            return ExtractText(json);
         }
 
         private string ExtractText(string raw)

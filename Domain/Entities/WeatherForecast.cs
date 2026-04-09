@@ -15,7 +15,7 @@ namespace Domain.Entities
         [Required]
         public Guid LocationId { get; set; }  // Liên kết với Location để biết thời tiết của địa điểm nào
         public string City { get; set; } = string.Empty;
-        public DateOnly ForecastDate { get; set; }
+        public DateTime ForecastDate { get; set; }
         public double TemperatureCelsius { get; set; }
         public double WindSpeed { get; set; }
         public double PrecipitationProbability { get; set; }

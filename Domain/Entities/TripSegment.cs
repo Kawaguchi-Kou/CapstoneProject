@@ -23,8 +23,8 @@ namespace Domain.Entities
         [Required]
         public int OrderIndex { get; set; }   // Thứ tự chặng
 
-        public DateOnly StartDate { get; set; }
-        public DateOnly EndDate { get; set; }
+        public DateTime StartDate { get; set; }
+        public DateTime EndDate { get; set; }
 
         public double? DistanceKm { get; set; }
 

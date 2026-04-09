@@ -14,7 +14,7 @@ namespace Application.DTOs.Responses
 
         public Guid PoiId { get; set; }
 
-        public DateOnly PlannedDate { get; set; }
+        public DateTime PlannedDate { get; set; }
 
         public double StoredRiskScore { get; set; }
     }

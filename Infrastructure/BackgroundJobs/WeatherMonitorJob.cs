@@ -28,7 +28,7 @@ namespace Infrastructure.BackgroundJobs
 
         public async Task ScanUpcomingTripsAsync()
         {
-            var today = DateOnly.FromDateTime(DateTime.UtcNow);
+            var today = DateTime.Now;
 
             var trips = await _tripRepository
                 .GetUpcomingTripsAsync(today);

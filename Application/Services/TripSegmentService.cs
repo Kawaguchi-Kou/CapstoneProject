@@ -33,8 +33,8 @@ namespace Application.Services
         }
 
         public async Task<List<Location>> RecommendSegmentsAsync(
-            DateOnly startDate,
-            DateOnly endDate,
+            DateTime startDate,
+            DateTime endDate,
             int maxStops)
         {
             var locations = await _locationRepo.GetAllAsync();
@@ -159,6 +159,108 @@ namespace Application.Services
             await _segmentRepo.AddRangeAsync(segments);
 
             return segments;
+        }
+
+        public async Task<List<TripSegment>> InsertSegmentsAsync(
+    Guid tripId,
+    int insertAt,
+    List<TripSegment> newSegments)
+        {
+            var trip = await _tripRepo.GetByIdAsync(tripId);
+            if (trip == null)
+                throw new Exception("Trip not found");
+
+            if (newSegments == null || !newSegments.Any())
+                throw new Exception("Segments cannot be empty");
+
+            var existing = trip.TripSegments
+                .OrderBy(x => x.OrderIndex)
+                .ToList();
+
+            if (!existing.Any())
+                throw new Exception("Trip has no base segments");
+
+            // 🔥 VALIDATE POSITION
+            if (insertAt < 1 || insertAt > existing.Count)
+                throw new Exception("Invalid insert position");
+
+            // 🔥 SHIFT EXISTING SEGMENTS
+            int shift = newSegments.Count;
+
+            foreach (var seg in existing.Where(x => x.OrderIndex >= insertAt))
+            {
+                seg.OrderIndex += shift;
+            }
+
+            // 🔥 PRELOAD LOCATIONS
+            var locationIds = newSegments.Select(x => x.LocationId).ToList();
+
+            var prevSegment = existing
+                .FirstOrDefault(x => x.OrderIndex == insertAt - 1);
+
+            var nextSegment = existing
+                .FirstOrDefault(x => x.OrderIndex == insertAt + shift);
+
+            if (prevSegment != null) locationIds.Add(prevSegment.LocationId);
+            if (nextSegment != null) locationIds.Add(nextSegment.LocationId);
+
+            locationIds = locationIds.Distinct().ToList();
+
+            var locationDict = await _locationRepo
+                .GetByIdsAsDictionaryAsync(locationIds);
+
+            // 🔥 RESOLVE PREVIOUS LOCATION
+            Location? prevLocation = null;
+
+            if (prevSegment != null)
+                prevLocation = locationDict[prevSegment.LocationId];
+
+            int index = 0;
+
+            foreach (var segment in newSegments)
+            {
+                if (!locationDict.ContainsKey(segment.LocationId))
+                    throw new Exception($"Location {segment.LocationId} not found");
+
+                var currentLocation = locationDict[segment.LocationId];
+
+                segment.SegmentId = Guid.NewGuid();
+                segment.TripId = tripId;
+                segment.CreatedAt = DateTime.UtcNow;
+                segment.OrderIndex = insertAt + index;
+
+                // 🔥 DISTANCE CALCULATION
+                if (prevLocation == null)
+                {
+                    segment.DistanceKm = 0;
+                }
+                else
+                {
+                    segment.DistanceKm = await _geocodingService.GetDrivingDistance(
+                        prevLocation.Latitude, prevLocation.Longitude,
+                        currentLocation.Latitude, currentLocation.Longitude
+                    );
+                }
+
+                prevLocation = currentLocation;
+                index++;
+            }
+
+            // 🔥 FIX DISTANCE FOR NEXT SEGMENT (VERY IMPORTANT)
+            if (nextSegment != null && prevLocation != null)
+            {
+                var nextLocation = locationDict[nextSegment.LocationId];
+
+                nextSegment.DistanceKm = await _geocodingService.GetDrivingDistance(
+                    prevLocation.Latitude, prevLocation.Longitude,
+                    nextLocation.Latitude, nextLocation.Longitude
+                );
+            }
+
+            // 🔥 SAVE
+            await _segmentRepo.AddRangeAsync(newSegments);
+
+            return newSegments;
         }
     }
 }
