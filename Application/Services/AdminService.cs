@@ -226,9 +226,7 @@ namespace Application.Services
 
 
             var existingAccounts = await _authRepository.GetAllAccountsAsync();
-            var existingEmails = existingAccounts
-                .Select(x => x.Email.ToLower())
-                .ToHashSet();
+            var existingDict = existingAccounts.ToDictionary(a => a.Email.ToLower());
 
             for (int row = headerRow + 1; row <= rowCount; row++)
             {
@@ -238,9 +236,7 @@ namespace Application.Services
                     string name = worksheet.Cells[row, nameCol].Text.Trim();
                     string roleRaw = worksheet.Cells[row, roleCol].Text.Trim().ToLower();
                     string isActiveRaw = worksheet.Cells[row, isActiveCol].Text.Trim();
-                    string password = passwordCol > 0
-                        ? worksheet.Cells[row, passwordCol].Text.Trim()
-                        : "123456";
+                    string passwordRaw = passwordCol > 0 ? worksheet.Cells[row, passwordCol].Text.Trim() : "";
 
                     if (string.IsNullOrWhiteSpace(email) && string.IsNullOrWhiteSpace(name))
                         continue;
@@ -252,14 +248,6 @@ namespace Application.Services
                     {
                         var parts = email.Split('@');
                         name = parts.Length > 0 ? parts[0] : "User";
-                    }
-
-                    if (string.IsNullOrWhiteSpace(password))
-                        password = "123456";
-
-                    if (existingEmails.Contains(email.ToLower()))
-                    {
-                        continue; // Bỏ qua nếu đã tồn tại thay vì throw
                     }
 
                     if (!roleDict.TryGetValue(roleRaw, out var role))
@@ -278,26 +266,44 @@ namespace Application.Services
                     if (!bool.TryParse(isActiveRaw, out var isActive))
                         isActive = true;
 
-                    var account = new Account
+                    if (existingDict.TryGetValue(email.ToLower(), out var existingAccount))
                     {
-                        Id = Guid.NewGuid(),
-                        Email = email,
-                        PasswordHash = BCrypt.Net.BCrypt.HashPassword(password),
-                        Name = name,
-                        RoleId = role.Id,
-                        IsActive = isActive,
+                        // Update
+                        existingAccount.Name = name;
+                        existingAccount.RoleId = role.Id;
+                        existingAccount.IsActive = isActive;
+                        
+                        if (!string.IsNullOrWhiteSpace(passwordRaw))
+                        {
+                            existingAccount.PasswordHash = BCrypt.Net.BCrypt.HashPassword(passwordRaw);
+                        }
+                        
+                        await _authRepository.UpdateAsync(existingAccount);
+                    }
+                    else
+                    {
+                        // Create
+                        string password = string.IsNullOrWhiteSpace(passwordRaw) ? "123456" : passwordRaw;
+                        var account = new Account
+                        {
+                            Id = Guid.NewGuid(),
+                            Email = email,
+                            PasswordHash = BCrypt.Net.BCrypt.HashPassword(password),
+                            Name = name,
+                            RoleId = role.Id,
+                            IsActive = isActive,
 
-                        // default
-                        CreatedAt = DateTime.UtcNow,
-                        Address = "",
-                        PhoneNumber = "",
-                        AvatarUrl = "",
-                        Gender = "",
-                        ResetToken = ""
-                    };
+                            CreatedAt = DateTime.UtcNow,
+                            Address = "",
+                            PhoneNumber = "",
+                            AvatarUrl = "",
+                            Gender = "",
+                            ResetToken = ""
+                        };
 
-                    await _authRepository.AddAsync(account);
-                    existingEmails.Add(email.ToLower());
+                        await _authRepository.AddAsync(account);
+                        existingDict[email.ToLower()] = account;
+                    }
                 }
                 catch (Exception)
                 {

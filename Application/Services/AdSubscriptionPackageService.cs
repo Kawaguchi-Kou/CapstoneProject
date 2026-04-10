@@ -271,7 +271,7 @@ namespace Application.Services
             int currencyCol = headerMap.TryGetValue("currency", out var tmpCurrencyCol) ? tmpCurrencyCol : 7;
 
             var existingPackages = await _packageRepository.GetAllAsync();
-            var existingTitles = existingPackages.Select(p => p.Title.ToLower()).ToHashSet();
+            var existingDict = existingPackages.ToDictionary(p => p.Title.ToLower());
 
             for (int row = headerRow + 1; row <= rowCount; row++)
             {
@@ -293,29 +293,40 @@ namespace Application.Services
                         title = "Package " + DateTime.UtcNow.ToString("yyyyMMddHHmmss") + row;
                     }
 
-                    if (existingTitles.Contains(title.ToLower()))
-                    {
-                        continue; // Bỏ qua thay vì ném ra Exception
-                    }
-
                     if (!AllowedStatuses.Contains(statusRaw))
                         statusRaw = "active";
 
-                    var packageEntity = new AdSubscriptionPackage
+                    if (existingDict.TryGetValue(title.ToLower(), out var existingPackage))
                     {
-                        PackageId = Guid.NewGuid(),
-                        Title = title,
-                        Description = desc,
-                        Price = price,
-                        DurationDays = duration,
-                        MaxAdsPerPeriod = maxAds,
-                        Status = statusRaw,
-                        Currency = currency,
-                        CreatedAt = DateTime.UtcNow
-                    };
+                        // Update
+                        existingPackage.Description = desc;
+                        existingPackage.Price = price;
+                        existingPackage.DurationDays = duration;
+                        existingPackage.MaxAdsPerPeriod = maxAds;
+                        existingPackage.Status = statusRaw;
+                        existingPackage.Currency = currency;
+                        
+                        await _packageRepository.UpdateAsync(existingPackage);
+                    }
+                    else
+                    {
+                        // Create
+                        var packageEntity = new AdSubscriptionPackage
+                        {
+                            PackageId = Guid.NewGuid(),
+                            Title = title,
+                            Description = desc,
+                            Price = price,
+                            DurationDays = duration,
+                            MaxAdsPerPeriod = maxAds,
+                            Status = statusRaw,
+                            Currency = currency,
+                            CreatedAt = DateTime.UtcNow
+                        };
 
-                    await _packageRepository.CreateAsync(packageEntity);
-                    existingTitles.Add(title.ToLower());
+                        await _packageRepository.CreateAsync(packageEntity);
+                        existingDict[title.ToLower()] = packageEntity;
+                    }
                 }
                 catch (Exception)
                 {
