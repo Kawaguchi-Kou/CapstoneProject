@@ -46,7 +46,12 @@ namespace WebAPI.Controllers
                 var poi = _mapper.Map<POI>(request);
                 poi.POIImgUrl = poiUrl;
 
-                var response = await _poiService.CreatePartnerPoiAsync(partnerId, poi, request.PoiPreferences ?? new List<Guid>());
+                var response = await _poiService.CreatePartnerPoiAsync(
+                    partnerId,
+                    poi,
+                    request.PoiPreferences ?? new List<Guid>(),
+                    request.LocationId,
+                    request.DistrictId);
                 var result = _mapper.Map<RecommendedPoiResponse>(response);
                 return Ok(result);
             }

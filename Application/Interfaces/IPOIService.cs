@@ -12,7 +12,7 @@ namespace Application.Interfaces
         Task<List<POI>> GetAllAsync();
         Task<POI?> GetByIdAsync(Guid id);
         Task<POI> CreateAsync(POI request, List<Guid> preferenceIds, Guid locationId, Guid districtId);
-        Task<POI> CreatePartnerPoiAsync(Guid partnerId, POI request, List<Guid> preferenceIds);
+        Task<POI> CreatePartnerPoiAsync(Guid partnerId, POI request, List<Guid> preferenceIds, Guid locationId, Guid districtId);
         Task<POI> UpdateAsync(Guid id, POI request);
         Task<POI> UpdatePartnerPoiAsync(Guid partnerId, Guid id, POI request);
 

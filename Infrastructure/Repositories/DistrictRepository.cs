@@ -28,5 +28,13 @@ namespace Infrastructure.Repositories
         {
             return await _context.Districts.ToListAsync();
         }
+
+        public async Task<List<District>> GetByLocationIdAsync(Guid locationId)
+        {
+            return await _context.Districts
+                .Where(d => d.LocationId == locationId)
+                .OrderBy(d => d.Name)
+                .ToListAsync();
+        }
     }
 }

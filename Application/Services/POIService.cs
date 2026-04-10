@@ -89,25 +89,37 @@ namespace Application.Services
 
         public async Task<POI> CreateAsync(POI request, List<Guid> preferenceIds, Guid locationId, Guid districtId)
         {
-            var location = _locationRepository.GetByIdAsync(locationId).Result;
+            var location = await _locationRepository.GetByIdAsync(locationId);
+            var district = await _districtRepository.GetByIdAsync(districtId) ?? throw new KeyNotFoundException("District not found.");
+
+            if (district.LocationId != location.LocationId)
+                throw new InvalidOperationException("District không thuộc city đã chọn.");
+
             var (lat, lon) = await _geocodingService.GetCoordinatesAsync(request.Name, location.LocationName);
             request.Latitude = lat;
             request.Longitude = lon;
             request.Status = POIStatus.Active;
             request.PartnerId = null;
-            request.LocationId = locationId;
-            request.DistrictId = districtId;
+            request.LocationId = location.LocationId;
+            request.DistrictId = district.Id;
 
             await _poiRepository.AddAsync(request, preferenceIds);
             return request;
         }
 
-        public async Task<POI> CreatePartnerPoiAsync(Guid partnerId, POI request, List<Guid> preferenceIds)
+        public async Task<POI> CreatePartnerPoiAsync(Guid partnerId, POI request, List<Guid> preferenceIds, Guid locationId, Guid districtId)
         {
-            var location = _locationRepository.GetByIdAsync(request.LocationId).Result;
+            var location = await _locationRepository.GetByIdAsync(locationId);
+            var district = await _districtRepository.GetByIdAsync(districtId) ?? throw new KeyNotFoundException("District not found.");
+
+            if (district.LocationId != location.LocationId)
+                throw new InvalidOperationException("District không thuộc city đã chọn.");
+
             var (lat, lon) = await _geocodingService.GetCoordinatesAsync(request.Name, location.LocationName);
             request.Latitude = lat;
             request.Longitude = lon;
+            request.LocationId = location.LocationId;
+            request.DistrictId = district.Id;
             request.PartnerId = partnerId;
             request.Status = POIStatus.Pending;
 
