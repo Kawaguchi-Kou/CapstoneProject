@@ -214,11 +214,7 @@ namespace Application.Services
             int isActiveCol = headerMap.TryGetValue("isactive", out var tmpIsActiveCol) ? tmpIsActiveCol : 4;
             int passwordCol = headerMap.TryGetValue("password", out var tmpPasswordCol) ? tmpPasswordCol : -1;
 
-            if (!headerMap.ContainsKey("role") || !headerMap.ContainsKey("isactive"))
-            {
-                // If the header still isn't detected, at least ensure defaults will point to valid columns.
-                throw new Exception("Import file must include Role and IsActive columns in the header row.");
-            }
+            // Bỏ lỗi ném ra nếu không thấy header chứa role và isactive, fallback về column 3 và 4 mặc định
 
             // FIX 1: đúng cách lấy roles
             var roles = await _roleRepository.GetAllAsync();
@@ -249,14 +245,14 @@ namespace Application.Services
                     if (string.IsNullOrWhiteSpace(email) && string.IsNullOrWhiteSpace(name))
                         continue;
 
-                    if (string.IsNullOrWhiteSpace(email))
-                        throw new Exception("Email is empty");
-
-                    if (!Regex.IsMatch(email, @"^[^@\s]+@[^@\s]+\.[^@\s]+$"))
-                        throw new Exception("Invalid email format");
+                    if (string.IsNullOrWhiteSpace(email) || !Regex.IsMatch(email, @"^[^@\s]+@[^@\s]+\.[^@\s]+$"))
+                        continue;
 
                     if (string.IsNullOrWhiteSpace(name) || name.Length < 2)
-                        throw new Exception("Fullname must be at least 2 characters");
+                    {
+                        var parts = email.Split('@');
+                        name = parts.Length > 0 ? parts[0] : "User";
+                    }
 
                     if (string.IsNullOrWhiteSpace(password))
                         password = "123456";
@@ -303,9 +299,10 @@ namespace Application.Services
                     await _authRepository.AddAsync(account);
                     existingEmails.Add(email.ToLower());
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
-                    throw new Exception($"Row {row}: {ex.Message}");
+                    // Bỏ qua lỗi 1 dòng để tiếp tục import các dòng khác
+                    continue;
                 }
             }
 

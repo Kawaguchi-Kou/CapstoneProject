@@ -217,27 +217,81 @@ namespace Application.Services
             using var package = new ExcelPackage(stream);
             var worksheet = package.Workbook.Worksheets[0];
             int rowCount = worksheet.Dimension.Rows;
+            int colCount = worksheet.Dimension.Columns;
+
+            // Normalize header text
+            string NormalizeHeader(string s)
+            {
+                var normalized = (s ?? "").Trim().ToLowerInvariant();
+                normalized = System.Text.RegularExpressions.Regex.Replace(normalized, @"[^a-z0-9]", "");
+                return normalized;
+            }
+
+            // Scan headers
+            Dictionary<string, int> headerMap = new Dictionary<string, int>();
+            int headerRow = -1;
+            for (int candidateRow = 1; candidateRow <= Math.Min(5, rowCount); candidateRow++)
+            {
+                var temp = new Dictionary<string, int>();
+                for (int col = 1; col <= colCount; col++)
+                {
+                    var header = NormalizeHeader(worksheet.Cells[candidateRow, col].Text);
+                    if (!string.IsNullOrWhiteSpace(header) && !temp.ContainsKey(header))
+                    {
+                        temp[header] = col;
+                    }
+                }
+                if (temp.ContainsKey("title") || temp.ContainsKey("price"))
+                {
+                    headerMap = temp;
+                    headerRow = candidateRow;
+                    break;
+                }
+            }
+
+            if (headerRow == -1)
+            {
+                headerRow = 1;
+                for (int col = 1; col <= colCount; col++)
+                {
+                    var header = NormalizeHeader(worksheet.Cells[headerRow, col].Text);
+                    if (!string.IsNullOrWhiteSpace(header) && !headerMap.ContainsKey(header))
+                    {
+                        headerMap[header] = col;
+                    }
+                }
+            }
+
+            int titleCol = headerMap.TryGetValue("title", out var tmpTitleCol) ? tmpTitleCol : 1;
+            int descCol = headerMap.TryGetValue("description", out var tmpDescCol) ? tmpDescCol : 2;
+            int priceCol = headerMap.TryGetValue("price", out var tmpPriceCol) ? tmpPriceCol : 3;
+            int durationCol = headerMap.TryGetValue("durationdays", out var tmpDurationCol) ? tmpDurationCol : (headerMap.TryGetValue("duration", out var t1) ? t1 : 4);
+            int maxAdsCol = headerMap.TryGetValue("maxadsperperiod", out var tmpMaxAdsCol) ? tmpMaxAdsCol : (headerMap.TryGetValue("maxads", out var t2) ? t2 : 5);
+            int statusCol = headerMap.TryGetValue("status", out var tmpStatusCol) ? tmpStatusCol : 6;
+            int currencyCol = headerMap.TryGetValue("currency", out var tmpCurrencyCol) ? tmpCurrencyCol : 7;
 
             var existingPackages = await _packageRepository.GetAllAsync();
             var existingTitles = existingPackages.Select(p => p.Title.ToLower()).ToHashSet();
 
-            for (int row = 2; row <= rowCount; row++)
+            for (int row = headerRow + 1; row <= rowCount; row++)
             {
                 try
                 {
-                    string title = worksheet.Cells[row, 1].Text.Trim();
-                    string desc = worksheet.Cells[row, 2].Text.Trim();
-                    decimal price = decimal.TryParse(worksheet.Cells[row, 3].Text.Trim(), out var p) ? p : 0;
-                    int duration = int.TryParse(worksheet.Cells[row, 4].Text.Trim(), out var d) ? d : 0;
-                    int maxAds = int.TryParse(worksheet.Cells[row, 5].Text.Trim(), out var m) ? m : 0;
-                    string statusRaw = worksheet.Cells[row, 6].Text.Trim().ToLower();
-                    string currency = string.IsNullOrWhiteSpace(worksheet.Cells[row, 7].Text.Trim()) ? "VND" : worksheet.Cells[row, 7].Text.Trim();
+                    string title = worksheet.Cells[row, titleCol].Text?.Trim() ?? "";
+                    string desc = worksheet.Cells[row, descCol].Text?.Trim() ?? "";
+                    decimal price = decimal.TryParse(worksheet.Cells[row, priceCol].Text?.Trim(), out var p) ? p : 0;
+                    int duration = int.TryParse(worksheet.Cells[row, durationCol].Text?.Trim(), out var d) ? d : 30; // default 30 days
+                    int maxAds = int.TryParse(worksheet.Cells[row, maxAdsCol].Text?.Trim(), out var m) ? m : 5; // default 5 ads
+                    string statusRaw = worksheet.Cells[row, statusCol].Text?.Trim()?.ToLower() ?? "";
+                    string currency = string.IsNullOrWhiteSpace(worksheet.Cells[row, currencyCol].Text?.Trim()) ? "VND" : worksheet.Cells[row, currencyCol].Text.Trim();
 
                     if (string.IsNullOrWhiteSpace(title) && string.IsNullOrWhiteSpace(desc))
                         continue;
 
                     if (string.IsNullOrWhiteSpace(title) || title.Length < 2)
-                        throw new Exception("Package title must be at least 2 characters");
+                    {
+                        title = "Package " + DateTime.UtcNow.ToString("yyyyMMddHHmmss") + row;
+                    }
 
                     if (existingTitles.Contains(title.ToLower()))
                     {
@@ -263,9 +317,10 @@ namespace Application.Services
                     await _packageRepository.CreateAsync(packageEntity);
                     existingTitles.Add(title.ToLower());
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
-                    throw new Exception($"Row {row}: {ex.Message}");
+                    // Bỏ qua dòng lỗi để import các dòng khác
+                    continue;
                 }
             }
 
