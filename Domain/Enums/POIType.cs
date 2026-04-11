@@ -14,7 +14,22 @@ namespace Domain.Enums
         Hotel,
         Museum,
         Park,
-        Shopping
+        Shopping,
+        StreetFood,
+        Landmark,
+        Viewpoint,
+        Beach,
+        CulturalSite,
+        HistoricalSite,
+        Temple,
+        Church,
+        Nature,
+        Waterfall,
+        Market,
+        NightMarket,
+        Bar,
+        Nightlife,
+        Resort
 
     }
 }

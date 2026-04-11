@@ -22,5 +22,7 @@ namespace Application.Interfaces
     Guid tripId,
     int insertAt,
     List<TripSegment> newSegments);
+
+        Task<List<Location>> GetAllAsync();
     }
 }

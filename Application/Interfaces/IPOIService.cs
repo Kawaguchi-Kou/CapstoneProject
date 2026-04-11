@@ -28,5 +28,9 @@ namespace Application.Interfaces
 
         Task ImportExcelAsync(IFormFile file);
         void AddImageMapping(string fileName, string url);
+
+        Task<List<POI>> GetPoisByLocationSortedByPreferenceAsync(
+    Guid accountId,
+    Guid locationId);
     }
 }

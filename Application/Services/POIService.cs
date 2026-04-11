@@ -77,6 +77,50 @@ namespace Application.Services
                 .ToList();
         }
 
+        public async Task<List<POI>> GetPoisByLocationSortedByPreferenceAsync(
+    Guid accountId,
+    Guid locationId)
+        {
+            var userPrefs = await _userRepository.GetPreferenceByAccountIdAsync(accountId);
+
+            // 🔥 Only get POIs in this location
+            var pois = await _poiRepository.GetAllWithPreferencesAsync();
+
+            var userPrefSet = userPrefs
+                .Select(x => x.Preference.Name)
+                .ToHashSet();
+
+            return pois
+                .Where(p => p.LocationId == locationId) // ✅ filter here
+                .Select(poi =>
+                {
+                    var score = poi.PoiPreferences.Count(pp =>
+                        pp.Preference != null &&
+                        userPrefSet.Contains(pp.Preference.Name));
+
+                    return new RecommendedPoiResponse
+                    {
+                        Id = poi.Id,
+                        Name = poi.Name,
+                        Address = poi.Address,
+                        ApproxCost = poi.ApproxCost,
+                        OpenHour = poi.OpenHour,
+                        CloseHour = poi.CloseHour,
+                        GoogleMapLink = poi.GoogleMapLink,
+                        IsIndoor = poi.IsIndoor,
+                        LocationName = poi.Location?.LocationName ?? "",
+                        POIImgUrl = poi.POIImgUrl!,
+                        Score = score,
+                        POIPreferences = poi.PoiPreferences
+                            .Where(pp => pp.Preference != null)
+                            .Select(pp => pp.Preference.Name)
+                            .ToList()
+                    };
+                })
+                .OrderByDescending(x => x.Score)
+                .ToList();
+        }
+
         public async Task<List<POI>> GetAllAsync() 
         {
             return await _poiRepository.GetAllWithPreferencesAsync();  

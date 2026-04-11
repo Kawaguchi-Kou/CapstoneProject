@@ -85,5 +85,20 @@ namespace WebAPI.Controllers
                 return BadRequest(ex.Message);
             }
         }
+
+        [HttpGet("get-all-location")]
+        public async Task<IActionResult> GetAllLocation()
+        {
+            try
+            {
+                var locations = await _tripSegmentService.GetAllAsync();
+                var resposne = _mapper.Map<List<LocationResponse>>(locations);
+                return Ok(resposne);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
     }
 }

@@ -91,6 +91,7 @@ namespace Application.Mappings
                 .ForMember(dest => dest.PoiPreferences, opt => opt.Ignore());
             CreateMap<UpdatePoiRequest, POI>()
                 .ForMember(dest => dest.PoiPreferences, opt => opt.Ignore());
+            CreateMap<Location, DTOs.Responses.LocationResponse>();
 
             //Trip Risk Profile
             CreateMap<Trip, TripRiskContextResponse>();
