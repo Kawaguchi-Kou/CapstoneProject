@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace WebAPI.Controllers
 {
     [ApiController]
-    [Route("api/manager/advertisements")]
+    [Route("api/manager/accounts")]
     [Authorize(Roles = "Manager")]
     public class ManagerAdvertisementController : ControllerBase
     {
@@ -16,15 +16,15 @@ namespace WebAPI.Controllers
             _advertisementService = advertisementService;
         }
 
-        [HttpGet("pending/accounts")]
-        public async Task<IActionResult> GetPendingAccounts(
+        [HttpGet]
+        public async Task<IActionResult> GetAccounts(
             [FromQuery] int page = 1,
             [FromQuery] int pageSize = 10,
-            [FromQuery] string? search = null)
+            [FromQuery] string? keyword = null)
         {
             try
             {
-                var result = await _advertisementService.GetPendingAdvertisementAccountsAsync(page, pageSize, search);
+                var result = await _advertisementService.GetManagerAccountsAsync(page, pageSize, keyword);
                 return Ok(result);
             }
             catch (Exception ex)
@@ -33,12 +33,12 @@ namespace WebAPI.Controllers
             }
         }
 
-        [HttpGet("pending")]
-        public async Task<IActionResult> GetPendingByAccount(
-            [FromQuery] Guid accountId,
+        [HttpGet("{accountId}/advertisements")]
+        public async Task<IActionResult> GetAdvertisementsByAccount(
+            [FromRoute] Guid accountId,
+            [FromQuery] string status = "PendingApproval",
             [FromQuery] int page = 1,
-            [FromQuery] int pageSize = 10,
-            [FromQuery] string? keyword = null)
+            [FromQuery] int pageSize = 10)
         {
             try
             {
@@ -47,7 +47,7 @@ namespace WebAPI.Controllers
                     return BadRequest(new { message = "accountId is required" });
                 }
 
-                var result = await _advertisementService.GetPendingAdvertisementsByAccountAsync(accountId, page, pageSize, keyword);
+                var result = await _advertisementService.GetManagerAdvertisementsByAccountAsync(accountId, status, page, pageSize);
                 return Ok(result);
             }
             catch (Exception ex)

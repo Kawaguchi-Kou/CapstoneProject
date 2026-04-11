@@ -12,16 +12,16 @@ namespace Application.Interfaces
         Task<Advertisement> ApproveAdvertisementAsync(Guid adId);
         Task<Advertisement> RejectAdvertisementAsync(Guid adId, string? reason = null);
 
-        Task<PagedResultResponse<PendingAdvertisementAccountItemResponse>> GetPendingAdvertisementAccountsAsync(
-            int page,
-            int pageSize,
-            string? search = null);
-
-        Task<PagedResultResponse<PendingAdvertisementItemResponse>> GetPendingAdvertisementsByAccountAsync(
-            Guid accountId,
+        Task<PagedResultResponse<PendingAdvertisementAccountItemResponse>> GetManagerAccountsAsync(
             int page,
             int pageSize,
             string? keyword = null);
+
+        Task<PagedResultResponse<PendingAdvertisementItemResponse>> GetManagerAdvertisementsByAccountAsync(
+            Guid accountId,
+            string? status,
+            int page,
+            int pageSize);
 
         Task<List<Advertisement>> GetAllAsync();
         Task<List<Advertisement>> GetPendingAsync();

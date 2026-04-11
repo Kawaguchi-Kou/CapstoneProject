@@ -22,5 +22,10 @@ namespace Application.Services
         {
             return await _districtRepository.GetAllAsync();
         }
+
+        public async Task<List<District>> GetByLocationIdAsync(Guid locationId)
+        {
+            return await _districtRepository.GetByLocationIdAsync(locationId);
+        }
     }
 }

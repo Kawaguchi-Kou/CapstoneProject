@@ -1,4 +1,4 @@
-﻿using Application.DTOs.Requests;
+using Application.DTOs.Requests;
 using Application.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -7,7 +7,7 @@ namespace WebAPI.Controllers
 {
     [ApiController]
     [Route("api/manager/locations")]
-    [Authorize(Roles = "Manager")]
+    [Authorize(Roles = "Manager,Partner")]
     public class ManagerLocationController : ControllerBase
     {
         private readonly ILocationService _locationService;
@@ -18,6 +18,7 @@ namespace WebAPI.Controllers
         }
 
         [HttpGet]
+        [AllowAnonymous]
         public async Task<IActionResult> GetAll()
         {
             var locations = await _locationService.GetAllAsync();
@@ -25,6 +26,7 @@ namespace WebAPI.Controllers
         }
 
         [HttpGet("{id}")]
+        [AllowAnonymous]
         public async Task<IActionResult> GetById(Guid id)
         {
             var location = await _locationService.GetByIdAsync(id);
@@ -36,6 +38,7 @@ namespace WebAPI.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Manager")]
         public async Task<IActionResult> Create(CreateLocationRequest request)
         {
             var location = await _locationService.CreateAsync(request);
@@ -43,6 +46,7 @@ namespace WebAPI.Controllers
         }
 
         [HttpPut("{id}")]
+        [Authorize(Roles = "Manager")]
         public async Task<IActionResult> Update(Guid id, UpdateLocationRequest request)
         {
             var location = await _locationService.UpdateAsync(id, request);
@@ -50,6 +54,7 @@ namespace WebAPI.Controllers
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Manager")]
         public async Task<IActionResult> Delete(Guid id)
         {
             await _locationService.DeleteAsync(id);
@@ -57,6 +62,7 @@ namespace WebAPI.Controllers
         }
 
         [HttpPost("import")]
+        [Authorize(Roles = "Manager")]
         public async Task<IActionResult> ImportExcel(IFormFile file)
         {
             if (file == null || file.Length == 0)

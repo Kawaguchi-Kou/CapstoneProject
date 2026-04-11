@@ -10,5 +10,6 @@ namespace Application.Interfaces
     public interface IDistrictService
     {
         Task<List<District>> GetAllAsync();
+        Task<List<District>> GetByLocationIdAsync(Guid locationId);
     }
 }
