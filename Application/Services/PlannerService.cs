@@ -488,8 +488,7 @@ namespace Application.Services
 
             var activityPois = pois.Where(p =>
                 p.Type != POIType.Hotel &&
-                p.Type != POIType.Airport &&
-                p.Type != POIType.BusStation
+                p.Type != POIType.Resort 
             ).ToList();
 
             // 🔥 Ensure forecast

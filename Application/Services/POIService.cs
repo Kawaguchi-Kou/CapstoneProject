@@ -77,7 +77,7 @@ namespace Application.Services
                 .ToList();
         }
 
-        public async Task<List<POI>> GetPoisByLocationSortedByPreferenceAsync(
+        public async Task<List<RecommendedPoiResponse>> GetPoisByLocationSortedByPreferenceAsync(
     Guid accountId,
     Guid locationId)
         {

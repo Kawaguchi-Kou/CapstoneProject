@@ -29,7 +29,7 @@ namespace Application.Interfaces
         Task ImportExcelAsync(IFormFile file);
         void AddImageMapping(string fileName, string url);
 
-        Task<List<POI>> GetPoisByLocationSortedByPreferenceAsync(
+        Task<List<RecommendedPoiResponse>> GetPoisByLocationSortedByPreferenceAsync(
     Guid accountId,
     Guid locationId);
     }
