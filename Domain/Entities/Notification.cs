@@ -25,7 +25,6 @@ namespace Domain.Entities
 
         [ForeignKey("SenderId")]
         public Account? Sender { get; set; }
-        [ForeignKey("RecipientId")]
         public ICollection<NotificationRecipient> Recipients { get; set; }
         [ForeignKey("TripId")]
         public Trip? Trip { get; set; }

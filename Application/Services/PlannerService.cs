@@ -96,7 +96,7 @@ namespace Application.Services
                     Name = x.Name,
                     Address = x.Address,
                     IsIndoor = x.IsIndoor,
-                    Location = x.Location
+                    Location = new Location { LocationName = x.LocationName }
                 }));
 
                 pois.AddRange(endPois.Select(x => new POI
@@ -105,7 +105,7 @@ namespace Application.Services
                     Name = x.Name,
                     Address = x.Address,
                     IsIndoor = x.IsIndoor,
-                    Location = x.Location
+                    Location = new Location { LocationName = x.LocationName }
                 }));
 
                 if (!pois.Any())
