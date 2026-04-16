@@ -42,7 +42,7 @@ namespace Application.Services
             else if (!string.IsNullOrEmpty(request.Email))
                 user = await _accountRepo.GetByEmailAsync(request.Email);
             else if (!string.IsNullOrEmpty(request.Username))
-                user = await _accountRepo.GetByUsernameAsync(request.Username);
+                user = await _accountRepo.GetByNameAsync(request.Username);
 
             if (user == null)
                 throw new Exception("User not found");
