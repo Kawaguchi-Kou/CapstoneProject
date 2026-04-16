@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -113,6 +113,56 @@ namespace Application.Mappings
 
             //District
             CreateMap<District, DistrictResponse>();
+
+            //Participant
+            CreateMap<Participant, ParticipantResponse>()
+            .ForMember(dest => dest.UserEmail,
+                opt => opt.MapFrom(src => src.User.Email))
+            .ForMember(dest => dest.Status,
+                opt => opt.MapFrom(src => src.Status.ToString()))
+            .ForMember(dest => dest.Role,
+                opt => opt.MapFrom(src => src.Role.ToString()));
+
+
+            // 🔥 ROOT
+            CreateMap<List<TripSegment>, FullTripResponse>()
+                .ForMember(dest => dest.Segments, opt => opt.MapFrom(src => src));
+
+            // 🔥 SEGMENT
+            CreateMap<TripSegment, SegmentResponse>()
+                .ForMember(dest => dest.Days, opt => opt.MapFrom(src =>
+                    src.Itineraries!
+                       .SelectMany(i => i.ItineraryDetails!)
+                       .GroupBy(d => d.VisitDate.Date)
+                ));
+
+            // 🔥 GROUP → DAY
+            CreateMap<IGrouping<DateTime, ItineraryDetail>, DayPlanResponse>()
+                .ForMember(dest => dest.Date, opt => opt.MapFrom(src => src.Key))
+                .ForMember(dest => dest.Items, opt => opt.MapFrom(src => src));
+
+            // 🔥 DETAIL → ITEM
+            CreateMap<ItineraryDetail, ItineraryItemResponse>()
+                .ForMember(dest => dest.Type, opt => opt.MapFrom(src => ResolveType(src)))
+                .ForMember(dest => dest.PoiName, opt => opt.MapFrom(src => src.POI!.Name))
+                .ForMember(dest => dest.Address, opt => opt.MapFrom(src => src.POI!.Address))
+                .ForMember(dest => dest.LocationName, opt => opt.MapFrom(src => src.POI!.Location.LocationName))
+                .ForMember(dest => dest.IsIndoor, opt => opt.MapFrom(src => src.POI!.IsIndoor))
+                .ForMember(dest => dest.StartTime, opt => opt.MapFrom(src => src.StartTime))
+                .ForMember(dest => dest.EndTime, opt => opt.MapFrom(src => src.EndTime))
+                .ForMember(dest => dest.WeatherRiskScore, opt => opt.MapFrom(src => src.WeatherRiskScore));
+        }
+
+        private static string ResolveType(ItineraryDetail d)
+        {
+            var hour = d.StartTime.Hour;
+
+            if (hour < 10) return "Breakfast";
+            if (hour < 13) return "Lunch";
+            if (hour < 17) return "Activity";
+            if (hour < 20) return "Dinner";
+
+            return "Activity";
         }
     }
 }

@@ -38,13 +38,6 @@ namespace Infrastructure.Repositories
             await _context.SaveChangesAsync();
         }
 
-        public async Task<List<Participant>> GetAllTripByParticipantIdAsync(Guid participantId)
-        {
-            return await _context.Participants
-                .Where(sp => sp.UserId == participantId)
-                .ToListAsync();
-        }
-
         public async Task<int> AmountParticipantsInTripAsync(Guid tripId)
         {
             return await _context.Participants
@@ -68,6 +61,12 @@ namespace Infrastructure.Repositories
         {
             return await _context.Participants
                 .Where(sp => sp.Id == participantId).FirstOrDefaultAsync();
+        }
+
+        public async Task<bool> ExistsAsync(Guid tripId, Guid userId)
+        {
+            return await _context.Participants
+                .AnyAsync(x => x.TripId == tripId && x.UserId == userId);
         }
     }
 }

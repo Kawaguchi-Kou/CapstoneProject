@@ -1,4 +1,6 @@
-﻿using Application.Interfaces;
+﻿using Application.DTOs.Responses;
+using Application.Interfaces;
+using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -9,10 +11,12 @@ namespace WebAPI.Controllers
     public class PlannerController : ControllerBase
     {
         private readonly IPlannerService _plannerService;
+        private readonly IMapper _mapper;
 
-        public PlannerController(IPlannerService plannerService)
+        public PlannerController(IPlannerService plannerService, IMapper mapper)
         {
             _plannerService = plannerService;
+            _mapper = mapper;
         }
 
         /// <summary>
@@ -25,12 +29,42 @@ namespace WebAPI.Controllers
             try
             {
                 await _plannerService.GenerateAsync(tripId);
+                //var trip = await _plannerService.GetByTripIdWithDetailsAsync(tripId);
+                //var response = _mapper.Map<List<FullTripResponse>>(trip);
 
                 return Ok(new
                 {
                     message = "Itinerary generated successfully",
                     tripId = tripId
                 });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new
+                {
+                    message = ex.Message
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new
+                {
+                    message = "Internal server error",
+                    detail = ex.Message
+                });
+            }
+        }
+
+        [HttpGet("{tripId}/get")]
+        [Authorize]
+        public async Task<IActionResult> Get(Guid tripId)
+        {
+            try
+            {
+                var trip = await _plannerService.GetByTripIdWithDetailsAsync(tripId);
+                var response = _mapper.Map<FullTripResponse>(trip);
+
+                return Ok(response);
             }
             catch (ArgumentException ex)
             {

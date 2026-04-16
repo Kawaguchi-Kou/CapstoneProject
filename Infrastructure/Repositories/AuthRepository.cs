@@ -25,6 +25,11 @@ namespace Infrastructure.Repositories
             return await _context.Accounts.Include(a => a.Role).FirstOrDefaultAsync(u => u.Email == email);
         }
 
+        public async Task<Account?> GetByNameAsync(string name)
+        {
+            return await _context.Accounts.Include(a => a.Role).FirstOrDefaultAsync(u => u.Name == name);
+        }
+
         public async Task<Account?> GetByIdAsync(Guid id)
         {
             return await _context.Accounts

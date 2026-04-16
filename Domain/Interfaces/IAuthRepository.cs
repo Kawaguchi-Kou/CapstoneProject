@@ -10,6 +10,7 @@ namespace Domain.Interfaces
     public interface IAuthRepository
     {
         Task<Account?> GetByEmailAsync(string email);
+        Task<Account?> GetByNameAsync(string name);
         Task<Account?> GetByIdAsync(Guid id);
         Task AddAsync(Account account);
         Task SaveChangesAsync();

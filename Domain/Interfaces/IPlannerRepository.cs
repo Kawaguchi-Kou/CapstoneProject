@@ -11,6 +11,8 @@ namespace Domain.Interfaces
     {
         Task<Trip?> GetTripWithSegmentsAndItinerary(Guid tripId);
 
+        Task<List<TripSegment>> GetByTripIdWithDetailsAsync(Guid tripId);
+
         Task SaveChangesAsync();
     }
 }

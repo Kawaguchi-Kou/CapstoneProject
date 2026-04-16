@@ -18,13 +18,15 @@ namespace WebAPI.Controllers
         private readonly IAuthService _authService;
         private readonly IMapper _mapper;
         private readonly ITripSegmentService _tripSegmentService;
+        private readonly IParticipantService _service;
 
-        public TripController(ITripService tripService, IAuthService authService, IMapper mapper, ITripSegmentService tripSegmentService)
+        public TripController(ITripService tripService, IAuthService authService, IMapper mapper, ITripSegmentService tripSegmentService, IParticipantService participantService)
         {
             _tripService = tripService;
             _authService = authService;
             _mapper = mapper;
             _tripSegmentService = tripSegmentService;
+            _service = participantService;
         }
 
         [HttpPost("create")]
@@ -99,6 +101,39 @@ namespace WebAPI.Controllers
             {
                 return BadRequest(ex.Message);
             }
+        }
+
+        // 🔷 Owner add
+        [HttpPost("{tripId}/participants")]
+        public async Task<IActionResult> AddParticipant(Guid tripId, AddParticipantRequest request)
+        {
+            var user = await _authService.GetCurrentAccount();
+
+            var participant = await _service.AddTripParticipantAsync(tripId, request, user.Id);
+
+            return Ok(_mapper.Map<ParticipantResponse>(participant));
+        }
+
+        // 🔷 Generate QR
+        [HttpGet("{tripId}/invite-link")]
+        public async Task<IActionResult> GenerateInvite(Guid tripId)
+        {
+            var user = await _authService.GetCurrentAccount();
+
+            var link = await _service.GenerateInviteLinkAsync(tripId, user.Id);
+
+            return Ok(new { inviteUrl = link });
+        }
+
+        // 🔷 Join via QR
+        [HttpPost("/api/invites/join")]
+        public async Task<IActionResult> Join([FromQuery] Guid tripId)
+        {
+            var user = await _authService.GetCurrentAccount();
+
+            var participant = await _service.JoinByTripIdAsync(tripId, user.Id);
+
+            return Ok(_mapper.Map<ParticipantResponse>(participant));
         }
     }
 }

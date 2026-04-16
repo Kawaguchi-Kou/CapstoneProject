@@ -7,7 +7,6 @@ using Domain.Entities;
 using Domain.Enums;
 using Domain.Interfaces;
 using Domain.Weather;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Application.Services
 {
@@ -27,6 +26,7 @@ namespace Application.Services
         private readonly IGeminiService _gemini;
         private readonly IWeatherService _weatherService;
         private readonly IPOIService _poiService;
+        private readonly IPlannerRepository _plannerRepository;
 
         public PlannerService(
             IPOIRepository poiRepo,
@@ -40,7 +40,8 @@ namespace Application.Services
             IUserRepository userRepository,
             IWeatherService weatherService,
             IGeminiService gemini,
-            IPOIService poiService)
+            IPOIService poiService,
+            IPlannerRepository plannerRepository)
         {
             _poiRepo = poiRepo;
             _weatherRepo = weatherRepo;
@@ -54,6 +55,7 @@ namespace Application.Services
             _weatherService = weatherService;
             _gemini = gemini;
             _poiService = poiService;
+            _plannerRepository = plannerRepository;
         }
 
         public async Task GenerateAsync(Guid tripId)
@@ -598,6 +600,12 @@ namespace Application.Services
 
                 return null; // ⚠️ caller must handle fallback risk = 0
             }
+        }
+
+        public async Task<List<TripSegment>> GetByTripIdWithDetailsAsync(Guid tripId)
+        {
+            var segments = await _plannerRepository.GetByTripIdWithDetailsAsync(tripId);
+            return segments;
         }
     }
 }

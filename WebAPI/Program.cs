@@ -38,15 +38,15 @@ ExcelPackage.License.SetNonCommercialPersonal("CapstoneProject");
 
 
 // Add DbContext
+var connectionString = Environment.GetEnvironmentVariable("SUPABASE");
+
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("Supabase")));
+    options.UseNpgsql(connectionString));
 
 //Hangfire configuration 
 builder.Services.AddHangfire(config =>
     config.UsePostgreSqlStorage(options =>
-        options.UseNpgsqlConnection(
-            builder.Configuration.GetConnectionString("Supabase")
-        )
+        options.UseNpgsqlConnection(connectionString)
     ));
 builder.Services.AddHangfireServer(options =>
 {
@@ -200,6 +200,12 @@ builder.Services.AddScoped<ITripSegmentRepository, TripSegmentRepository>();
 //Location
 builder.Services.AddScoped<ILocationRepository, LocationRepository>();
 
+//Planner&RePlanner
+builder.Services.AddScoped<IPlannerRepository, PlannerRepository>();
+
+//Participant
+builder.Services.AddScoped<IParticipantRepository, ParticipantRepository>();
+
 
 
 //Cloudinary
@@ -219,7 +225,7 @@ builder.Services.AddScoped<INotificationRecipientService, NotificationRecipientS
 builder.Services.AddScoped<INotificationRecipientRepository, NotificationRecipientRepository>();
 
 //Participant
-builder.Services.AddScoped<IParticipantRepository, ParticipantRepository>();
+builder.Services.AddScoped<IParticipantService, ParticipantService>();
 
 //WeatherRiskScan
 builder.Services.AddScoped<IWeatherRiskScanService, WeatherRiskScanService>();
@@ -384,5 +390,9 @@ RecurringJob.AddOrUpdate<IWeatherMonitorJob>(
     "weather-hourly-scan",
     x => x.ScanUpcomingTripsAsync(),
     Cron.Hourly);
+
+//var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
+
+//app.Run($"http://0.0.0.0:{port}");
 
 app.Run();

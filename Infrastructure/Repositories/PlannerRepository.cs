@@ -28,6 +28,18 @@ namespace Infrastructure.Repositories
                 .FirstOrDefaultAsync(t => t.TripId == tripId);
         }
 
+        public async Task<List<TripSegment>> GetByTripIdWithDetailsAsync(Guid tripId)
+        {
+            return await _context.TripSegments!
+                .Where(s => s.TripId == tripId!)
+                .Include(s => s.Itineraries!)
+                    .ThenInclude(i => i.ItineraryDetails!)
+                        .ThenInclude(d => d.POI!)
+                            .ThenInclude(p => p.Location)
+                .OrderBy(s => s.OrderIndex)
+                .ToListAsync();
+        }
+
         public async Task SaveChangesAsync()
         {
             await _context.SaveChangesAsync();
