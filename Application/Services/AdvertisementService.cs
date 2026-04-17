@@ -13,15 +13,18 @@ namespace Application.Services
         private readonly IAdvertisementRepository _advertisementRepository;
         private readonly IAccountSubscriptionService _subscriptionService;
         private readonly IPOIRepository _poiRepository;
+        private readonly ICloudinaryService _cloudinaryService;
 
         public AdvertisementService(
             IAdvertisementRepository advertisementRepository,
             IAccountSubscriptionService subscriptionService,
-            IPOIRepository poiRepository)
+            IPOIRepository poiRepository,
+            ICloudinaryService cloudinaryService)
         {
             _advertisementRepository = advertisementRepository;
             _subscriptionService = subscriptionService;
             _poiRepository = poiRepository;
+            _cloudinaryService = cloudinaryService;
         }
 
         public async Task<Advertisement> CreateAdvertisementAsync(Guid accountId, CreateAdvertisementRequest request)
