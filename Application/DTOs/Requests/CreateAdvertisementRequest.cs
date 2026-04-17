@@ -8,11 +8,14 @@ namespace Application.DTOs.Requests
         public Guid POIId { get; set; }
 
         [Required]
-        [MaxLength(200)]
+        [MaxLength(100)]
         public string Title { get; set; } = string.Empty;
 
         public string VideoUrl { get; set; } = string.Empty;
+
+        [MaxLength(1000)]
         public string Content { get; set; } = string.Empty;
+
         public string ImageUrl { get; set; } = string.Empty;
 
         [Required]

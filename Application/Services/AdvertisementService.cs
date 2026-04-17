@@ -4,6 +4,7 @@ using Application.Interfaces;
 using Domain.Entities;
 using Domain.Enums;
 using Domain.Interfaces;
+using Microsoft.AspNetCore.Http;
 
 namespace Application.Services
 {
@@ -69,8 +70,32 @@ namespace Application.Services
                 throw new ArgumentException("Promotion payload is required");
             }
 
+            if (request.ImageFile != null && request.ImageFile.Length > 50 * 1024 * 1024)
+            {
+                throw new ArgumentException("Image file size must not exceed 50MB");
+            }
+
+            if (request.VideoFile != null && request.VideoFile.Length > 50 * 1024 * 1024)
+            {
+                throw new ArgumentException("Video file size must not exceed 50MB");
+            }
+
             var startDateUtc = EnsureUtc(request.StartDate);
             var endDateUtc = EnsureUtc(request.EndDate);
+
+            string? imageUrl = null;
+            if (request.ImageFile != null && request.ImageFile.Length > 0)
+            {
+                using var stream = request.ImageFile.OpenReadStream();
+                imageUrl = await _cloudinaryService.UploadImageAsync(stream, request.ImageFile.FileName);
+            }
+
+            string? videoUrl = null;
+            if (request.VideoFile != null && request.VideoFile.Length > 0)
+            {
+                using var stream = request.VideoFile.OpenReadStream();
+                videoUrl = await _cloudinaryService.UploadFileAsync(stream, request.VideoFile.FileName);
+            }
 
             var advertisement = new Advertisement
             {
@@ -78,9 +103,9 @@ namespace Application.Services
                 PackageId = subscription.SubscriptionPackageId,
                 POIId = request.POIId,
                 Title = request.Title,
-                VideoUrl = request.VideoUrl,
+                VideoUrl = videoUrl ?? string.Empty,
                 Content = request.Content,
-                ImageUrl = request.ImageUrl,
+                ImageUrl = imageUrl ?? string.Empty,
                 StartDate = startDateUtc,
                 EndDate = endDateUtc,
                 Status = AdStatus.PendingApproval,

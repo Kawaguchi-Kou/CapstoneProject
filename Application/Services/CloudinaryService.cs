@@ -35,5 +35,17 @@ namespace Application.Services
             var result = await _cloudinary.UploadAsync(uploadParams);
             return result?.SecureUrl?.ToString() ?? throw new Exception("Image upload failed");
         }
+
+        public async Task<string> UploadFileAsync(Stream fileStream, string fileName, string? resourceType = null)
+        {
+            var uploadParams = new RawUploadParams
+            {
+                File = new FileDescription(fileName, fileStream),
+                ResourceType = resourceType ?? "auto"
+            };
+
+            var result = await _cloudinary.UploadAsync(uploadParams);
+            return result?.SecureUrl?.ToString() ?? throw new Exception("File upload failed");
+        }
     }
 }

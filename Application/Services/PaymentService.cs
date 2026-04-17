@@ -17,6 +17,7 @@ namespace Application.Services
     {
         private readonly IPaymentRepository _paymentRepository;
         private readonly IAccountSubscriptionRepository _subscriptionRepository;
+        private readonly IAccountSubscriptionService _subscriptionService;
         private readonly IAdSubscriptionPackageRepository _packageRepository;
         private readonly IAuthRepository _authRepository;
         private readonly ISePayService _sePayService;
@@ -25,6 +26,7 @@ namespace Application.Services
         public PaymentService(
             IPaymentRepository paymentRepository,
             IAccountSubscriptionRepository subscriptionRepository,
+            IAccountSubscriptionService subscriptionService,
             IAdSubscriptionPackageRepository packageRepository,
             IAuthRepository authRepository,
             ISePayService sePayService,
@@ -32,6 +34,7 @@ namespace Application.Services
         {
             _paymentRepository = paymentRepository;
             _subscriptionRepository = subscriptionRepository;
+            _subscriptionService = subscriptionService;
             _packageRepository = packageRepository;
             _authRepository = authRepository;
             _sePayService = sePayService;
@@ -44,6 +47,13 @@ namespace Application.Services
             var package = await _packageRepository.GetByIdAsync(request.PackageId);
             if (package == null)
                 throw new KeyNotFoundException("Package not found");
+
+            // 2. Kiểm tra account đã có subscription active chưa
+            var activeSub = await _subscriptionService.GetActiveSubscriptionAsync(accountId);
+            if (activeSub != null)
+            {
+                throw new InvalidOperationException("Bạn hiện đang có một gói quảng cáo đang hoạt động. Vui lòng đợi gói hiện tại hết hạn hoặc sử dụng hết lượt quảng cáo trước khi đăng ký gói mới.");
+            }
 
             // 2. Nếu Amount = 0 hoặc null, lấy từ package price
             float amount = request.Amount;

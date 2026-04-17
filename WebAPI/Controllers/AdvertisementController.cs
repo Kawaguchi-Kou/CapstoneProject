@@ -23,7 +23,8 @@ namespace WebAPI.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> CreateAdvertisement([FromBody] CreateAdvertisementRequest request)
+        [Consumes("multipart/form-data")]
+        public async Task<IActionResult> CreateAdvertisement([FromForm] CreateAdvertisementRequest request)
         {
             try
             {

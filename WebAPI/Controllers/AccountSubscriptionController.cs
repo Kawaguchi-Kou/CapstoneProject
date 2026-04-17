@@ -1,3 +1,4 @@
+using System;
 using System.Security.Claims;
 using Application.DTOs.Requests;
 using Application.DTOs.Responses;
@@ -59,11 +60,16 @@ namespace WebAPI.Controllers
             }
             catch (InvalidOperationException ex)
             {
+                if (ex.Message.Contains("active subscription", StringComparison.OrdinalIgnoreCase))
+                {
+                    return Conflict(new { message = ex.Message });
+                }
+
                 return BadRequest(new { message = ex.Message });
             }
             catch (Exception ex)
             {
-                return BadRequest(new { message = ex.Message });
+                return StatusCode(500, new { message = "Đã xảy ra lỗi hệ thống, vui lòng thử lại sau." });
             }
         }
 
