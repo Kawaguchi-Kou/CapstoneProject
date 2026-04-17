@@ -12,8 +12,8 @@ namespace Application.DTOs.Responses
         public Guid TripId { get; set; }
         public Guid LocationId { get; set; }
         public int OrderIndex { get; set; }
-        public DateOnly StartDate { get; set; }
-        public DateOnly EndDate { get; set; }
+        public DateTime StartDate { get; set; }
+        public DateTime EndDate { get; set; }
         public float? DistanceKm { get; set; }
         public DateTime CreatedAt { get; set; }
     }

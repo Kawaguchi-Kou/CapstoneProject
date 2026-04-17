@@ -47,7 +47,9 @@ namespace Infrastructure.Repositories
 
         public async Task<Trip?> GetByIdAsync(Guid tripId)
         {
-            return await _db.Trips.FindAsync(tripId);
+            return await _db.Trips
+        .Include(t => t.TripSegments)   // ✅ REQUIRED
+        .FirstOrDefaultAsync(t => t.TripId == tripId);
         }
     }
 }

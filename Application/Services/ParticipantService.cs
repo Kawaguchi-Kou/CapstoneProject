@@ -8,6 +8,7 @@ using Application.Interfaces;
 using Domain.Entities;
 using Domain.Enums;
 using Domain.Interfaces;
+using QRCoder;
 
 namespace Application.Services
 {
@@ -108,6 +109,28 @@ namespace Application.Services
         {
             var participants = await _participantRepo.GetAllParticipantByTripIdAsync(tripId);
             return participants;
+        }
+
+        public async Task<(string link, byte[] qrImage)> GenerateInviteQrAsync(Guid tripId, Guid requesterId)
+        {
+            var trip = await _tripRepo.GetByIdAsync(tripId);
+
+            if (trip == null || trip.OwnerId != requesterId)
+                throw new UnauthorizedAccessException();
+
+            //var link = $"https://yourapp.com/join?tripId={tripId}";
+
+            var baseUrl = "https://abc123.ngrok.io";
+
+            var link = $"{baseUrl}/join?tripId={tripId}";
+
+            // 🔥 Generate QR
+            using var qrGenerator = new QRCodeGenerator();
+            var qrData = qrGenerator.CreateQrCode(link, QRCodeGenerator.ECCLevel.Q);
+            var qrCode = new PngByteQRCode(qrData);
+            var qrBytes = qrCode.GetGraphic(20);
+
+            return (link, qrBytes);
         }
 
     }

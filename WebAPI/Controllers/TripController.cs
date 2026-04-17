@@ -73,6 +73,8 @@ namespace WebAPI.Controllers
 
             try
             {
+                Console.WriteLine(requests.GetType());
+                Console.WriteLine(requests.First().GetType());
                 var segments = _mapper.Map<List<TripSegment>>(requests);
 
                 var result = await _tripSegmentService
@@ -84,7 +86,13 @@ namespace WebAPI.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(ex.Message);
+                //return BadRequest(ex.Message);
+                return BadRequest(new
+                {
+                    ex.Message,
+                    Inner = ex.InnerException?.Message,
+                    Stack = ex.StackTrace
+                });
             }
         }
 
