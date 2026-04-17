@@ -63,6 +63,7 @@ namespace WebAPI.Controllers
             {
                 var trip = await _plannerService.GetByTripIdWithDetailsAsync(tripId);
                 var response = _mapper.Map<FullTripResponse>(trip);
+                response.TripId = tripId;
 
                 return Ok(response);
             }
