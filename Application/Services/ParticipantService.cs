@@ -75,7 +75,7 @@ namespace Application.Services
             if (trip == null || trip.OwnerId != requesterId)
                 throw new UnauthorizedAccessException();
 
-            return $"https://yourapp.com/join?tripId={tripId}";
+            return $"https://travelplanner-e8afamefddf8bwc7.southeastasia-01.azurewebsites.net/join?tripId={tripId}";
         }
 
         // 🔷 Join via QR (tripId)
@@ -118,11 +118,7 @@ namespace Application.Services
             if (trip == null || trip.OwnerId != requesterId)
                 throw new UnauthorizedAccessException();
 
-            //var link = $"https://yourapp.com/join?tripId={tripId}";
-
-            var baseUrl = "https://abc123.ngrok.io";
-
-            var link = $"{baseUrl}/join?tripId={tripId}";
+            var link = $"https://travelplanner-e8afamefddf8bwc7.southeastasia-01.azurewebsites.net/join?tripId={tripId}";
 
             // 🔥 Generate QR
             using var qrGenerator = new QRCodeGenerator();

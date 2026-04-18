@@ -15,5 +15,6 @@ namespace Application.Interfaces
         Task<List<Participant>> GetAllParticipantByTripIdAsync(Guid tripId);
         Task<string> GenerateInviteLinkAsync(Guid tripId, Guid requesterId);
         Task<Participant> JoinByTripIdAsync(Guid tripId, Guid userId);
+        Task<(string link, byte[] qrImage)> GenerateInviteQrAsync(Guid tripId, Guid requesterId);
     }
 }

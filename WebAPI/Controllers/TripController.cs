@@ -122,13 +122,24 @@ namespace WebAPI.Controllers
             return Ok(_mapper.Map<ParticipantResponse>(participant));
         }
 
-        // 🔷 Generate QR
+        // 🔷 Generate link
         [HttpGet("{tripId}/invite-link")]
         public async Task<IActionResult> GenerateInvite(Guid tripId)
         {
             var user = await _authService.GetCurrentAccount();
 
             var link = await _service.GenerateInviteLinkAsync(tripId, user.Id);
+
+            return Ok(new { inviteUrl = link });
+        }
+
+        // 🔷 Generate QR
+        [HttpGet("{tripId}/generate-qr")]
+        public async Task<IActionResult> GenerateQR(Guid tripId)
+        {
+            var user = await _authService.GetCurrentAccount();
+
+            var link = await _service.GenerateInviteQrAsync(tripId, user.Id);
 
             return Ok(new { inviteUrl = link });
         }
