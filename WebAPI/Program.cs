@@ -137,6 +137,7 @@ builder.Services.AddScoped<Application.Interfaces.IPaymentService, Application.S
 
 //Advertisement
 builder.Services.AddScoped<IAdvertisementService, AdvertisementService>();
+builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
 
 //AccountAdmin
 builder.Services.AddScoped<IAdminService, AdminService>();
