@@ -133,15 +133,18 @@ namespace WebAPI.Controllers
             return Ok(new { inviteUrl = link });
         }
 
-        // 🔷 Generate QR
         [HttpGet("{tripId}/generate-qr")]
         public async Task<IActionResult> GenerateQR(Guid tripId)
         {
             var user = await _authService.GetCurrentAccount();
 
-            var link = await _service.GenerateInviteQrAsync(tripId, user.Id);
+            var (link, qrImage) = await _service.GenerateInviteQrAsync(tripId, user.Id);
 
-            return Ok(new { inviteUrl = link });
+            return Ok(new
+            {
+                inviteUrl = link,
+                qrCode = Convert.ToBase64String(qrImage) // so FE can render it
+            });
         }
 
         // 🔷 Join via QR
