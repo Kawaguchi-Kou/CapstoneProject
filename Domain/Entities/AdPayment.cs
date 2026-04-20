@@ -21,7 +21,9 @@ namespace Domain.Entities
         public string PaymentMethod { get; set; } = string.Empty;
 
         public PaymentStatus PaymentStatus { get; set; } = PaymentStatus.Pending;
-        public DateTime PaidAt { get; set; }
+        public DateTime CreatedAt { get; set; }
+        public DateTime ExpiresAt { get; set; }
+        public DateTime? PaidAt { get; set; }
 
         // SePay specific fields
         public string TransactionContent { get; set; } = string.Empty; // Mã nội dung chuyển khoản (Pay{Guid}ment)

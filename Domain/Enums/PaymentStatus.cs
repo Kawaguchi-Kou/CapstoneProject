@@ -11,6 +11,5 @@ namespace Domain.Enums
         Pending,
         Completed,
         Failed,
-        Refunded
     }
 }
