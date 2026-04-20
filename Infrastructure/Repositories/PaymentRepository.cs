@@ -36,7 +36,17 @@ namespace Infrastructure.Repositories
         public async Task<List<AdPayment>> GetBySubscriptionIdAsync(Guid subscriptionId)
         {
             return await _context.adPayments
+                .Include(p => p.Subscription)
                 .Where(p => p.SubscriptionId == subscriptionId)
+                .OrderByDescending(p => p.PaidAt)
+                .ToListAsync();
+        }
+
+        public async Task<List<AdPayment>> GetByAccountIdAsync(Guid accountId)
+        {
+            return await _context.adPayments
+                .Include(p => p.Subscription)
+                .Where(p => p.AccountId == accountId)
                 .OrderByDescending(p => p.PaidAt)
                 .ToListAsync();
         }

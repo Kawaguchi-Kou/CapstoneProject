@@ -15,5 +15,6 @@ namespace Application.Interfaces
         Task<AdPayment?> ProcessSePayWebhookAsync(SePayWebhookRequest webhookRequest);
         Task<AdPayment?> GetPaymentByIdAsync(Guid paymentId);
         Task<List<AdPayment>> GetPaymentsBySubscriptionIdAsync(Guid subscriptionId);
+        Task<List<PaymentResponse>> GetPurchaseHistoryAsync(Guid accountId, string? userRole);
     }
 }

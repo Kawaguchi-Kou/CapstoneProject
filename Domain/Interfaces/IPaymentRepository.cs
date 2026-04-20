@@ -12,6 +12,7 @@ namespace Domain.Interfaces
         Task<AdPayment?> GetByIdAsync(Guid paymentId);
         Task<AdPayment?> GetByTransactionContentAsync(string transactionContent);
         Task<List<AdPayment>> GetBySubscriptionIdAsync(Guid subscriptionId);
+        Task<List<AdPayment>> GetByAccountIdAsync(Guid accountId);
         Task<AdPayment> CreateAsync(AdPayment payment);
         Task<AdPayment> UpdateAsync(AdPayment payment);
         Task SaveChangesAsync();

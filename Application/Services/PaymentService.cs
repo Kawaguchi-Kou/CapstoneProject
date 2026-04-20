@@ -270,5 +270,57 @@ namespace Application.Services
         {
             return await _paymentRepository.GetBySubscriptionIdAsync(subscriptionId);
         }
+
+        public async Task<List<PaymentResponse>> GetPurchaseHistoryAsync(Guid accountId, string? userRole)
+        {
+            if (userRole != "Partner" && userRole != "Admin")
+            {
+                throw new UnauthorizedAccessException("Bạn không có quyền xem lịch sử mua hàng. Yêu cầu role Partner.");
+            }
+
+            var payments = await _paymentRepository.GetByAccountIdAsync(accountId);
+            
+            // Lấy danh sách package titles để map nếu navigation property bị null
+            var packageIds = payments.Select(p => p.PackageId).Distinct().ToList();
+            var packageTitles = new Dictionary<Guid, string>();
+            
+            foreach (var packageId in packageIds)
+            {
+                var pkg = await _packageRepository.GetByIdAsync(packageId);
+                if (pkg != null)
+                {
+                    packageTitles[packageId] = pkg.Title;
+                }
+            }
+
+            return payments.Select(p => {
+                var response = MapToPurchaseHistoryResponse(p);
+                if (string.IsNullOrEmpty(response.PackageTitle) && packageTitles.TryGetValue(p.PackageId, out var title))
+                {
+                    response.PackageTitle = title;
+                }
+                return response;
+            }).ToList();
+        }
+
+        private static PaymentResponse MapToPurchaseHistoryResponse(AdPayment payment)
+        {
+            return new PaymentResponse
+            {
+                PaymentId = payment.PaymentId,
+                SubscriptionId = payment.SubscriptionId,
+                PackageId = payment.PackageId,
+                PackageTitle = payment.Subscription?.SubscriptionPackage?.Title ?? string.Empty,
+                Amount = payment.Amount,
+                Currency = payment.Currency,
+                Status = payment.PaymentStatus,
+                TransactionContent = payment.TransactionContent,
+                TransactionDate = payment.TransactionDate,
+                PaymentMethod = payment.PaymentMethod,
+                QrCodeUrl = string.Empty,
+                BankInfo = string.Empty,
+                CreatedAt = payment.PaidAt
+            };
+        }
     }
 }
