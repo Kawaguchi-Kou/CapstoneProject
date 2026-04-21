@@ -11,6 +11,8 @@ namespace Application.Interfaces
         Task<List<Advertisement>> GetByAccountIdAsync(Guid accountId);
         Task<Advertisement> ApproveAdvertisementAsync(Guid adId);
         Task<Advertisement> RejectAdvertisementAsync(Guid adId, string? reason = null);
+        Task<Advertisement> InactivateMyAdvertisementAsync(Guid accountId, Guid adId);
+        Task<Advertisement> ActivateMyAdvertisementAsync(Guid accountId, Guid adId);
 
         Task<PagedResultResponse<PendingAdvertisementAccountItemResponse>> GetManagerAccountsAsync(
             int page,

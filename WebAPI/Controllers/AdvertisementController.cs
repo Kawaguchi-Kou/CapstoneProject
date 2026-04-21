@@ -122,6 +122,66 @@ namespace WebAPI.Controllers
             }
         }
 
+        [HttpPatch("my-ads/{id}/inactivate")]
+        [Authorize(Roles = "Partner")]
+        public async Task<IActionResult> InactivateMyAdvertisement(Guid id)
+        {
+            try
+            {
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var accountId))
+                {
+                    return Unauthorized(new { message = "Invalid token: User ID not found" });
+                }
+
+                var advertisement = await _advertisementService.InactivateMyAdvertisementAsync(accountId, id);
+                var response = _mapper.Map<AdvertisementResponse>(advertisement);
+                return Ok(response);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpPatch("my-ads/{id}/activate")]
+        [Authorize(Roles = "Partner")]
+        public async Task<IActionResult> ActivateMyAdvertisement(Guid id)
+        {
+            try
+            {
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var accountId))
+                {
+                    return Unauthorized(new { message = "Invalid token: User ID not found" });
+                }
+
+                var advertisement = await _advertisementService.ActivateMyAdvertisementAsync(accountId, id);
+                var response = _mapper.Map<AdvertisementResponse>(advertisement);
+                return Ok(response);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
         [HttpPost("{id}/approve")]
         [Authorize(Roles = "Manager")]
         public async Task<IActionResult> ApproveAdvertisement(Guid id)

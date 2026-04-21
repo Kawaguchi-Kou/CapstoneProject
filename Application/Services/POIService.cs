@@ -19,6 +19,7 @@ namespace Application.Services
         private readonly IAdvertisementRepository _advertisementRepository;
         private readonly IPreferenceRepository _preferenceRepository;
         private readonly IDistrictRepository _districtRepository;
+        private readonly IRealtimeNotifier _realtimeNotifier;
 
         public POIService(
             IPOIRepository poiRepository,
@@ -27,7 +28,8 @@ namespace Application.Services
             ILocationRepository locationRepository,
             IAdvertisementRepository advertisementRepository,
             IPreferenceRepository preferenceRepository,
-            IDistrictRepository districtRepository)
+            IDistrictRepository districtRepository,
+            IRealtimeNotifier realtimeNotifier)
         {
             _poiRepository = poiRepository;
             _userRepository = userRepository;
@@ -36,6 +38,7 @@ namespace Application.Services
             _advertisementRepository = advertisementRepository;
             _preferenceRepository = preferenceRepository;
             _districtRepository = districtRepository;
+            _realtimeNotifier = realtimeNotifier;
         }
 
         public async Task<List<RecommendedPoiResponse>> GetAllPoisSortedByPreferenceAsync(Guid accountId)
@@ -271,6 +274,9 @@ namespace Application.Services
 
             poi.Status = POIStatus.Active;
             await _poiRepository.UpdateAsync(poi);
+
+            await _realtimeNotifier.SendUserNotificationAsync(poi.PartnerId.Value, new { Type = "POI_UPDATED", POIId = poi.Id, Status = poi.Status.ToString() });
+
             return poi;
         }
 
@@ -282,6 +288,9 @@ namespace Application.Services
 
             poi.Status = POIStatus.Rejected;
             await _poiRepository.UpdateAsync(poi);
+
+            await _realtimeNotifier.SendUserNotificationAsync(poi.PartnerId.Value, new { Type = "POI_UPDATED", POIId = poi.Id, Status = poi.Status.ToString() });
+
             return poi;
         }
 

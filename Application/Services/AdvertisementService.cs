@@ -14,17 +14,20 @@ namespace Application.Services
         private readonly IAccountSubscriptionService _subscriptionService;
         private readonly IPOIRepository _poiRepository;
         private readonly ICloudinaryService _cloudinaryService;
+        private readonly IRealtimeNotifier _realtimeNotifier;
 
         public AdvertisementService(
             IAdvertisementRepository advertisementRepository,
             IAccountSubscriptionService subscriptionService,
             IPOIRepository poiRepository,
-            ICloudinaryService cloudinaryService)
+            ICloudinaryService cloudinaryService,
+            IRealtimeNotifier realtimeNotifier)
         {
             _advertisementRepository = advertisementRepository;
             _subscriptionService = subscriptionService;
             _poiRepository = poiRepository;
             _cloudinaryService = cloudinaryService;
+            _realtimeNotifier = realtimeNotifier;
         }
 
         public async Task<Advertisement> CreateAdvertisementAsync(Guid accountId, CreateAdvertisementRequest request)
@@ -166,6 +169,8 @@ namespace Application.Services
             await _advertisementRepository.UpdateAsync(advertisement);
             await _subscriptionService.IncrementAdsUsedAsync(advertisement.AccountId);
 
+            await _realtimeNotifier.SendUserNotificationAsync(advertisement.AccountId, new { Type = "AD_UPDATED", AdId = advertisement.AdId, Status = advertisement.Status.ToString() });
+
             return advertisement;
         }
 
@@ -185,6 +190,65 @@ namespace Application.Services
             {
                 advertisement.Promotion.Status = PromotionStatus.Rejected;
                 advertisement.Promotion.UpdatedAt = DateTime.UtcNow;
+            }
+
+            await _advertisementRepository.UpdateAsync(advertisement);
+            await _realtimeNotifier.SendUserNotificationAsync(advertisement.AccountId, new { Type = "AD_UPDATED", AdId = advertisement.AdId, Status = advertisement.Status.ToString() });
+            return advertisement;
+        }
+
+        public async Task<Advertisement> InactivateMyAdvertisementAsync(Guid accountId, Guid adId)
+        {
+            var advertisement = await _advertisementRepository.GetByIdAsync(adId)
+                ?? throw new KeyNotFoundException("Advertisement not found");
+
+            if (advertisement.AccountId != accountId)
+                throw new InvalidOperationException("Bạn không có quyền tắt quảng cáo này.");
+
+            var now = DateTime.UtcNow;
+            if (advertisement.StartDate > now || advertisement.EndDate < now)
+                throw new InvalidOperationException("Chỉ có thể tắt quảng cáo trong thời gian còn hiệu lực.");
+
+            if (advertisement.Status != AdStatus.Active)
+                throw new InvalidOperationException("Chỉ quảng cáo Active mới có thể tắt.");
+
+            advertisement.Status = AdStatus.Paused;
+            if (advertisement.Promotion != null && advertisement.Promotion.Status == PromotionStatus.Active)
+            {
+                advertisement.Promotion.Status = PromotionStatus.Inactive;
+                advertisement.Promotion.UpdatedAt = now;
+            }
+
+            await _advertisementRepository.UpdateAsync(advertisement);
+            return advertisement;
+        }
+
+        public async Task<Advertisement> ActivateMyAdvertisementAsync(Guid accountId, Guid adId)
+        {
+            var advertisement = await _advertisementRepository.GetByIdAsync(adId)
+                ?? throw new KeyNotFoundException("Advertisement not found");
+
+            if (advertisement.AccountId != accountId)
+                throw new InvalidOperationException("Bạn không có quyền mở quảng cáo này.");
+
+            var now = DateTime.UtcNow;
+            if (advertisement.StartDate > now || advertisement.EndDate < now)
+                throw new InvalidOperationException("Chỉ có thể mở quảng cáo trong thời gian còn hiệu lực.");
+
+            if (advertisement.Status != AdStatus.Paused)
+                throw new InvalidOperationException("Chỉ quảng cáo đang tắt (Paused) mới có thể mở lại.");
+
+            var poi = await _poiRepository.GetByIdAsync(advertisement.POIId)
+                ?? throw new KeyNotFoundException("POI not found");
+
+            if (poi.Status != POIStatus.Active)
+                throw new InvalidOperationException("Không thể mở quảng cáo vì POI liên kết đang không hoạt động.");
+
+            advertisement.Status = AdStatus.Active;
+            if (advertisement.Promotion != null)
+            {
+                advertisement.Promotion.Status = PromotionStatus.Active;
+                advertisement.Promotion.UpdatedAt = now;
             }
 
             await _advertisementRepository.UpdateAsync(advertisement);
