@@ -218,6 +218,7 @@ builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
 //BackGroundJob
 builder.Services.AddScoped<IWeatherMonitorJob, WeatherMonitorJob>();
 builder.Services.AddScoped<IWeatherPreloadJob, WeatherPreloadJob>();
+builder.Services.AddScoped<IPaymentExpiryJob, PaymentExpiryJob>();
 
 //RiskEngine
 builder.Services.AddScoped<IAdaptiveWeatherRiskEngine, AdaptiveWeatherRiskEngine>();

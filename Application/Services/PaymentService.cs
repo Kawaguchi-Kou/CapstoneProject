@@ -81,8 +81,10 @@ namespace Application.Services
                 Currency = package.Currency,
                 PaymentMethod = "SePay",
                 PaymentStatus = PaymentStatus.Pending,
+                CreatedAt = DateTime.UtcNow,
+                ExpiresAt = DateTime.UtcNow.AddMinutes(15),
                 TransactionContent = transactionContent,
-                PaidAt = DateTime.UtcNow
+                PaidAt = null
             };
 
             await _paymentRepository.CreateAsync(payment);
@@ -101,7 +103,9 @@ namespace Application.Services
                 TransactionContent = payment.TransactionContent,
                 QrCodeUrl = qrCodeUrl,
                 BankInfo = _sePayService.GetBankInfo(),
-                CreatedAt = payment.PaidAt
+                CreatedAt = payment.CreatedAt,
+                ExpiresAt = payment.ExpiresAt,
+                PaidAt = payment.PaidAt
             };
         }
 
@@ -157,10 +161,24 @@ namespace Application.Services
                 return null;
             }
 
+            if (payment.ExpiresAt <= DateTime.UtcNow)
+            {
+                _logger.LogWarning("⚠️ Payment expired before webhook arrived: {PaymentId}, ExpiresAt: {ExpiresAt}", paymentId, payment.ExpiresAt);
+                payment.PaymentStatus = PaymentStatus.Failed;
+                await _paymentRepository.SaveChangesAsync();
+                return payment;
+            }
+
             _logger.LogInformation("✅ Found pending payment: {PaymentId}", paymentId);
 
             // 4. Cập nhật payment với thông tin từ webhook
             _logger.LogInformation("💳 Updating payment status to Completed: {PaymentId}", paymentId);
+            if (payment.PaymentStatus == PaymentStatus.Failed)
+            {
+                _logger.LogWarning("⚠️ Payment already expired and marked failed: {PaymentId}", paymentId);
+                return payment;
+            }
+
             payment.PaymentStatus = PaymentStatus.Completed;
             if (DateTime.TryParse(webhookRequest.TransactionDate, out DateTime transactionDate))
             {
@@ -269,6 +287,80 @@ namespace Application.Services
         public async Task<List<AdPayment>> GetPaymentsBySubscriptionIdAsync(Guid subscriptionId)
         {
             return await _paymentRepository.GetBySubscriptionIdAsync(subscriptionId);
+        }
+
+        public async Task<PagedResultResponse<PaymentResponse>> GetPurchaseHistoryAsync(Guid accountId, string? userRole, int page = 1, int pageSize = 15)
+        {
+            if (userRole != "Partner" && userRole != "Admin")
+            {
+                throw new UnauthorizedAccessException("Bạn không có quyền xem lịch sử mua hàng. Yêu cầu role Partner.");
+            }
+
+            page = page <= 0 ? 1 : page;
+            pageSize = pageSize <= 0 ? 15 : pageSize;
+
+            await ExpirePendingPaymentsAsync();
+
+            var totalItems = await _paymentRepository.CountByAccountIdAsync(accountId);
+            var payments = await _paymentRepository.GetByAccountIdAsync(accountId, (page - 1) * pageSize, pageSize);
+
+            var packageIds = payments.Select(p => p.PackageId).Distinct().ToList();
+            var packageTitles = new Dictionary<Guid, string>();
+
+            foreach (var packageId in packageIds)
+            {
+                var pkg = await _packageRepository.GetByIdAsync(packageId);
+                if (pkg != null)
+                {
+                    packageTitles[packageId] = pkg.Title;
+                }
+            }
+
+            var items = payments.Select(p =>
+            {
+                var response = MapToPurchaseHistoryResponse(p);
+                if (string.IsNullOrEmpty(response.PackageTitle) && packageTitles.TryGetValue(p.PackageId, out var title))
+                {
+                    response.PackageTitle = title;
+                }
+                return response;
+            }).ToList();
+
+            return new PagedResultResponse<PaymentResponse>
+            {
+                Items = items,
+                Page = page,
+                PageSize = pageSize,
+                TotalItems = totalItems,
+                TotalPages = totalItems == 0 ? 0 : (int)Math.Ceiling(totalItems / (double)pageSize)
+            };
+        }
+
+        public async Task<int> ExpirePendingPaymentsAsync()
+        {
+            return await _paymentRepository.ExpirePendingPaymentsAsync(DateTime.UtcNow);
+        }
+
+        private static PaymentResponse MapToPurchaseHistoryResponse(AdPayment payment)
+        {
+            return new PaymentResponse
+            {
+                PaymentId = payment.PaymentId,
+                SubscriptionId = payment.SubscriptionId,
+                PackageId = payment.PackageId,
+                PackageTitle = payment.Subscription?.SubscriptionPackage?.Title ?? string.Empty,
+                Amount = payment.Amount,
+                Currency = payment.Currency,
+                Status = payment.PaymentStatus,
+                TransactionContent = payment.TransactionContent,
+                TransactionDate = payment.TransactionDate,
+                PaymentMethod = payment.PaymentMethod,
+                QrCodeUrl = string.Empty,
+                BankInfo = string.Empty,
+                CreatedAt = payment.CreatedAt,
+                ExpiresAt = payment.ExpiresAt,
+                PaidAt = payment.PaidAt
+            };
         }
     }
 }

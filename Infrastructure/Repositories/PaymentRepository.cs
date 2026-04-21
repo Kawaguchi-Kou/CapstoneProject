@@ -1,5 +1,6 @@
 using Domain.Entities;
 using Domain.Interfaces;
+using Domain.Enums;
 using Infrastructure.EntitiesConfigurations;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -36,8 +37,26 @@ namespace Infrastructure.Repositories
         public async Task<List<AdPayment>> GetBySubscriptionIdAsync(Guid subscriptionId)
         {
             return await _context.adPayments
+                .Include(p => p.Subscription)
                 .Where(p => p.SubscriptionId == subscriptionId)
                 .OrderByDescending(p => p.PaidAt)
+                .ToListAsync();
+        }
+
+        public async Task<int> CountByAccountIdAsync(Guid accountId)
+        {
+            return await _context.adPayments.CountAsync(p => p.AccountId == accountId);
+        }
+
+        public async Task<List<AdPayment>> GetByAccountIdAsync(Guid accountId, int skip, int take)
+        {
+            return await _context.adPayments
+                .Include(p => p.Subscription)
+                .Where(p => p.AccountId == accountId)
+                .OrderByDescending(p => p.PaidAt)
+                .ThenByDescending(p => p.CreatedAt)
+                .Skip(skip)
+                .Take(take)
                 .ToListAsync();
         }
 
@@ -53,6 +72,26 @@ namespace Infrastructure.Repositories
             _context.adPayments.Update(payment);
             await _context.SaveChangesAsync();
             return payment;
+        }
+
+        public async Task<int> ExpirePendingPaymentsAsync(DateTime utcNow)
+        {
+            var expiredPendingPayments = await _context.adPayments
+                .Where(p => p.PaymentStatus == PaymentStatus.Pending && p.ExpiresAt <= utcNow)
+                .ToListAsync();
+
+            if (!expiredPendingPayments.Any())
+            {
+                return 0;
+            }
+
+            foreach (var payment in expiredPendingPayments)
+            {
+                payment.PaymentStatus = PaymentStatus.Failed;
+            }
+
+            await _context.SaveChangesAsync();
+            return expiredPendingPayments.Count;
         }
 
         public async Task SaveChangesAsync()

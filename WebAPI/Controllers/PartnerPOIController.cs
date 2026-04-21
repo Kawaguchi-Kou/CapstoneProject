@@ -167,5 +167,35 @@ namespace WebAPI.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
+
+        [HttpPost("my/{id}/request-reactivation")]
+        public async Task<IActionResult> RequestReactivation(Guid id)
+        {
+            try
+            {
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var partnerId))
+                {
+                    return Unauthorized(new { message = "Invalid token: User ID not found" });
+                }
+
+                var poi = await _poiService.RequestReactivationAsync(partnerId, id);
+                var mapped = _mapper.Map<PoiResponse>(poi);
+
+                return Ok(new
+                {
+                    poi = mapped,
+                    message = "Đã gửi lại POI để Manager duyệt."
+                });
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
     }
 }

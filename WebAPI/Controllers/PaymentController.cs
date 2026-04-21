@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
+using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace WebAPI.Controllers
@@ -38,7 +38,7 @@ namespace WebAPI.Controllers
             try
             {
                 // Kiểm tra role Partner
-                var userRole = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value?.Trim();
+                var userRole = User.FindFirst(ClaimTypes.Role)?.Value?.Trim();
                 if (userRole != "Partner")
                 {
                     return StatusCode(403, new
@@ -165,7 +165,7 @@ namespace WebAPI.Controllers
 
                 // Kiểm tra quyền truy cập (chỉ owner hoặc admin)
                 var currentUser = await _authService.GetCurrentAccount();
-                var userRole = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value?.Trim();
+                var userRole = User.FindFirst(ClaimTypes.Role)?.Value?.Trim();
 
                 if (payment.AccountId != currentUser.Id && userRole != "Admin")
                 {
@@ -182,7 +182,9 @@ namespace WebAPI.Controllers
                     TransactionContent = payment.TransactionContent,
                     QrCodeUrl = _sePayService.GenerateQrCodeUrl(payment.Amount, payment.TransactionContent),
                     BankInfo = "MBBank - 0984147052 - NGUYEN HAI QUAN",
-                    CreatedAt = payment.PaidAt
+                    CreatedAt = payment.CreatedAt,
+                    ExpiresAt = payment.ExpiresAt,
+                    PaidAt = payment.PaidAt
                 };
 
                 return Ok(response);
@@ -199,8 +201,67 @@ namespace WebAPI.Controllers
         {
             try
             {
+                var currentUser = await _authService.GetCurrentAccount();
+                if (currentUser == null)
+                {
+                    return Unauthorized(new { message = "Invalid token: User not found" });
+                }
+
+                var userRole = User.FindFirst(ClaimTypes.Role)?.Value?.Trim();
                 var payments = await _paymentService.GetPaymentsBySubscriptionIdAsync(subscriptionId);
-                return Ok(payments);
+                var subscriptionPayment = payments.FirstOrDefault();
+
+                if (subscriptionPayment == null)
+                {
+                    return NotFound(new { message = "No payment history found for this subscription" });
+                }
+
+                if (subscriptionPayment.AccountId != currentUser.Id && userRole != "Admin")
+                {
+                    return Forbid();
+                }
+
+                var response = payments.Select(p => new
+                {
+                    paymentId = p.PaymentId,
+                    subscriptionId = p.SubscriptionId,
+                    packageId = p.PackageId,
+                    amount = p.Amount,
+                    currency = p.Currency,
+                    status = p.PaymentStatus.ToString(),
+                    paymentMethod = p.PaymentMethod,
+                    transactionContent = p.TransactionContent,
+                    transactionDate = p.TransactionDate,
+                    paidAt = p.PaidAt
+                }).ToList();
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpGet("history")]
+        [Authorize]
+        public async Task<IActionResult> GetPurchaseHistory([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
+        {
+            try
+            {
+                var currentUser = await _authService.GetCurrentAccount();
+                if (currentUser == null)
+                {
+                    return Unauthorized(new { message = "Invalid token: User not found" });
+                }
+
+                var userRole = User.FindFirst(ClaimTypes.Role)?.Value?.Trim();
+                var response = await _paymentService.GetPurchaseHistoryAsync(currentUser.Id, userRole, page, pageSize);
+
+                return Ok(response);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return StatusCode(403, new { message = ex.Message });
             }
             catch (Exception ex)
             {
