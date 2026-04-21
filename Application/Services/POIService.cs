@@ -314,6 +314,21 @@ namespace Application.Services
             return (poi, affectedAds);
         }
 
+        public async Task<POI> RequestReactivationAsync(Guid partnerId, Guid poiId)
+        {
+            var poi = await _poiRepository.GetByIdAsync(poiId) ?? throw new KeyNotFoundException("POI not found");
+
+            if (poi.PartnerId == null || poi.PartnerId != partnerId)
+                throw new InvalidOperationException("Bạn không có quyền gửi duyệt lại POI này.");
+
+            if (poi.Status != POIStatus.Inactive)
+                throw new InvalidOperationException("Chỉ POI Inactive mới có thể gửi duyệt lại.");
+
+            poi.Status = POIStatus.Pending;
+            await _poiRepository.UpdateAsync(poi);
+            return poi;
+        }
+
         public async Task<POI> ActivatePoiAsync(Guid poiId)
         {
             var poi = await _poiRepository.GetByIdAsync(poiId) ?? throw new KeyNotFoundException("POI not found");

@@ -24,6 +24,7 @@ namespace Application.Interfaces
         Task<POI> ApprovePartnerPoiAsync(Guid poiId);
         Task<POI> RejectPartnerPoiAsync(Guid poiId);
         Task<(POI poi, int affectedAds)> InactivatePoiAsync(Guid actorId, Guid poiId, bool isManagerOrStaff, bool confirmCascade);
+        Task<POI> RequestReactivationAsync(Guid partnerId, Guid poiId);
         Task<POI> ActivatePoiAsync(Guid poiId);
 
         Task ImportExcelAsync(IFormFile file);

@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 
@@ -180,7 +182,9 @@ namespace WebAPI.Controllers
                     TransactionContent = payment.TransactionContent,
                     QrCodeUrl = _sePayService.GenerateQrCodeUrl(payment.Amount, payment.TransactionContent),
                     BankInfo = "MBBank - 0984147052 - NGUYEN HAI QUAN",
-                    CreatedAt = payment.PaidAt
+                    CreatedAt = payment.CreatedAt,
+                    ExpiresAt = payment.ExpiresAt,
+                    PaidAt = payment.PaidAt
                 };
 
                 return Ok(response);
@@ -240,7 +244,7 @@ namespace WebAPI.Controllers
 
         [HttpGet("history")]
         [Authorize]
-        public async Task<IActionResult> GetPurchaseHistory()
+        public async Task<IActionResult> GetPurchaseHistory([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
         {
             try
             {
@@ -251,7 +255,7 @@ namespace WebAPI.Controllers
                 }
 
                 var userRole = User.FindFirst(ClaimTypes.Role)?.Value?.Trim();
-                var response = await _paymentService.GetPurchaseHistoryAsync(currentUser.Id, userRole);
+                var response = await _paymentService.GetPurchaseHistoryAsync(currentUser.Id, userRole, page, pageSize);
 
                 return Ok(response);
             }

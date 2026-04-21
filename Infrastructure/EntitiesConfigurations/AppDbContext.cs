@@ -532,8 +532,14 @@ namespace Infrastructure.EntitiesConfigurations
                 entity.Property(e => e.Code)
                       .HasMaxLength(100);
 
+                entity.Property(e => e.CreatedAt)
+                      .IsRequired();
+
+                entity.Property(e => e.ExpiresAt)
+                      .IsRequired();
+
                 entity.Property(e => e.PaidAt)
-                      .HasDefaultValueSql("NOW()");
+                      .IsRequired(false);
 
                 entity.HasOne(e => e.Subscription)
                       .WithMany(s => s.Payments)
