@@ -91,9 +91,15 @@ namespace WebAPI.Controllers
         {
             try
             {
-                var advertisements = await _advertisementService.GetActiveAsync();
-                var response = _mapper.Map<List<AdvertisementResponse>>(advertisements);
-                return Ok(response);
+                Guid? accountId = null;
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (!string.IsNullOrEmpty(userIdClaim) && Guid.TryParse(userIdClaim, out var parsedId))
+                {
+                    accountId = parsedId;
+                }
+
+                var advertisements = await _advertisementService.GetActiveAsync(accountId);
+                return Ok(advertisements);
             }
             catch (Exception ex)
             {

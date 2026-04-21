@@ -229,7 +229,9 @@ namespace Infrastructure.Repositories
         public async Task<List<Advertisement>> GetActiveAsync()
         {
             return await _context.Advertisements
+                .Include(a => a.Account)
                 .Include(a => a.POI)
+                    .ThenInclude(p => p.PoiPreferences)
                 .Include(a => a.Promotion)
                 .Where(a => a.Status == AdStatus.Active)
                 .OrderByDescending(a => a.CreatedAt)

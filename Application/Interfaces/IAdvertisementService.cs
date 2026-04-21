@@ -27,7 +27,7 @@ namespace Application.Interfaces
 
         Task<List<Advertisement>> GetAllAsync();
         Task<List<Advertisement>> GetPendingAsync();
-        Task<List<Advertisement>> GetActiveAsync();
+        Task<List<RecommendedAdsResponse>> GetActiveAsync(Guid? accountId = null);
         Task<List<SavedPromotion>> GetSavedPromotionsByAccountIdAsync(Guid accountId);
         Task SavePromotionAsync(Guid accountId, Guid promotionId);
     }
