@@ -24,5 +24,11 @@ namespace Application.Interfaces
     List<TripSegment> newSegments);
 
         Task<List<Location>> GetAllAsync();
+        Task DeleteSegmentsAsync(
+    Guid tripId,
+    List<Guid> segmentIds);
+        Task UpdateSegmentDatesAsync(
+    Guid tripId,
+    List<UpdateSegmentDatesRequest> updates);
     }
 }

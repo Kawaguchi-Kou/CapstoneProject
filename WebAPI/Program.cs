@@ -165,6 +165,9 @@ builder.Services.AddScoped<IAuthRepository, AuthRepository>();
 builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
 builder.Services.AddScoped<IOtpRepository, OtpRepository>();
 
+//UnitOfWork
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+
 //User
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 

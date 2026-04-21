@@ -22,8 +22,8 @@ namespace Application.DTOs.Responses
         public POIType Type { get; set; }
         public POIStatus Status { get; set; }
         public bool IsIndoor { get; set; }
-        public decimal Latitude { get; set; }
-        public decimal Longitude { get; set; }
+        public double Latitude { get; set; }
+        public double Longitude { get; set; }
         public string LocationName { get; set; } = string.Empty;
         public int Score { get; set; }
         public List<string> POIPreferences { get; set; } = new List<string>();

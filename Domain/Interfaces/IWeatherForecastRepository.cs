@@ -29,5 +29,7 @@ namespace Domain.Interfaces
         Task<Dictionary<DateTime, WeatherForecast>> GetByLocationAndDatesDict(
     Guid locationId,
     List<DateTime> dates);
+
+        Task SaveChangesAsync();
     }
 }

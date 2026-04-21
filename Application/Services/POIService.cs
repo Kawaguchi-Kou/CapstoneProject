@@ -66,6 +66,8 @@ namespace Application.Services
                         IsIndoor = poi.IsIndoor,
                         LocationName = poi.Location?.LocationName ?? "",
                         POIImgUrl = poi.POIImgUrl!,
+                        Latitude = poi.Latitude,
+                        Longitude = poi.Longitude,
                         Score = score,
                         POIPreferences = poi.PoiPreferences
                             .Where(pp => pp.Preference != null)
@@ -110,6 +112,8 @@ namespace Application.Services
                         IsIndoor = poi.IsIndoor,
                         LocationName = poi.Location?.LocationName ?? "",
                         POIImgUrl = poi.POIImgUrl!,
+                        Latitude = poi.Latitude,
+                        Longitude = poi.Longitude,
                         Score = score,
                         POIPreferences = poi.PoiPreferences
                             .Where(pp => pp.Preference != null)

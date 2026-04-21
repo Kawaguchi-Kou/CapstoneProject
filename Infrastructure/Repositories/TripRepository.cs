@@ -45,6 +45,12 @@ namespace Infrastructure.Repositories
                 .ToListAsync();
         }
 
+        public async Task UpdateAsync(Trip trip)
+        {
+            _db.Trips.Update(trip);
+            await _db.SaveChangesAsync();
+        }
+
         public async Task<Trip?> GetByIdAsync(Guid tripId)
         {
             return await _db.Trips

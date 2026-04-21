@@ -20,5 +20,6 @@ namespace Domain.Interfaces
         Task UpdateAsync(TripSegment segment);
 
         Task DeleteAsync(Guid id);
+        Task DeleteByIdsAsync(List<Guid> segmentIds);
     }
 }

@@ -60,5 +60,14 @@ namespace Infrastructure.Repositories
                 await _context.SaveChangesAsync();
             }
         }
+
+        public async Task DeleteByIdsAsync(List<Guid> segmentIds)
+        {
+            var segments = await _context.TripSegments
+                .Where(x => segmentIds.Contains(x.SegmentId))
+                .ToListAsync();
+
+            _context.TripSegments.RemoveRange(segments);
+        }
     }
 }

@@ -549,7 +549,7 @@ namespace Infrastructure.EntitiesConfigurations
                 {
                     entity.ToTable("weather_forecast");
 
-                    entity.HasIndex(x => new { x.City, x.ForecastDate})
+                    entity.HasIndex(x => new { x.LocationId, x.ForecastDate})
                             .IsUnique();
                 });
 

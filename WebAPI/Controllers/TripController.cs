@@ -96,6 +96,64 @@ namespace WebAPI.Controllers
             }
         }
 
+        // 🔹 1. Update segment dates
+        [HttpPut("{tripId}/segments/update-dates")]
+        public async Task<IActionResult> UpdateSegmentDates(
+            Guid tripId,
+            [FromBody] List<UpdateSegmentDatesRequest> request)
+        {
+            try
+            {
+                await _tripSegmentService.UpdateSegmentDatesAsync(tripId, request);
+
+                return Ok(new
+                {
+                    message = "Segment dates updated successfully"
+                });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new
+                {
+                    message = "Internal server error",
+                    detail = ex.Message
+                });
+            }
+        }
+
+        // 🔹 2. Delete segments
+        [HttpDelete("{tripId}/segments")]
+        public async Task<IActionResult> DeleteSegments(
+            Guid tripId,
+            [FromBody] List<Guid> segmentIds)
+        {
+            try
+            {
+                await _tripSegmentService.DeleteSegmentsAsync(tripId, segmentIds);
+
+                return Ok(new
+                {
+                    message = "Segments deleted successfully"
+                });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new
+                {
+                    message = "Internal server error",
+                    detail = ex.Message
+                });
+            }
+        }
+
         [HttpGet("get-all-location")]
         public async Task<IActionResult> GetAllLocation()
         {

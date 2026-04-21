@@ -69,6 +69,23 @@ namespace Infrastructure.Repositories
             return location;
         }
 
+        public async Task<List<Location>> GetByNamesAsync(List<string> names)
+        {
+            if (names == null || !names.Any())
+                return new List<Location>();
+
+            // Optional: normalize input (trim + lower) to avoid mismatch
+            var normalizedNames = names
+                .Where(x => !string.IsNullOrWhiteSpace(x))
+                .Select(x => x.Trim())
+                .Distinct()
+                .ToList();
+
+            return await _context.Locations
+                .Where(x => normalizedNames.Contains(x.LocationName))
+                .ToListAsync();
+        }
+
         public async Task<List<Location>> GetAllAsync()
         {
             return await _context.Locations.ToListAsync();

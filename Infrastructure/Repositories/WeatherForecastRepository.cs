@@ -92,19 +92,46 @@ namespace Infrastructure.Repositories
 
         public async Task UpsertAsync(WeatherForecast forecast)
         {
-            var existing = await _context.WeatherForecasts
-                .FirstOrDefaultAsync(x =>
-                    x.LocationId == forecast.LocationId &&
-                    x.ForecastDate == forecast.ForecastDate);
+            //var existing = await _context.WeatherForecasts
+            //    .FirstOrDefaultAsync(x =>
+            //        x.LocationId == forecast.LocationId &&
+            //        x.ForecastDate == forecast.ForecastDate);
 
-            if (existing == null)
-            {
-                await _context.WeatherForecasts.AddAsync(forecast);
-            }
-            else
-            {
-                _context.Entry(existing).CurrentValues.SetValues(forecast);
-            }
+            //if (existing == null)
+            //{
+            //    await _context.WeatherForecasts.AddAsync(forecast);
+            //}
+            //else
+            //{
+            //    _context.Entry(existing).CurrentValues.SetValues(forecast);
+            //}
+
+            await _context.Database.ExecuteSqlRawAsync(@"
+                INSERT INTO weather_forecast 
+                (""Id"", ""City"", ""FetchedAt"", ""ForecastDate"", ""LocationId"", 
+                 ""PrecipitationProbability"", ""TemperatureCelsius"", ""WindSpeed"")
+                VALUES ({0}, {1}, {2}, {3}, {4}, {5}, {6}, {7})
+                ON CONFLICT (""LocationId"", ""ForecastDate"")
+                DO UPDATE SET
+                    ""PrecipitationProbability"" = EXCLUDED.""PrecipitationProbability"",
+                    ""TemperatureCelsius"" = EXCLUDED.""TemperatureCelsius"",
+                    ""WindSpeed"" = EXCLUDED.""WindSpeed"",
+                    ""FetchedAt"" = EXCLUDED.""FetchedAt"";
+            ",
+            forecast.Id,
+            forecast.City,
+            forecast.FetchedAt,
+            forecast.ForecastDate,
+            forecast.LocationId,
+            forecast.PrecipitationProbability,
+            forecast.TemperatureCelsius,
+            forecast.WindSpeed
+            );
+        }
+
+        public async Task SaveChangesAsync()
+        {
+            await _context.SaveChangesAsync();
         }
 
         //public async Task UpsertAsync(WeatherForecast forecast)
