@@ -9,6 +9,6 @@ namespace Application.DTOs.AIResponse
     public class AIDayPlan
     {
         public DateTime Date { get; set; }
-        public List<AIItem> Plan { get; set; }
+        public List<AIActivity> Plan { get; set; }
     }
 }

@@ -27,7 +27,7 @@ namespace Infrastructure.Migrations
                 name: "TripId",
                 table: "itineraries");
 
-            migrationBuilder.AlterColumn<DateOnly>(
+            migrationBuilder.AlterColumn<DateTime>(
                 name: "ForecastDate",
                 table: "weather_forecast",
                 type: "date",
@@ -42,7 +42,7 @@ namespace Infrastructure.Migrations
                 nullable: false,
                 defaultValue: new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified));
 
-            migrationBuilder.AlterColumn<DateOnly>(
+            migrationBuilder.AlterColumn<DateTime>(
                 name: "StartDate",
                 table: "trips",
                 type: "date",
@@ -50,7 +50,7 @@ namespace Infrastructure.Migrations
                 oldClrType: typeof(DateTime),
                 oldType: "timestamp with time zone");
 
-            migrationBuilder.AlterColumn<DateOnly>(
+            migrationBuilder.AlterColumn<DateTime>(
                 name: "EndDate",
                 table: "trips",
                 type: "date",
@@ -137,7 +137,7 @@ namespace Infrastructure.Migrations
                 table: "weather_forecast",
                 type: "timestamp with time zone",
                 nullable: false,
-                oldClrType: typeof(DateOnly),
+                oldClrType: typeof(DateTime),
                 oldType: "date");
 
             migrationBuilder.AlterColumn<DateTime>(
@@ -145,7 +145,7 @@ namespace Infrastructure.Migrations
                 table: "trips",
                 type: "timestamp with time zone",
                 nullable: false,
-                oldClrType: typeof(DateOnly),
+                oldClrType: typeof(DateTime),
                 oldType: "date");
 
             migrationBuilder.AlterColumn<DateTime>(
@@ -153,7 +153,7 @@ namespace Infrastructure.Migrations
                 table: "trips",
                 type: "timestamp with time zone",
                 nullable: false,
-                oldClrType: typeof(DateOnly),
+                oldClrType: typeof(DateTime),
                 oldType: "date");
 
             migrationBuilder.AddColumn<int>(

@@ -20,8 +20,10 @@ namespace Application.DTOs.Responses
 
         public string ApproxCost { get; set; } = string.Empty;
 
-        public TimeOnly OpenHour { get; set; } 
-        public TimeOnly CloseHour { get; set; }
+        public TimeOnly? OpenHour { get; set; } 
+        public TimeOnly? CloseHour { get; set; }
+        public bool Is24Hours { get; set; }
+        public string? VisitRecommendation { get; set; }
 
         public string GoogleMapLink { get; set; } = string.Empty;
         public string POIImgUrl { get; set; } = string.Empty;

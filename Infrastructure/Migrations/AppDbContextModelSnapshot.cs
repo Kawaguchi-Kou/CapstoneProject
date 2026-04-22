@@ -311,7 +311,7 @@ namespace Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("LocationId");
+                    b.HasIndex("LocationId", "Name");
 
                     b.ToTable("districts", (string)null);
                 });
@@ -585,9 +585,9 @@ namespace Infrastructure.Migrations
 
                     b.HasIndex("DistrictId");
 
-                    b.HasIndex("LocationId");
-
                     b.HasIndex("PartnerId");
+
+                    b.HasIndex("LocationId", "DistrictId");
 
                     b.ToTable("pois", (string)null);
                 });
@@ -830,6 +830,9 @@ namespace Infrastructure.Migrations
                     b.Property<double?>("DistanceKm")
                         .HasColumnType("double precision");
 
+                    b.Property<Guid>("DistrictId")
+                        .HasColumnType("uuid");
+
                     b.Property<DateTime>("EndDate")
                         .HasColumnType("timestamp with time zone");
 
@@ -849,7 +852,9 @@ namespace Infrastructure.Migrations
 
                     b.HasIndex("LocationId");
 
-                    b.HasIndex("TripId");
+                    b.HasIndex("DistrictId", "OrderIndex");
+
+                    b.HasIndex("TripId", "OrderIndex");
 
                     b.ToTable("trip_segments", (string)null);
                 });
@@ -1163,6 +1168,12 @@ namespace Infrastructure.Migrations
 
             modelBuilder.Entity("Domain.Entities.TripSegment", b =>
                 {
+                    b.HasOne("Domain.Entities.District", "District")
+                        .WithMany("Segments")
+                        .HasForeignKey("DistrictId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("Domain.Entities.Location", "Location")
                         .WithMany("Segments")
                         .HasForeignKey("LocationId")
@@ -1174,6 +1185,8 @@ namespace Infrastructure.Migrations
                         .HasForeignKey("TripId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("District");
 
                     b.Navigation("Location");
 
@@ -1247,6 +1260,8 @@ namespace Infrastructure.Migrations
             modelBuilder.Entity("Domain.Entities.District", b =>
                 {
                     b.Navigation("POIs");
+
+                    b.Navigation("Segments");
                 });
 
             modelBuilder.Entity("Domain.Entities.Itinerary", b =>

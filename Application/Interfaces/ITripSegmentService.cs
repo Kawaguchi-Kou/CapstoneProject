@@ -16,7 +16,7 @@ namespace Application.Interfaces
             DateTime endDate,
             int maxStops);
 
-        Task<List<TripSegment>> AddSegmentsToTripAsync(Guid tripId, List<TripSegment> segments);
+        //Task<List<TripSegment>> AddSegmentsToTripAsync(Guid tripId, List<TripSegment> segments);
 
         Task<List<TripSegment>> InsertSegmentsAsync(
     Guid tripId,

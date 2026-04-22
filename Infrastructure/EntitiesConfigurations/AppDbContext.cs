@@ -183,6 +183,9 @@ namespace Infrastructure.EntitiesConfigurations
                 entity.Property(s => s.CreatedAt)
                       .HasDefaultValueSql("NOW()");
 
+                entity.HasIndex(s => new { s.TripId, s.OrderIndex });       // ⭐ PRIMARY USE
+                entity.HasIndex(s => new { s.DistrictId, s.OrderIndex });   // optional
+
                 // relationship
                 entity.HasOne(s => s.Location)
                       .WithMany(l => l.Segments)
@@ -191,6 +194,13 @@ namespace Infrastructure.EntitiesConfigurations
                 entity.HasMany(s => s.Itineraries)
                       .WithOne(i => i.Segment)
                       .HasForeignKey(i => i.SegmentId);
+
+                entity.HasOne(s => s.District)
+                      .WithMany(d => d.Segments)
+                      .HasForeignKey(s => s.DistrictId)
+                      .OnDelete(DeleteBehavior.Restrict);
+
+
             });
 
             // =========================
@@ -291,6 +301,7 @@ namespace Infrastructure.EntitiesConfigurations
             {
                 entity.ToTable("pois");
                 entity.HasKey(p => p.Id);
+                entity.HasIndex(p => new { p.LocationId, p.DistrictId });
                 entity.Property(p => p.Name)
                       .IsRequired()
                       .HasMaxLength(255);
@@ -357,6 +368,7 @@ namespace Infrastructure.EntitiesConfigurations
             {
                 entity.ToTable("districts");
                 entity.HasKey(d => d.Id);
+                entity.HasIndex(d => new { d.LocationId, d.Name });
                 entity.Property(d => d.Name)
                       .HasMaxLength(150);
             });

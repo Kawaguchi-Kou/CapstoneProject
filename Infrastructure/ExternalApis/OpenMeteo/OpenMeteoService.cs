@@ -29,8 +29,8 @@ namespace Infrastructure.ExternalApis.OpenMeteo
         //public async Task<IReadOnlyList<DailyWeatherDto>> GetDailyAsync(
         //    double latitude,
         //    double longitude,
-        //    DateOnly from,
-        //    DateOnly to)
+        //    DateTime from,
+        //    DateTime to)
         //{
 
         //    if (to < from)
@@ -41,7 +41,7 @@ namespace Infrastructure.ExternalApis.OpenMeteo
         //    if (days > 7)
         //        throw new ArgumentException("Forecast period cannot exceed 7 days.");
 
-        //    var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        //    var today = DateTime.FromDateTime(DateTime.UtcNow);
 
         //    if (from < today)
         //        throw new ArgumentException("Cannot forecast past dates.");
@@ -74,7 +74,7 @@ namespace Infrastructure.ExternalApis.OpenMeteo
         //    {
         //        result.Add(new DailyWeatherDto
         //        {
-        //            Date = DateOnly.Parse(data.Daily.Time[i]),
+        //            Date = DateTime.Parse(data.Daily.Time[i]),
         //            MaxTemperature = data.Daily.TemperatureMax[i],
         //            PrecipitationProbability = data.Daily.PrecipitationProbabilityMax[i],
         //            MaxWindSpeed = data.Daily.WindSpeedMax[i]
@@ -87,13 +87,13 @@ namespace Infrastructure.ExternalApis.OpenMeteo
         //public async Task<IReadOnlyList<DailyWeatherDto>> GetDailyAsync(
         //    double latitude,
         //    double longitude,
-        //    DateOnly from,
-        //    DateOnly to)
+        //    DateTime from,
+        //    DateTime to)
         //{
         //    if (to < from)
         //        throw new ArgumentException("End date must be after start date.");
 
-        //    var today = DateOnly.FromDateTime(DateTime.Now); // ✅ LOCAL TIME
+        //    var today = DateTime.FromDateTime(DateTime.Now); // ✅ LOCAL TIME
 
         //    // 🔥 FIX 1: auto-adjust instead of throw
         //    if (from < today)
@@ -139,7 +139,7 @@ namespace Infrastructure.ExternalApis.OpenMeteo
         //            {
         //                result.Add(new DailyWeatherDto
         //                {
-        //                    Date = DateOnly.Parse(data.Daily.Time[i]),
+        //                    Date = DateTime.Parse(data.Daily.Time[i]),
         //                    MaxTemperature = data.Daily.TemperatureMax[i],
         //                    PrecipitationProbability = data.Daily.PrecipitationProbabilityMax[i],
         //                    MaxWindSpeed = data.Daily.WindSpeedMax[i]

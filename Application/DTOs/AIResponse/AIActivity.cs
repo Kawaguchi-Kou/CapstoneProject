@@ -6,10 +6,10 @@ using System.Threading.Tasks;
 
 namespace Application.DTOs.AIResponse
 {
-    public class AIItem
+    public class AIActivity
     {
-        public string Type { get; set; } // Breakfast, Lunch...
-        public string Poi { get; set; }
-        public string Time { get; set; }
+        public Guid PoiId { get; set; }
+        public string Period { get; set; }
+        public int DurationMinutes { get; set; }
     }
 }

@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class ChangeDateOnlyToDateTimeInTrip : Migration
+    public partial class ChangeDateTimeToDateTimeInTrip : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -16,7 +16,7 @@ namespace Infrastructure.Migrations
                 table: "trips",
                 type: "timestamp with time zone",
                 nullable: false,
-                oldClrType: typeof(DateOnly),
+                oldClrType: typeof(DateTime),
                 oldType: "date");
 
             migrationBuilder.AlterColumn<DateTime>(
@@ -24,14 +24,14 @@ namespace Infrastructure.Migrations
                 table: "trips",
                 type: "timestamp with time zone",
                 nullable: false,
-                oldClrType: typeof(DateOnly),
+                oldClrType: typeof(DateTime),
                 oldType: "date");
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AlterColumn<DateOnly>(
+            migrationBuilder.AlterColumn<DateTime>(
                 name: "StartDate",
                 table: "trips",
                 type: "date",
@@ -39,7 +39,7 @@ namespace Infrastructure.Migrations
                 oldClrType: typeof(DateTime),
                 oldType: "timestamp with time zone");
 
-            migrationBuilder.AlterColumn<DateOnly>(
+            migrationBuilder.AlterColumn<DateTime>(
                 name: "EndDate",
                 table: "trips",
                 type: "date",

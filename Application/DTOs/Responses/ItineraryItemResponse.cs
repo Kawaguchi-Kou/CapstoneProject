@@ -16,6 +16,7 @@ namespace Application.DTOs.Responses
 
         public TimeOnly StartTime { get; set; }
         public TimeOnly EndTime { get; set; }
+        public string Period { get; set; } = default!;
 
         public double WeatherRiskScore { get; set; }
     }

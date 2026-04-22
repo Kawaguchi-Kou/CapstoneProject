@@ -23,7 +23,7 @@ namespace Application.Services
         }
 
 
-        public async Task<Trip> CreateTripAsync(Trip newTrip)
+        public async Task<Trip> CreateTripAsync(Trip newTrip, Guid startDistrictId, Guid endDistrictId)
         {
             await _unitOfWork.BeginTransactionAsync();
 
@@ -58,6 +58,7 @@ namespace Application.Services
                 {
                     SegmentId = Guid.NewGuid(),
                     TripId = newTrip.TripId,
+                    DistrictId = startDistrictId,
                     LocationId = startLocationId,
                     StartDate = newTrip.StartDate,
                     EndDate = newTrip.StartDate,
@@ -69,27 +70,13 @@ namespace Application.Services
                 {
                     SegmentId = Guid.NewGuid(),
                     TripId = newTrip.TripId,
+                    DistrictId = endDistrictId,
                     LocationId = endLocationId,
                     StartDate = newTrip.StartDate.AddDays(1),
                     EndDate = newTrip.EndDate,
                     OrderIndex = 2,
                     CreatedAt = DateTime.UtcNow
                 });
-
-                // 2. RoundTrip → add return segment
-                if (newTrip.TripType == TripType.RoundTrip)
-                {
-                    baseSegments.Add(new TripSegment
-                    {
-                        SegmentId = Guid.NewGuid(),
-                        TripId = newTrip.TripId,
-                        LocationId = startLocationId,
-                        StartDate = newTrip.EndDate.AddDays(1),
-                        EndDate = newTrip.EndDate.AddDays(1),
-                        OrderIndex = 3,
-                        CreatedAt = DateTime.UtcNow
-                    });
-                }
 
                 await _segmentRepo.AddRangeAsync(baseSegments);
                 // ✅ SINGLE COMMIT

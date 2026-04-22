@@ -8,7 +8,6 @@ namespace Domain.Enums
 {
     public enum TripType
     {
-        RoundTrip,        // Đi và về
         OneWay            // Đi một chiều
     }
 }

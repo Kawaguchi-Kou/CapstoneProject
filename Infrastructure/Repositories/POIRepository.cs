@@ -1,3 +1,5 @@
+﻿using System.Linq;
+using Application.DTOs.Requests;
 using Domain.Entities;
 using Domain.Enums;
 using Domain.Interfaces;
@@ -42,6 +44,47 @@ namespace Infrastructure.Repositories
                 .OrderByDescending(p => p.Id)
                 .ToListAsync();
         }
+
+        public async Task<List<POI>> GetPoisByDistrictAsync(
+        Guid locationId,
+        Guid districtId)
+        {
+            return await _context.POIs
+                .AsNoTracking()
+                .Include(x => x.PoiPreferences)
+                .Where(x =>
+                    x.Status == POIStatus.Active &&
+                    x.LocationId == locationId &&
+                    x.DistrictId == districtId)
+                .ToListAsync();
+        }
+
+        public async Task<List<POI>> GetByLocationDistrictPairsAsync(
+    List<(Guid LocationId, Guid DistrictId)> keys)
+        {
+            if (keys == null || !keys.Any())
+                return new List<POI>();
+
+            var locationIds = keys.Select(x => x.LocationId).Distinct().ToList();
+            var districtIds = keys.Select(x => x.DistrictId).Distinct().ToList();
+
+            var raw = await _context.POIs
+                .AsNoTracking()
+                .Include(p => p.PoiPreferences)
+                .Where(p =>
+                    locationIds.Contains(p.LocationId) &&
+                    districtIds.Contains(p.DistrictId))
+                .ToListAsync();
+
+            // 🔥 exact pair filtering
+            var keySet = keys.ToHashSet();
+
+            return raw
+                .Where(p => keySet.Contains((p.LocationId, p.DistrictId)))
+                .ToList();
+        }
+
+
 
         public async Task<List<POI>> GetByPartnerIdAsync(Guid partnerId)
         {

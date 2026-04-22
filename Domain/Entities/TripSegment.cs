@@ -19,6 +19,8 @@ namespace Domain.Entities
 
         [Required]
         public Guid LocationId { get; set; }
+        [Required]
+        public Guid DistrictId { get; set; }
 
         [Required]
         public int OrderIndex { get; set; }   // Thứ tự chặng
@@ -33,6 +35,9 @@ namespace Domain.Entities
         // Navigation
         [ForeignKey(nameof(TripId))]
         public Trip Trip { get; set; }
+
+        [ForeignKey(nameof(DistrictId))]
+        public District District { get; set; }
 
         [ForeignKey(nameof(LocationId))]
         public Location Location { get; set; }

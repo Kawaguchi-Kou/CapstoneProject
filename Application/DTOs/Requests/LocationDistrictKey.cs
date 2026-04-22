@@ -6,11 +6,10 @@ using System.Threading.Tasks;
 
 namespace Application.DTOs.Requests
 {
-    public class AddTripSegmentRequest
+    public class LocationDistrictKey
     {
         public Guid LocationId { get; set; }
         public Guid DistrictId { get; set; }
-        public DateTime StartDate { get; set; }
-        public DateTime EndDate { get; set; }
     }
+
 }

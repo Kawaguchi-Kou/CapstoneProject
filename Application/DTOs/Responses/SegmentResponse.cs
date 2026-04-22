@@ -12,7 +12,6 @@ namespace Application.DTOs.Responses
         public int OrderIndex { get; set; }
         public DateTime StartDate { get; set; }
         public DateTime EndDate { get; set; }
-        public bool HasGeneratedPlan { get; set; }   // 👈 important
         public List<DayPlanResponse>? Days { get; set; } // 👈 nullable
     }
 }

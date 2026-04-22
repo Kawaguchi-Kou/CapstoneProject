@@ -5,11 +5,11 @@ using System.Text.Json.Serialization;
 
 namespace WebAPI.Converters;
 
-public sealed class DateOnlyJsonConverter : JsonConverter<DateOnly>
+public sealed class DateTimeJsonConverter : JsonConverter<DateTime>
 {
     private const string Format = "yyyy-MM-dd";
 
-    public override DateOnly Read(
+    public override DateTime Read(
         ref Utf8JsonReader reader,
         Type typeToConvert,
         JsonSerializerOptions options)
@@ -17,9 +17,9 @@ public sealed class DateOnlyJsonConverter : JsonConverter<DateOnly>
         var value = reader.GetString();
 
         if (string.IsNullOrWhiteSpace(value))
-            throw new JsonException("DateOnly value is null or empty");
+            throw new JsonException("DateTime value is null or empty");
 
-        return DateOnly.ParseExact(
+        return DateTime.ParseExact(
             value,
             Format,
             CultureInfo.InvariantCulture
@@ -28,7 +28,7 @@ public sealed class DateOnlyJsonConverter : JsonConverter<DateOnly>
 
     public override void Write(
         Utf8JsonWriter writer,
-        DateOnly value,
+        DateTime value,
         JsonSerializerOptions options)
     {
         writer.WriteStringValue(value.ToString(Format));

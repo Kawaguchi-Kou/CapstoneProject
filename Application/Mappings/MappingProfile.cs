@@ -121,7 +121,13 @@ namespace Application.Mappings
             .ForMember(dest => dest.Status,
                 opt => opt.MapFrom(src => src.Status.ToString()))
             .ForMember(dest => dest.Role,
-                opt => opt.MapFrom(src => src.Role.ToString()));
+                opt => opt.MapFrom(src => src.Role.ToString()))
+            .ForMember(dest => dest.PhoneNumber,
+                opt => opt.MapFrom(src => src.User.PhoneNumber))
+            .ForMember(dest => dest.Gender,
+                opt => opt.MapFrom(src => src.User.Gender))
+            .ForMember(dest => dest.AvatarUrl,
+                opt => opt.MapFrom(src => src.User.AvatarUrl));
 
 
             // 🔥 ROOT
@@ -143,7 +149,12 @@ namespace Application.Mappings
 
             // 🔥 DETAIL → ITEM
             CreateMap<ItineraryDetail, ItineraryItemResponse>()
-                .ForMember(dest => dest.Type, opt => opt.MapFrom(src => ResolveType(src)))
+                .ForMember(dest => dest.Period, opt => opt.MapFrom(src =>
+                    src.StartTime.Hour < 11 ? "Morning" :
+                    src.StartTime.Hour < 15 ? "Noon" :
+                    "Evening"
+                ))
+
                 .ForMember(dest => dest.PoiName, opt => opt.MapFrom(src => src.POI!.Name))
                 .ForMember(dest => dest.Address, opt => opt.MapFrom(src => src.POI!.Address))
                 .ForMember(dest => dest.LocationName, opt => opt.MapFrom(src => src.POI!.Location.LocationName))
@@ -151,18 +162,6 @@ namespace Application.Mappings
                 .ForMember(dest => dest.StartTime, opt => opt.MapFrom(src => src.StartTime))
                 .ForMember(dest => dest.EndTime, opt => opt.MapFrom(src => src.EndTime))
                 .ForMember(dest => dest.WeatherRiskScore, opt => opt.MapFrom(src => src.WeatherRiskScore));
-        }
-
-        private static string ResolveType(ItineraryDetail d)
-        {
-            var hour = d.StartTime.Hour;
-
-            if (hour < 10) return "Breakfast";
-            if (hour < 13) return "Lunch";
-            if (hour < 17) return "Activity";
-            if (hour < 20) return "Dinner";
-
-            return "Activity";
         }
     }
 }

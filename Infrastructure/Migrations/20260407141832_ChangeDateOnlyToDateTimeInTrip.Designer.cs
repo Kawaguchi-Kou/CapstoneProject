@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260407141832_ChangeDateOnlyToDateTimeInTrip")]
-    partial class ChangeDateOnlyToDateTimeInTrip
+    [Migration("20260407141832_ChangeDateTimeToDateTimeInTrip")]
+    partial class ChangeDateTimeToDateTimeInTrip
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

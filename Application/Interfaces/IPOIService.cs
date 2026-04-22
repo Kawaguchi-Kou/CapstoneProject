@@ -15,6 +15,10 @@ namespace Application.Interfaces
         Task<POI> CreatePartnerPoiAsync(Guid partnerId, POI request, List<Guid> preferenceIds, Guid locationId, Guid districtId);
         Task<POI> UpdateAsync(Guid id, POI request);
         Task<POI> UpdatePartnerPoiAsync(Guid partnerId, Guid id, POI request);
+        Task<List<PoiResponse>> GetPoisByDistrictAsync(
+       Guid locationId,
+       Guid districtId,
+       Guid accountId);
 
         Task<List<POI>> GetMyPoisAsync(Guid partnerId);
         Task<PagedResultResponse<POI>> GetMyPoisAsync(Guid partnerId, int page, int pageSize);

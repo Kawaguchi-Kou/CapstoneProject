@@ -84,9 +84,9 @@ namespace WebAPI.Controllers
             }
         }
 
-        ///// <summary>
-        ///// Preview replan (AI suggestion only, not applied)
-        ///// </summary>
+        /// <summary>
+        /// Preview replan (AI suggestion only, not applied)
+        /// </summary>
         //[HttpPost("{tripId}/preview-replan")]
         //[Authorize]
         //public async Task<IActionResult> PreviewReplan(Guid tripId)
@@ -106,13 +106,14 @@ namespace WebAPI.Controllers
         //        return BadRequest(new
         //        {
         //            message = ex.Message
+        //            message = ex.Message
         //        });
         //    }
         //}
 
-        ///// <summary>
-        ///// Apply replan (user confirms changes)
-        ///// </summary>
+        /// <summary>
+        /// Apply replan (user confirms changes)
+        /// </summary>
         //[HttpPost("{tripId}/apply-replan")]
         //[Authorize]
         //public async Task<IActionResult> ApplyReplan(Guid tripId)
@@ -135,9 +136,9 @@ namespace WebAPI.Controllers
         //    }
         //}
 
-        ///// <summary>
-        ///// Manual update itinerary detail (user override)
-        ///// </summary>
+        /// <summary>
+        /// Manual update itinerary detail (user override)
+        /// </summary>
         //[HttpPut("itinerary-detail/{detailId}")]
         //[Authorize]
         //public async Task<IActionResult> UpdateDetail(Guid detailId, [FromBody] UpdateItineraryDetailRequest request)
@@ -147,6 +148,7 @@ namespace WebAPI.Controllers
         //        await _plannerService.UpdateDetailAsync(detailId, request);
 
         //        return Ok(new
+        //        {
         //        {
         //            message = "Itinerary detail updated (manual override applied)"
         //        });

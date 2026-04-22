@@ -47,6 +47,7 @@ namespace Infrastructure.Repositories
         public async Task<List<Participant>> GetAllParticipantByTripIdAsync(Guid tripId)
         {
             return await _context.Participants
+                .Include(p => p.User) // Include the User navigation property to get user details
                 .Where(sp => sp.TripId == tripId)
                 .ToListAsync();
         }

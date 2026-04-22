@@ -16,12 +16,14 @@ namespace WebAPI.Controllers
         private readonly IPOIService _poiService;
         private readonly IAuthService _authService;
         private readonly IMapper _mapper;
+        private readonly IDistrictService _districtService;
 
-        public POIController(IPOIService poiService, IAuthService authService, IMapper mapper)
+        public POIController(IPOIService poiService, IAuthService authService, IMapper mapper, IDistrictService districtService)
         {
             _poiService = poiService;
             _authService = authService;
             _mapper = mapper;
+            _districtService = districtService;
         }
 
         [HttpGet("recommended")]
@@ -46,6 +48,19 @@ namespace WebAPI.Controllers
                 return BadRequest(ex.Message);
             }
         }
+
+        [HttpGet("by-location/{locationId}")]
+        public async Task<IActionResult> GetByLocation(Guid locationId)
+        {
+            var districts = await _districtService.GetByLocationIdAsync(locationId);
+
+            return Ok(districts.Select(d => new
+            {
+                d.Id,
+                d.Name
+            }));
+        }
+
     }
 
 }

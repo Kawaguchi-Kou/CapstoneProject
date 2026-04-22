@@ -12,8 +12,11 @@ namespace Application.DTOs.Requests
     {
         public string Title { get; set; }
 
-        public string StartLocation { get; set; } = string.Empty;
-        public string EndLocation { get; set; } = string.Empty;
+        public string StartLocation { get; set; }
+        public Guid StartDistrictId { get; set; } // 🔥 ADD
+
+        public string EndLocation { get; set; }
+        public Guid EndDistrictId { get; set; }
 
         public DateTime StartDate { get; set; }
 

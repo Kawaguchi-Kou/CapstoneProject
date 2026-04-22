@@ -345,126 +345,60 @@ namespace Application.Services
             return poi;
         }
 
-        //public async Task ImportExcelAsync(IFormFile file)
-        //{
-        //    using var stream = new MemoryStream();
-        //    await file.CopyToAsync(stream);
+        public async Task<List<PoiResponse>> GetPoisByDistrictAsync(
+        Guid locationId,
+        Guid districtId,
+        Guid accountId)
+        {
+            var pois = await _poiRepository
+                .GetPoisByDistrictAsync(locationId, districtId);
 
-        //    using var package = new ExcelPackage(stream);
-        //    var worksheet = package.Workbook.Worksheets[0];
-        //    int rowCount = worksheet.Dimension.Rows;
+            var userPreferences = await _userRepository
+            .GetPreferenceByAccountIdAsync(accountId);
 
-        //    // 🔥 Load toàn bộ Location 1 lần (tránh gọi DB trong loop)
-        //    var locations = (await _locationRepository.GetAllAsync())
-        //      .GroupBy(x => x.LocationName.ToLower())
-        //      .ToDictionary(g => g.Key, g => g.First());
+            var preferenceIds = userPreferences
+                .Select(x => x.PreferenceId)
+                .ToList();
 
-        //    List<POI> pois = new();
+            IQueryable<POI> query = pois.AsQueryable();
 
-        //    for (int row = 2; row <= rowCount; row++)
-        //    {
-        //        string name = worksheet.Cells[row, 1].Text.Trim();
-        //        string address = worksheet.Cells[row, 2].Text.Trim();
-        //        string cityRaw = worksheet.Cells[row, 3].Text.Trim();
-        //        var prefRaw = worksheet.Cells[row, 8].Text.Trim();
-        //        var preferenceIds = new List<Guid>();
-        //        if (!string.IsNullOrEmpty(prefRaw))
-        //        {
-        //            preferenceIds = prefRaw
-        //                .Split(',', StringSplitOptions.RemoveEmptyEntries)
-        //                .Select(x => Guid.TryParse(x.Trim(), out var id) ? id : (Guid?)null)
-        //                .Where(x => x.HasValue)
-        //                .Select(x => x!.Value)
-        //                .ToList();
-        //        }
+            if (preferenceIds.Any())
+            {
+                query = query
+                    .Where(x => x.PoiPreferences.Any(pp =>
+                        preferenceIds.Contains(pp.PreferenceId)))
+                    .OrderByDescending(x =>
+                        x.PoiPreferences.Count(pp =>
+                            preferenceIds.Contains(pp.PreferenceId)))
+                    .ThenBy(x => x.Name);
+            }
+            else
+            {
+                query = query.OrderBy(x => x.Name);
+            }
 
-
-        //        string cityKey = cityRaw.ToLower();
-
-        //        if (!locations.ContainsKey(cityKey))
-        //            continue;
-
-        //        var location = locations[cityKey];
-
-        //        decimal.TryParse(worksheet.Cells[row, 4].Text, out var cost);
-        //        bool.TryParse(worksheet.Cells[row, 7].Text, out var isIndoor);
-
-        //        //Opening Hours Parsing
-        //        var openingRaw = worksheet.Cells[row, 5].Text.Trim();
-
-        //        TimeOnly? openHour = null;
-        //        TimeOnly? closeHour = null;
-        //        bool is24Hours = false;
-
-        //        if (!string.IsNullOrWhiteSpace(openingRaw) && openingRaw.Contains("~"))
-        //        {
-        //            var parts = openingRaw.Split('~', StringSplitOptions.TrimEntries);
-
-        //            if (parts.Length == 2)
-        //            {
-        //                if (TimeOnly.TryParse(parts[0], out var open))
-        //                    openHour = open;
-
-        //                if (TimeOnly.TryParse(parts[1], out var close))
-        //                    closeHour = close;
-
-        //                // 24h case
-        //                if (openHour == TimeOnly.MinValue && closeHour == TimeOnly.MinValue)
-        //                {
-        //                    is24Hours = true;
-        //                }
-        //            }
-        //        }
-
-        //        // Visit Recommendation
-        //        string visitRecommendation = GetVisitRecommendation(
-        //            openHour,
-        //            closeHour,
-        //            is24Hours,
-        //            isIndoor
-        //        );
-
-        //        // LẤY IMAGE TỪ MAP
-        //        var normalizedName = name.Trim().ToLower();
-
-        //        string? imageUrl = _imageMap.ContainsKey(normalizedName)
-        //            ? _imageMap[normalizedName]
-        //            : null;
-
-        //        var poi = new POI
-        //        {
-        //            Id = Guid.NewGuid(),
-
-        //            Name = name,
-        //            Address = address,
-        //            City = cityRaw,
-
-        //            ApproxCost = cost.ToString(),
-        //            OpenHour = openHour,
-        //            CloseHour = closeHour,
-        //            Is24Hours = is24Hours,
-        //            VisitRecommendation = visitRecommendation,
-        //            GoogleMapLink = worksheet.Cells[row, 6].Text,
-        //            IsIndoor = isIndoor,
-
-        //            LocationId = location.LocationId,
-        //            Latitude = location.Latitude,
-        //            Longitude = location.Longitude,
-
-        //            POIImgUrl = imageUrl
-        //        };
-        //        var poiPreferences = preferenceIds.Select(prefId => new POIPreference
-        //        {
-        //            PoiId = poi.Id,
-        //            PreferenceId = prefId
-        //        }).ToList();
-
-        //        pois.Add(poi);
-        //    }
-
-
-        //    await _poiRepository.AddRangeAsync(pois);
-        //}
+            return query
+                .Select(x => new PoiResponse
+                {
+                    Id = x.Id,
+                    Name = x.Name,
+                    Address = x.Address,
+                    ApproxCost = x.ApproxCost,
+                    OpenHour = x.OpenHour,
+                    CloseHour = x.CloseHour,
+                    Is24Hours = x.Is24Hours,
+                    VisitRecommendation = x.VisitRecommendation,
+                    GoogleMapLink = x.GoogleMapLink,
+                    POIImgUrl = x.POIImgUrl,
+                    IsIndoor = x.IsIndoor,
+                    Latitude = x.Latitude,
+                    Longitude = x.Longitude,
+                    Type = x.Type,
+                    LocationId = x.LocationId,
+                    DistrictId = x.DistrictId
+                })
+                .ToList();
+        }
 
         public async Task ImportExcelAsync(IFormFile file)
         {

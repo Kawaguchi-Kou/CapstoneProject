@@ -15,19 +15,19 @@ namespace Infrastructure.Migrations
                 name: "StayDays",
                 table: "trip_segments");
 
-            migrationBuilder.AddColumn<DateOnly>(
+            migrationBuilder.AddColumn<DateTime>(
                 name: "EndDate",
                 table: "trip_segments",
                 type: "date",
                 nullable: false,
-                defaultValue: new DateOnly(1, 1, 1));
+                defaultValue: new DateTime(1, 1, 1));
 
-            migrationBuilder.AddColumn<DateOnly>(
+            migrationBuilder.AddColumn<DateTime>(
                 name: "StartDate",
                 table: "trip_segments",
                 type: "date",
                 nullable: false,
-                defaultValue: new DateOnly(1, 1, 1));
+                defaultValue: new DateTime(1, 1, 1));
         }
 
         /// <inheritdoc />

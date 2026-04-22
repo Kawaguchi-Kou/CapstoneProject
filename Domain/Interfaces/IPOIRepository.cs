@@ -15,10 +15,13 @@ namespace Domain.Interfaces
         Task<int> CountPendingPartnerPoisAsync();
         Task AddAsync(POI poi, List<Guid> preferenceIds);
         Task AddRangeAsync(List<POI> pois);
-
+        Task<List<POI>> GetByLocationDistrictPairsAsync(
+    List<(Guid LocationId, Guid DistrictId)> keys);
         Task<Location?> GetLocationByIdAsync(Guid locationId);
         Task UpdateAsync(POI poi);
         Task<POI?> GetByNameAndCityAsync(string name, string city);
         Task<List<POI>> GetByLocationAsync(Guid locationId);
+        Task<List<POI>> GetPoisByDistrictAsync(Guid locationId,
+        Guid districtId);
     }
 }

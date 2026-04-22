@@ -12,7 +12,7 @@ namespace Application.DTOs.Requests
 
         public Guid? EndLocationId { get; set; } // optional
 
-        public DateOnly StartDate { get; set; }
+        public DateTime StartDate { get; set; }
 
         public int MaxStops { get; set; } = 5;
     }

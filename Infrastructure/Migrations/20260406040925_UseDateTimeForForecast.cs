@@ -20,7 +20,7 @@ namespace Infrastructure.Migrations
                 table: "weather_forecast",
                 type: "timestamp with time zone",
                 nullable: false,
-                oldClrType: typeof(DateOnly),
+                oldClrType: typeof(DateTime),
                 oldType: "date");
 
             migrationBuilder.AlterColumn<DateTime>(
@@ -28,7 +28,7 @@ namespace Infrastructure.Migrations
                 table: "trip_segments",
                 type: "timestamp with time zone",
                 nullable: false,
-                oldClrType: typeof(DateOnly),
+                oldClrType: typeof(DateTime),
                 oldType: "date");
 
             migrationBuilder.AlterColumn<DateTime>(
@@ -36,7 +36,7 @@ namespace Infrastructure.Migrations
                 table: "trip_segments",
                 type: "timestamp with time zone",
                 nullable: false,
-                oldClrType: typeof(DateOnly),
+                oldClrType: typeof(DateTime),
                 oldType: "date");
 
             migrationBuilder.AlterColumn<DateTime>(
@@ -44,7 +44,7 @@ namespace Infrastructure.Migrations
                 table: "itinerary_details",
                 type: "timestamp with time zone",
                 nullable: false,
-                oldClrType: typeof(DateOnly),
+                oldClrType: typeof(DateTime),
                 oldType: "date");
 
             migrationBuilder.CreateIndex(
@@ -61,7 +61,7 @@ namespace Infrastructure.Migrations
                 name: "IX_weather_forecast_City_ForecastDate",
                 table: "weather_forecast");
 
-            migrationBuilder.AlterColumn<DateOnly>(
+            migrationBuilder.AlterColumn<DateTime>(
                 name: "ForecastDate",
                 table: "weather_forecast",
                 type: "date",
@@ -69,7 +69,7 @@ namespace Infrastructure.Migrations
                 oldClrType: typeof(DateTime),
                 oldType: "timestamp with time zone");
 
-            migrationBuilder.AlterColumn<DateOnly>(
+            migrationBuilder.AlterColumn<DateTime>(
                 name: "StartDate",
                 table: "trip_segments",
                 type: "date",
@@ -77,7 +77,7 @@ namespace Infrastructure.Migrations
                 oldClrType: typeof(DateTime),
                 oldType: "timestamp with time zone");
 
-            migrationBuilder.AlterColumn<DateOnly>(
+            migrationBuilder.AlterColumn<DateTime>(
                 name: "EndDate",
                 table: "trip_segments",
                 type: "date",
@@ -85,7 +85,7 @@ namespace Infrastructure.Migrations
                 oldClrType: typeof(DateTime),
                 oldType: "timestamp with time zone");
 
-            migrationBuilder.AlterColumn<DateOnly>(
+            migrationBuilder.AlterColumn<DateTime>(
                 name: "VisitDate",
                 table: "itinerary_details",
                 type: "date",

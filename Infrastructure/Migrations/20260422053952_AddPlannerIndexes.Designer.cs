@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260318025654_SetNullablePOIImg")]
-    partial class SetNullablePOIImg
+    [Migration("20260422053952_AddPlannerIndexes")]
+    partial class AddPlannerIndexes
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -145,10 +145,16 @@ namespace Infrastructure.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("Currency")
                         .IsRequired()
                         .HasMaxLength(10)
                         .HasColumnType("character varying(10)");
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Gateway")
                         .HasMaxLength(100)
@@ -157,10 +163,8 @@ namespace Infrastructure.Migrations
                     b.Property<Guid>("PackageId")
                         .HasColumnType("uuid");
 
-                    b.Property<DateTime>("PaidAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamp with time zone")
-                        .HasDefaultValueSql("NOW()");
+                    b.Property<DateTime?>("PaidAt")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("PaymentMethod")
                         .IsRequired()
@@ -292,6 +296,27 @@ namespace Infrastructure.Migrations
                     b.HasIndex("PackageId");
 
                     b.ToTable("advertisements", (string)null);
+                });
+
+            modelBuilder.Entity("Domain.Entities.District", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("LocationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LocationId", "Name");
+
+                    b.ToTable("districts", (string)null);
                 });
 
             modelBuilder.Entity("Domain.Entities.Itinerary", b =>
@@ -511,14 +536,18 @@ namespace Infrastructure.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)");
 
-                    b.Property<string>("City")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("character varying(255)");
+                    b.Property<TimeOnly?>("CloseHour")
+                        .HasColumnType("time without time zone");
+
+                    b.Property<Guid>("DistrictId")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("GoogleMapLink")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<bool>("Is24Hours")
+                        .HasColumnType("boolean");
 
                     b.Property<bool>("IsIndoor")
                         .HasColumnType("boolean");
@@ -537,16 +566,31 @@ namespace Infrastructure.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)");
 
-                    b.Property<string>("OpeningHours")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<TimeOnly?>("OpenHour")
+                        .HasColumnType("time without time zone");
 
                     b.Property<string>("POIImgUrl")
                         .HasColumnType("text");
 
+                    b.Property<Guid?>("PartnerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("VisitRecommendation")
+                        .HasColumnType("text");
+
                     b.HasKey("Id");
 
-                    b.HasIndex("LocationId");
+                    b.HasIndex("DistrictId");
+
+                    b.HasIndex("PartnerId");
+
+                    b.HasIndex("LocationId", "DistrictId");
 
                     b.ToTable("pois", (string)null);
                 });
@@ -608,6 +652,54 @@ namespace Infrastructure.Migrations
                     b.ToTable("Preferences");
                 });
 
+            modelBuilder.Entity("Domain.Entities.Promotion", b =>
+                {
+                    b.Property<Guid>("PromotionId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AdId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<int>("SaveCount")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0);
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Terms")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("PromotionId");
+
+                    b.HasIndex("AdId")
+                        .IsUnique();
+
+                    b.ToTable("promotions", (string)null);
+                });
+
             modelBuilder.Entity("Domain.Entities.RefreshToken", b =>
                 {
                     b.Property<Guid>("Id")
@@ -656,6 +748,33 @@ namespace Infrastructure.Migrations
                     b.ToTable("roles", (string)null);
                 });
 
+            modelBuilder.Entity("Domain.Entities.SavedPromotion", b =>
+                {
+                    b.Property<Guid>("SavedPromotionId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AccountId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("PromotionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("SavedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.HasKey("SavedPromotionId");
+
+                    b.HasIndex("AccountId");
+
+                    b.HasIndex("PromotionId", "AccountId")
+                        .IsUnique();
+
+                    b.ToTable("saved_promotions", (string)null);
+                });
+
             modelBuilder.Entity("Domain.Entities.Trip", b =>
                 {
                     b.Property<Guid>("TripId")
@@ -668,13 +787,21 @@ namespace Infrastructure.Migrations
                         .HasDefaultValueSql("NOW()");
 
                     b.Property<DateTime>("EndDate")
-                        .HasColumnType("date");
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("EndLocation")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<Guid>("OwnerId")
                         .HasColumnType("uuid");
 
                     b.Property<DateTime>("StartDate")
-                        .HasColumnType("date");
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("StartLocation")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<int>("Status")
                         .HasColumnType("integer");
@@ -703,8 +830,14 @@ namespace Infrastructure.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasDefaultValueSql("NOW()");
 
-                    b.Property<float?>("DistanceKm")
-                        .HasColumnType("real");
+                    b.Property<double?>("DistanceKm")
+                        .HasColumnType("double precision");
+
+                    b.Property<Guid>("DistrictId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("EndDate")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<Guid>("LocationId")
                         .HasColumnType("uuid");
@@ -712,8 +845,8 @@ namespace Infrastructure.Migrations
                     b.Property<int>("OrderIndex")
                         .HasColumnType("integer");
 
-                    b.Property<int>("StayDays")
-                        .HasColumnType("integer");
+                    b.Property<DateTime>("StartDate")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<Guid>("TripId")
                         .HasColumnType("uuid");
@@ -722,7 +855,9 @@ namespace Infrastructure.Migrations
 
                     b.HasIndex("LocationId");
 
-                    b.HasIndex("TripId");
+                    b.HasIndex("DistrictId", "OrderIndex");
+
+                    b.HasIndex("TripId", "OrderIndex");
 
                     b.ToTable("trip_segments", (string)null);
                 });
@@ -762,7 +897,7 @@ namespace Infrastructure.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTime>("ForecastDate")
-                        .HasColumnType("date");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<Guid>("LocationId")
                         .HasColumnType("uuid");
@@ -778,10 +913,8 @@ namespace Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("City")
+                    b.HasIndex("LocationId", "ForecastDate")
                         .IsUnique();
-
-                    b.HasIndex("LocationId");
 
                     b.ToTable("weather_forecast", (string)null);
                 });
@@ -835,9 +968,9 @@ namespace Infrastructure.Migrations
                         .IsRequired();
 
                     b.HasOne("Domain.Entities.POI", "POI")
-                        .WithMany()
+                        .WithMany("Advertisements")
                         .HasForeignKey("POIId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("Domain.Entities.AdSubscriptionPackage", "Package")
@@ -851,6 +984,17 @@ namespace Infrastructure.Migrations
                     b.Navigation("POI");
 
                     b.Navigation("Package");
+                });
+
+            modelBuilder.Entity("Domain.Entities.District", b =>
+                {
+                    b.HasOne("Domain.Entities.Location", "Location")
+                        .WithMany("Districts")
+                        .HasForeignKey("LocationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Location");
                 });
 
             modelBuilder.Entity("Domain.Entities.Itinerary", b =>
@@ -922,13 +1066,28 @@ namespace Infrastructure.Migrations
 
             modelBuilder.Entity("Domain.Entities.POI", b =>
                 {
+                    b.HasOne("Domain.Entities.District", "District")
+                        .WithMany("POIs")
+                        .HasForeignKey("DistrictId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("Domain.Entities.Location", "Location")
-                        .WithMany()
+                        .WithMany("POIs")
                         .HasForeignKey("LocationId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("Domain.Entities.Account", "Partner")
+                        .WithMany("POIs")
+                        .HasForeignKey("PartnerId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.Navigation("District");
+
                     b.Navigation("Location");
+
+                    b.Navigation("Partner");
                 });
 
             modelBuilder.Entity("Domain.Entities.POIPreference", b =>
@@ -969,6 +1128,17 @@ namespace Infrastructure.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("Domain.Entities.Promotion", b =>
+                {
+                    b.HasOne("Domain.Entities.Advertisement", "Advertisement")
+                        .WithOne("Promotion")
+                        .HasForeignKey("Domain.Entities.Promotion", "AdId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Advertisement");
+                });
+
             modelBuilder.Entity("Domain.Entities.RefreshToken", b =>
                 {
                     b.HasOne("Domain.Entities.Account", "Account")
@@ -980,8 +1150,33 @@ namespace Infrastructure.Migrations
                     b.Navigation("Account");
                 });
 
+            modelBuilder.Entity("Domain.Entities.SavedPromotion", b =>
+                {
+                    b.HasOne("Domain.Entities.Account", "Account")
+                        .WithMany("SavedPromotions")
+                        .HasForeignKey("AccountId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.Promotion", "Promotion")
+                        .WithMany("SavedPromotions")
+                        .HasForeignKey("PromotionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Account");
+
+                    b.Navigation("Promotion");
+                });
+
             modelBuilder.Entity("Domain.Entities.TripSegment", b =>
                 {
+                    b.HasOne("Domain.Entities.District", "District")
+                        .WithMany("Segments")
+                        .HasForeignKey("DistrictId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("Domain.Entities.Location", "Location")
                         .WithMany("Segments")
                         .HasForeignKey("LocationId")
@@ -993,6 +1188,8 @@ namespace Infrastructure.Migrations
                         .HasForeignKey("TripId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("District");
 
                     b.Navigation("Location");
 
@@ -1035,11 +1232,15 @@ namespace Infrastructure.Migrations
 
                     b.Navigation("Advertisements");
 
+                    b.Navigation("POIs");
+
                     b.Navigation("Participants");
 
                     b.Navigation("Recipients");
 
                     b.Navigation("RefreshTokens");
+
+                    b.Navigation("SavedPromotions");
 
                     b.Navigation("UserPreferenceVectors");
                 });
@@ -1054,6 +1255,18 @@ namespace Infrastructure.Migrations
                     b.Navigation("AccountSubscriptions");
                 });
 
+            modelBuilder.Entity("Domain.Entities.Advertisement", b =>
+                {
+                    b.Navigation("Promotion");
+                });
+
+            modelBuilder.Entity("Domain.Entities.District", b =>
+                {
+                    b.Navigation("POIs");
+
+                    b.Navigation("Segments");
+                });
+
             modelBuilder.Entity("Domain.Entities.Itinerary", b =>
                 {
                     b.Navigation("ItineraryDetails");
@@ -1061,6 +1274,10 @@ namespace Infrastructure.Migrations
 
             modelBuilder.Entity("Domain.Entities.Location", b =>
                 {
+                    b.Navigation("Districts");
+
+                    b.Navigation("POIs");
+
                     b.Navigation("Segments");
 
                     b.Navigation("WeatherForecast");
@@ -1073,6 +1290,8 @@ namespace Infrastructure.Migrations
 
             modelBuilder.Entity("Domain.Entities.POI", b =>
                 {
+                    b.Navigation("Advertisements");
+
                     b.Navigation("ItineraryDetails");
 
                     b.Navigation("PoiPreferences");
@@ -1081,6 +1300,11 @@ namespace Infrastructure.Migrations
             modelBuilder.Entity("Domain.Entities.Preference", b =>
                 {
                     b.Navigation("PoiPreferences");
+                });
+
+            modelBuilder.Entity("Domain.Entities.Promotion", b =>
+                {
+                    b.Navigation("SavedPromotions");
                 });
 
             modelBuilder.Entity("Domain.Entities.Role", b =>

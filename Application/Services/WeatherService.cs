@@ -47,8 +47,8 @@ namespace Application.Services
             return newForecast;
         }
 
-        //public async Task<Dictionary<DateOnly, WeatherForecast>>
-        //    GetRangeAsync(Guid locationId, List<DateOnly> dates)
+        //public async Task<Dictionary<DateTime, WeatherForecast>>
+        //    GetRangeAsync(Guid locationId, List<DateTime> dates)
         //{
         //    var tasks = dates.Select(async date =>
         //    {

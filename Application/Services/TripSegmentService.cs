@@ -22,8 +22,9 @@ namespace Application.Services
         private readonly ITripRepository _tripRepo;
         private readonly IGeocodingService _geocodingService;
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IDistrictRepository _districtRepo;
 
-        public TripSegmentService(ITripSegmentRepository segmentRepo, ILocationRepository locationRepository, IWeatherForecastRepository weatherForecastRepository, IAdaptiveWeatherRiskEngine adaptiveWeatherRiskEngine, ITripRepository tripRepo, IGeocodingService geocodingService, IUnitOfWork unitOfWork)
+        public TripSegmentService(ITripSegmentRepository segmentRepo, ILocationRepository locationRepository, IWeatherForecastRepository weatherForecastRepository, IAdaptiveWeatherRiskEngine adaptiveWeatherRiskEngine, ITripRepository tripRepo, IGeocodingService geocodingService, IUnitOfWork unitOfWork, IDistrictRepository districtRepo)
         {
             _segmentRepo = segmentRepo;
             _locationRepo = locationRepository;
@@ -32,6 +33,7 @@ namespace Application.Services
             _tripRepo = tripRepo;
             _geocodingService = geocodingService;
             _unitOfWork = unitOfWork;
+            _districtRepo = districtRepo;
         }
 
         public async Task<List<Location>> RecommendSegmentsAsync(
@@ -59,108 +61,6 @@ namespace Application.Services
                 .Take(maxStops)
                 .Select(x => x.loc)
                 .ToList();
-        }
-
-        public async Task<List<TripSegment>> AddSegmentsToTripAsync(
-    Guid tripId,
-    List<TripSegment> segments)
-        {
-            // 1. Check Trip
-            var trip = await _tripRepo.GetByIdAsync(tripId);
-            if (trip == null)
-                throw new Exception("Trip not found");
-
-            if (segments == null || !segments.Any())
-                throw new Exception("Segments cannot be empty");
-
-            // 2. Sort input
-            segments = segments.OrderBy(x => x.OrderIndex).ToList();
-
-            // 3. Auto add return segment (RoundTrip)
-            if (trip.TripType == TripType.RoundTrip)
-            {
-                var first = segments.First();
-                var last = segments.Last();
-
-                if (first.LocationId != last.LocationId)
-                {
-                    segments.Add(new TripSegment
-                    {
-                        LocationId = first.LocationId,
-                        StartDate = last.EndDate.AddDays(1),
-                        EndDate = last.EndDate.AddDays(1),
-                        OrderIndex = last.OrderIndex + 1
-                    });
-                }
-            }
-
-            // 4. Get existing segments
-            var existingSegments = trip.TripSegments ?? new List<TripSegment>();
-            int currentMaxOrder = existingSegments.Any()
-                ? existingSegments.Max(x => x.OrderIndex)
-                : 0;
-
-            // 5. Preload ALL locations (new + previous)
-            var locationIds = segments.Select(x => x.LocationId).ToList();
-
-            TripSegment? prevSegment = existingSegments
-                .OrderBy(x => x.OrderIndex)
-                .LastOrDefault();
-
-            if (prevSegment != null)
-                locationIds.Add(prevSegment.LocationId);
-
-            locationIds = locationIds.Distinct().ToList();
-
-            var locationDict = await _locationRepo.GetByIdsAsDictionaryAsync(locationIds);
-
-            // 6. Resolve previous location
-            Location? prevLocation = null;
-
-            if (prevSegment != null)
-            {
-                if (!locationDict.ContainsKey(prevSegment.LocationId))
-                    throw new Exception("Previous location not found");
-
-                prevLocation = locationDict[prevSegment.LocationId];
-            }
-
-            // 7. Assign + calculate distance
-            int index = 1;
-
-            foreach (var segment in segments)
-            {
-                if (!locationDict.ContainsKey(segment.LocationId))
-                    throw new Exception($"Location {segment.LocationId} not found");
-
-                var currentLocation = locationDict[segment.LocationId];
-
-                segment.SegmentId = Guid.NewGuid();
-                segment.TripId = tripId;
-                segment.CreatedAt = DateTime.UtcNow;
-                segment.OrderIndex = currentMaxOrder + index;
-
-                // 🔥 Distance logic
-                if (prevLocation == null)
-                {
-                    segment.DistanceKm = 0;
-                }
-                else
-                {
-                    segment.DistanceKm = await _geocodingService.GetDrivingDistance(
-                        prevLocation.Latitude, prevLocation.Longitude,
-                        currentLocation.Latitude, currentLocation.Longitude
-                    );
-                }
-
-                prevLocation = currentLocation;
-                index++;
-            }
-
-            // 8. Save
-            await _segmentRepo.AddRangeAsync(segments);
-
-            return segments;
         }
 
         public async Task<List<TripSegment>> InsertSegmentsAsync(
@@ -235,6 +135,18 @@ namespace Application.Services
                 if (!locationDict.ContainsKey(segment.LocationId))
                     throw new Exception($"Location {segment.LocationId} not found");
 
+                if (!locationDict.ContainsKey(segment.LocationId))
+                    throw new Exception($"Location {segment.LocationId} not found");
+
+                // 🔥 VALIDATE DISTRICT
+                var district = await _districtRepo.GetByIdAsync(segment.DistrictId);
+
+                if (district == null)
+                    throw new Exception($"District {segment.DistrictId} not found");
+
+                if (district.LocationId != segment.LocationId)
+                    throw new Exception($"District does not belong to location");
+
                 var currentLocation = locationDict[segment.LocationId];
 
                 segment.SegmentId = Guid.NewGuid();
@@ -259,18 +171,32 @@ namespace Application.Services
             }
 
             // 8. Fix distance for the NEXT segment (critical)
-            if (nextSegment != null && prevLocation != null)
+            //if (nextSegment != null && prevLocation != null)
+            //{
+            //    if (!locationDict.ContainsKey(nextSegment.LocationId))
+            //        throw new Exception("Next location not found");
+
+            //    var nextLocation = locationDict[nextSegment.LocationId];
+
+            //    nextSegment.DistanceKm = await _geocodingService.GetDrivingDistance(
+            //        prevLocation.Latitude, prevLocation.Longitude,
+            //        nextLocation.Latitude, nextLocation.Longitude
+            //    );
+            //}
+
+            // reload ALL segments (including new ones)
+            var allSegments = await _segmentRepo.GetByTripIdAsync(tripId);
+
+            // normalize order (important after shift)
+            var ordered = allSegments.OrderBy(x => x.OrderIndex).ToList();
+
+            for (int i = 0; i < ordered.Count; i++)
             {
-                if (!locationDict.ContainsKey(nextSegment.LocationId))
-                    throw new Exception("Next location not found");
-
-                var nextLocation = locationDict[nextSegment.LocationId];
-
-                nextSegment.DistanceKm = await _geocodingService.GetDrivingDistance(
-                    prevLocation.Latitude, prevLocation.Longitude,
-                    nextLocation.Latitude, nextLocation.Longitude
-                );
+                ordered[i].OrderIndex = i + 1;
             }
+
+            // 🔥 recalc everything
+            await RecalculateDistances(ordered);
 
             // 9. Save new segments
             await _segmentRepo.AddRangeAsync(newSegments);
@@ -361,7 +287,7 @@ namespace Application.Services
                     .ToList();
 
                 // 🔹 Reorder
-                for (int i = 0; i <= remaining.Count; i++)
+                for (int i = 0; i < remaining.Count; i++)
                 {
                     remaining[i].OrderIndex = i + 1;
                 }
@@ -404,6 +330,40 @@ namespace Application.Services
         {
             var locations = await _locationRepo.GetAllAsync();
             return locations;
+        }
+
+        private async Task RecalculateDistances(List<TripSegment> segments)
+        {
+            var ordered = segments
+                .OrderBy(x => x.OrderIndex)
+                .ToList();
+
+            if (!ordered.Any()) return;
+
+            // 🔥 first segment = 0
+            ordered[0].DistanceKm = 0;
+
+            var locationIds = ordered
+                .Select(x => x.LocationId)
+                .Distinct()
+                .ToList();
+
+            var locationDict = await _locationRepo
+                .GetByIdsAsDictionaryAsync(locationIds);
+
+            for (int i = 1; i < ordered.Count; i++)
+            {
+                var prev = ordered[i - 1];
+                var curr = ordered[i];
+
+                var prevLoc = locationDict[prev.LocationId];
+                var currLoc = locationDict[curr.LocationId];
+
+                curr.DistanceKm = await _geocodingService.GetDrivingDistance(
+                    prevLoc.Latitude, prevLoc.Longitude,
+                    currLoc.Latitude, currLoc.Longitude
+                );
+            }
         }
     }
 }

@@ -31,8 +31,7 @@ namespace WebAPI.Controllers
 
         [HttpPost("create")]
         [Authorize]
-        public async Task<IActionResult> Create([FromBody] TripRequest request,
-    [FromQuery] TripType type)
+        public async Task<IActionResult> Create([FromBody] TripRequest request)
         {
             try
             {
@@ -40,9 +39,9 @@ namespace WebAPI.Controllers
                 var accountId = account.Id;
 
                 var trip = _mapper.Map<Trip>(request);
-                trip.TripType = type;
+                trip.TripType = TripType.OneWay;
                 trip.OwnerId = accountId;
-                await _tripService.CreateTripAsync(trip);
+                await _tripService.CreateTripAsync(trip, request.StartDistrictId, request.EndDistrictId);
 
                 var result = _mapper.Map<TripResponse>(trip);
 
@@ -178,6 +177,22 @@ namespace WebAPI.Controllers
             var participant = await _service.AddTripParticipantAsync(tripId, request, user.Id);
 
             return Ok(_mapper.Map<ParticipantResponse>(participant));
+        }
+
+        [HttpGet("{tripId}/get-participants")]
+        public async Task<IActionResult> GetParticipant(Guid tripId)
+        {
+            try
+            {
+                var participant = await _service.GetAllParticipantByTripIdAsync(tripId);
+                var response = _mapper.Map<List<ParticipantResponse>>(participant);
+
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
         // 🔷 Generate link

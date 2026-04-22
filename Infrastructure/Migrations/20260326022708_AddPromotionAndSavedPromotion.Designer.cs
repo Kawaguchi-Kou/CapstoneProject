@@ -357,7 +357,7 @@ namespace Infrastructure.Migrations
                     b.Property<TimeOnly>("StartTime")
                         .HasColumnType("time without time zone");
 
-                    b.Property<DateOnly>("VisitDate")
+                    b.Property<DateTime>("VisitDate")
                         .HasColumnType("date");
 
                     b.Property<double>("WeatherRiskScore")
@@ -758,13 +758,13 @@ namespace Infrastructure.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasDefaultValueSql("NOW()");
 
-                    b.Property<DateOnly>("EndDate")
+                    b.Property<DateTime>("EndDate")
                         .HasColumnType("date");
 
                     b.Property<Guid>("OwnerId")
                         .HasColumnType("uuid");
 
-                    b.Property<DateOnly>("StartDate")
+                    b.Property<DateTime>("StartDate")
                         .HasColumnType("date");
 
                     b.Property<int>("Status")
@@ -797,7 +797,7 @@ namespace Infrastructure.Migrations
                     b.Property<float?>("DistanceKm")
                         .HasColumnType("real");
 
-                    b.Property<DateOnly>("EndDate")
+                    b.Property<DateTime>("EndDate")
                         .HasColumnType("date");
 
                     b.Property<Guid>("LocationId")
@@ -806,7 +806,7 @@ namespace Infrastructure.Migrations
                     b.Property<int>("OrderIndex")
                         .HasColumnType("integer");
 
-                    b.Property<DateOnly>("StartDate")
+                    b.Property<DateTime>("StartDate")
                         .HasColumnType("date");
 
                     b.Property<Guid>("TripId")
@@ -855,7 +855,7 @@ namespace Infrastructure.Migrations
                     b.Property<DateTime>("FetchedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<DateOnly>("ForecastDate")
+                    b.Property<DateTime>("ForecastDate")
                         .HasColumnType("date");
 
                     b.Property<Guid>("LocationId")

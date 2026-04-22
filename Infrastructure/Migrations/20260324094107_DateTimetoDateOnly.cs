@@ -6,12 +6,12 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class DateTimetoDateOnly : Migration
+    public partial class DateTimetoDateTime : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AlterColumn<DateOnly>(
+            migrationBuilder.AlterColumn<DateTime>(
                 name: "VisitDate",
                 table: "itinerary_details",
                 type: "date",
@@ -28,7 +28,7 @@ namespace Infrastructure.Migrations
                 table: "itinerary_details",
                 type: "timestamp with time zone",
                 nullable: false,
-                oldClrType: typeof(DateOnly),
+                oldClrType: typeof(DateTime),
                 oldType: "date");
         }
     }

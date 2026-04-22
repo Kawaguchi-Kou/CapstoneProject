@@ -18,5 +18,6 @@ namespace Domain.Entities
         [ForeignKey(nameof(LocationId))]
         public Location? Location { get; set; } 
         public ICollection<POI> POIs { get; set; } = new List<POI>();
+        public ICollection<TripSegment> Segments { get; set; } = new List<TripSegment>();
     }
 }
