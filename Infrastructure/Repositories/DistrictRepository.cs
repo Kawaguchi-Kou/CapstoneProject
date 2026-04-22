@@ -36,5 +36,16 @@ namespace Infrastructure.Repositories
                 .OrderBy(d => d.Name)
                 .ToListAsync();
         }
+
+        public async Task<District?> GetByNameAndLocationIdAsync(string name, Guid locationId)
+        {
+            return await _context.Districts.FirstOrDefaultAsync(d => d.LocationId == locationId && d.Name == name);
+        }
+
+        public async Task AddAsync(District district)
+        {
+            await _context.Districts.AddAsync(district);
+            await _context.SaveChangesAsync();
+        }
     }
 }

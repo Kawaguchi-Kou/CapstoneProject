@@ -11,5 +11,6 @@ namespace Application.Interfaces
     {
         Task<List<District>> GetAllAsync();
         Task<List<District>> GetByLocationIdAsync(Guid locationId);
+        Task<District> CreateAsync(string name, Guid locationId);
     }
 }

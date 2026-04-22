@@ -1,4 +1,4 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using Application.DTOs.Requests;
 using Application.DTOs.Responses;
 using Application.Helper;
@@ -109,14 +109,24 @@ namespace Application.Services
             for (int row = 2; row <= rowCount; row++)
             {
                 string name = worksheet.Cells[row, 1].Text.Trim();
+                string latRaw = worksheet.Cells[row, 2].Text.Trim();
+                string lngRaw = worksheet.Cells[row, 3].Text.Trim();
+
+                // Skip rows that are completely empty
+                if (string.IsNullOrWhiteSpace(name) && 
+                    string.IsNullOrWhiteSpace(latRaw) && 
+                    string.IsNullOrWhiteSpace(lngRaw))
+                {
+                    continue;
+                }
 
                 if (string.IsNullOrWhiteSpace(name))
                     throw new Exception($"Row {row}: Location name is empty");
 
-                if (!double.TryParse(worksheet.Cells[row, 2].Text, out double lat))
+                if (!double.TryParse(latRaw, out double lat))
                     throw new Exception($"Row {row}: Invalid latitude");
 
-                if (!double.TryParse(worksheet.Cells[row, 3].Text, out double lng))
+                if (!double.TryParse(lngRaw, out double lng))
                     throw new Exception($"Row {row}: Invalid longitude");
 
                 var normalizedKey = StringNormalizer.Normalize(name);

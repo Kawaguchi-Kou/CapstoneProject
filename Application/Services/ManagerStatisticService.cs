@@ -1,0 +1,156 @@
+using Application.DTOs.Responses;
+using Application.Interfaces;
+using Domain.Enums;
+using Domain.Interfaces;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+
+namespace Application.Services
+{
+    public class ManagerStatisticService : IManagerStatisticService
+    {
+        private readonly IPOIRepository _poiRepository;
+        private readonly IAdvertisementRepository _advertisementRepository;
+        private readonly IUserRepository _userRepository;
+        private readonly IPaymentRepository _paymentRepository;
+
+        public ManagerStatisticService(
+            IPOIRepository poiRepository,
+            IAdvertisementRepository advertisementRepository,
+            IUserRepository userRepository,
+            IPaymentRepository paymentRepository)
+        {
+            _poiRepository = poiRepository;
+            _advertisementRepository = advertisementRepository;
+            _userRepository = userRepository;
+            _paymentRepository = paymentRepository;
+        }
+
+        public async Task<ManagerDashboardResponse> GetManagerDashboardStatisticsAsync(string period = "daily", DateTime? startDate = null, DateTime? endDate = null)
+        {
+            var pois = await _poiRepository.GetAllAsync();
+            var ads = await _advertisementRepository.GetAllAsync();
+            var users = await _userRepository.GetAllAsync();
+            var payments = await _paymentRepository.GetAllAsync();
+
+            var end = endDate?.Date ?? DateTime.UtcNow.Date;
+            var start = startDate?.Date ?? end.AddDays(-7);
+
+            var response = new ManagerDashboardResponse();
+
+            // 1. Pending Counts
+            response.PendingPois = pois.Count(p => p.Status == POIStatus.Pending);
+            response.PendingAds = ads.Count(a => a.Status == AdStatus.PendingApproval);
+
+            // 2. POI Approval Ratio (All time since POI doesn't have CreatedAt)
+            var processedPois = pois.Where(p => p.Status == POIStatus.Active || p.Status == POIStatus.Rejected).ToList();
+            if (processedPois.Any())
+            {
+                response.PoiApprovalRatio.TotalProcessed = processedPois.Count;
+                response.PoiApprovalRatio.ApprovedPercentage = Math.Round((double)processedPois.Count(p => p.Status == POIStatus.Active) / processedPois.Count * 100, 2);
+                response.PoiApprovalRatio.RejectedPercentage = Math.Round((double)processedPois.Count(p => p.Status == POIStatus.Rejected) / processedPois.Count * 100, 2);
+            }
+
+            // 3. Ad Approval Ratio (Current month)
+            var firstDayOfMonth = new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month, 1);
+            var processedAds = ads.Where(a => a.CreatedAt >= firstDayOfMonth && (a.Status == AdStatus.Active || a.Status == AdStatus.Rejected || a.Status == AdStatus.Paused || a.Status == AdStatus.Expired)).ToList();
+            if (processedAds.Any())
+            {
+                // Active, Paused, Expired mean they were approved
+                int approvedAds = processedAds.Count(a => a.Status != AdStatus.Rejected && a.Status != AdStatus.PendingApproval);
+                response.AdApprovalRatio.TotalProcessed = processedAds.Count;
+                response.AdApprovalRatio.ApprovedPercentage = Math.Round((double)approvedAds / processedAds.Count * 100, 2);
+                response.AdApprovalRatio.RejectedPercentage = Math.Round((double)processedAds.Count(a => a.Status == AdStatus.Rejected) / processedAds.Count * 100, 2);
+            }
+
+            // 4. Top POI Categories
+            var topCategories = pois.GroupBy(p => p.Type.ToString())
+                                    .Select(g => new PoiCategoryStat
+                                    {
+                                        CategoryName = g.Key,
+                                        Count = g.Count()
+                                    })
+                                    .OrderByDescending(c => c.Count)
+                                    .Take(5)
+                                    .ToList();
+            
+            int totalCategorized = topCategories.Sum(c => c.Count);
+            foreach (var cat in topCategories)
+            {
+                cat.Percentage = totalCategorized > 0 ? Math.Round((double)cat.Count / totalCategorized * 100, 2) : 0;
+            }
+            response.TopPoiCategories = topCategories;
+
+            // 5. Ad Status Breakdown
+            response.AdStatusBreakdown.Active = ads.Count(a => a.Status == AdStatus.Active);
+            response.AdStatusBreakdown.Paused = ads.Count(a => a.Status == AdStatus.Paused);
+            response.AdStatusBreakdown.Expired = ads.Count(a => a.Status == AdStatus.Expired);
+            response.AdStatusBreakdown.Rejected = ads.Count(a => a.Status == AdStatus.Rejected);
+
+            // 6. New Partners Growth
+            var partners = users.Where(u => u.Role != null && u.Role.Name == "Partner" && u.CreatedAt.Date >= start && u.CreatedAt.Date <= end).ToList();
+            
+            if (period.ToLower() == "monthly")
+            {
+                var growthStats = partners.GroupBy(u => new { u.CreatedAt.Year, u.CreatedAt.Month })
+                    .Select(g => new DailyPartnerGrowth { Date = $"{g.Key.Year}-{g.Key.Month:D2}", NewPartners = g.Count() }).ToList();
+
+                var allMonths = new List<string>();
+                var current = new DateTime(start.Year, start.Month, 1);
+                var endMonth = new DateTime(end.Year, end.Month, 1);
+                while (current <= endMonth)
+                {
+                    allMonths.Add(current.ToString("yyyy-MM"));
+                    current = current.AddMonths(1);
+                }
+
+                response.NewPartnersGrowth = allMonths.Select(m => new DailyPartnerGrowth
+                {
+                    Date = m,
+                    NewPartners = growthStats.FirstOrDefault(g => g.Date == m)?.NewPartners ?? 0
+                }).ToList();
+            }
+            else
+            {
+                var growthStats = partners.GroupBy(u => u.CreatedAt.Date)
+                    .Select(g => new DailyPartnerGrowth { Date = g.Key.ToString("yyyy-MM-dd"), NewPartners = g.Count() }).ToList();
+
+                var totalDays = (end - start).Days;
+                var allDays = Enumerable.Range(0, totalDays + 1).Select(offset => start.AddDays(offset).ToString("yyyy-MM-dd")).ToList();
+                
+                response.NewPartnersGrowth = allDays.Select(d => new DailyPartnerGrowth
+                {
+                    Date = d,
+                    NewPartners = growthStats.FirstOrDefault(g => g.Date == d)?.NewPartners ?? 0
+                }).ToList();
+            }
+
+            // 7. Package Revenue
+            // Only consider paid payments
+            var paidPayments = payments.Where(p => p.PaymentStatus == PaymentStatus.Completed && p.PaidAt.HasValue && p.PaidAt.Value.Date >= start && p.PaidAt.Value.Date <= end).ToList();
+            
+            // Note: Since AdPayment does not directly link to Package cleanly without Subscription sometimes,
+            // we should group by Subscription.SubscriptionPackage.Title if available.
+            // If the structure is complex, we use PackageId if available, but AdPayment has PackageId?
+            // Let's check AdPayment. It has PackageId. But getting Package Name requires IPackageRepository.
+            // Since we loaded payments.Include(Subscription).ThenInclude(SubscriptionPackage), let's see.
+            
+            var revenueStats = paidPayments
+                .Where(p => p.Subscription != null && p.Subscription.SubscriptionPackage != null)
+                .GroupBy(p => p.Subscription.SubscriptionPackage.Title)
+                .Select(g => new PackageRevenueStat
+                {
+                    PackageName = g.Key,
+                    TotalRevenue = g.Sum(p => p.Amount)
+                })
+                .OrderByDescending(r => r.TotalRevenue)
+                .ToList();
+                
+            response.PackageRevenue = revenueStats;
+
+            return response;
+        }
+    }
+}

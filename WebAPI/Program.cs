@@ -147,6 +147,7 @@ builder.Services.AddScoped<ILocationService, LocationService>();
 
 //Partner Statistics
 builder.Services.AddScoped<IPartnerStatisticService, PartnerStatisticService>();
+builder.Services.AddScoped<IManagerStatisticService, ManagerStatisticService>();
 
 //Admin Statistics
 builder.Services.AddScoped<IAdminStatisticService, AdminStatisticService>();
