@@ -27,5 +27,25 @@ namespace Application.Services
         {
             return await _districtRepository.GetByLocationIdAsync(locationId);
         }
+
+        public async Task<District> CreateAsync(string name, Guid locationId)
+        {
+            var normalizedName = name.Trim();
+            var existingDistrict = await _districtRepository.GetByNameAndLocationIdAsync(normalizedName, locationId);
+
+            if (existingDistrict != null)
+                throw new Exception("District already exists in this location");
+
+            var district = new District
+            {
+                Id = Guid.NewGuid(),
+                Name = normalizedName,
+                LocationId = locationId
+            };
+
+            await _districtRepository.AddAsync(district);
+
+            return district;
+        }
     }
 }
