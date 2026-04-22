@@ -17,6 +17,7 @@ namespace Domain.Interfaces
         Task<AdPayment> CreateAsync(AdPayment payment);
         Task<AdPayment> UpdateAsync(AdPayment payment);
         Task<int> ExpirePendingPaymentsAsync(DateTime utcNow);
+        Task<List<AdPayment>> GetAllAsync();
         Task SaveChangesAsync();
     }
 }
