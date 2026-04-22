@@ -98,5 +98,13 @@ namespace Infrastructure.Repositories
         {
             await _context.SaveChangesAsync();
         }
+
+        public async Task<List<AdPayment>> GetAllAsync()
+        {
+            return await _context.adPayments
+                .Include(p => p.Subscription)
+                .ThenInclude(s => s.SubscriptionPackage)
+                .ToListAsync();
+        }
     }
 }
