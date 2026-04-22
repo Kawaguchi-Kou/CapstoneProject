@@ -263,21 +263,21 @@ builder.Services.AddScoped<IRealtimeNotifier, SignalRRealtimeNotifier>();
 // add CORS
 builder.Services.AddCors(options =>
 {
-    //options.AddPolicy("AllowSpecificOrigins", builder =>
-    //{
-    //    builder.WithOrigins("http://localhost:3000")
-    //           .AllowAnyHeader()
-    //           .AllowAnyMethod()
-    //           .AllowCredentials();
-    //});
-    options.AddPolicy("AllowFrontend",
-        policy =>
-        {
-            policy.WithOrigins("https://traveler-planner-nine.vercel.app")
-                  .AllowAnyHeader()
-                  .AllowAnyMethod()
-                  .AllowCredentials();
-        });
+    options.AddPolicy("AllowSpecificOrigins", builder =>
+    {
+        builder.WithOrigins("http://localhost:3000")
+               .AllowAnyHeader()
+               .AllowAnyMethod()
+               .AllowCredentials();
+    });
+    //options.AddPolicy("AllowFrontend",
+    //    policy =>
+    //    {
+    //        policy.WithOrigins("https://traveler-planner-nine.vercel.app")
+    //              .AllowAnyHeader()
+    //              .AllowAnyMethod()
+    //              .AllowCredentials();
+    //    });
 });
 
 // Configure JWT
@@ -390,8 +390,8 @@ var app = builder.Build();
 
 app.UseRouting();
 
-//app.UseCors("AllowSpecificOrigins");
-app.UseCors("AllowFrontend");
+app.UseCors("AllowSpecificOrigins");
+//app.UseCors("AllowFrontend");
 
 app.UseAuthentication();
 app.UseAuthorization();
