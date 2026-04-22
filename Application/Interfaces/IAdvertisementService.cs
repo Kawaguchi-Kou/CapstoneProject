@@ -13,6 +13,7 @@ namespace Application.Interfaces
         Task<Advertisement> RejectAdvertisementAsync(Guid adId, string? reason = null);
         Task<Advertisement> InactivateMyAdvertisementAsync(Guid accountId, Guid adId);
         Task<Advertisement> ActivateMyAdvertisementAsync(Guid accountId, Guid adId);
+        Task<Advertisement> UpdateAdvertisementAsync(Guid accountId, Guid adId, UpdateAdvertisementRequest request);
 
         Task<PagedResultResponse<PendingAdvertisementAccountItemResponse>> GetManagerAccountsAsync(
             int page,

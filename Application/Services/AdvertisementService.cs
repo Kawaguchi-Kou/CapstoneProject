@@ -258,6 +258,120 @@ namespace Application.Services
             return advertisement;
         }
 
+        public async Task<Advertisement> UpdateAdvertisementAsync(Guid accountId, Guid adId, UpdateAdvertisementRequest request)
+        {
+            var advertisement = await _advertisementRepository.GetByIdAsync(adId)
+                ?? throw new KeyNotFoundException("Advertisement not found");
+
+            if (advertisement.AccountId != accountId)
+                throw new InvalidOperationException("Bạn không có quyền cập nhật quảng cáo này.");
+
+            bool isChanged = false;
+
+            // Check and update Dates
+            if (request.StartDate.HasValue && request.EndDate.HasValue)
+            {
+                if (request.StartDate.Value >= request.EndDate.Value)
+                    throw new ArgumentException("StartDate must be before EndDate");
+            }
+
+            if (request.StartDate.HasValue)
+            {
+                var newStartDate = EnsureUtc(request.StartDate.Value);
+                if (advertisement.StartDate != newStartDate)
+                {
+                    advertisement.StartDate = newStartDate;
+                    isChanged = true;
+                }
+            }
+
+            if (request.EndDate.HasValue)
+            {
+                var newEndDate = EnsureUtc(request.EndDate.Value);
+                if (advertisement.EndDate != newEndDate)
+                {
+                    advertisement.EndDate = newEndDate;
+                    isChanged = true;
+                }
+            }
+
+            // Update files if provided
+            if (request.ImageFile != null && request.ImageFile.Length > 0)
+            {
+                if (request.ImageFile.Length > 50 * 1024 * 1024)
+                    throw new ArgumentException("Image file size must not exceed 50MB");
+
+                using var stream = request.ImageFile.OpenReadStream();
+                advertisement.ImageUrl = await _cloudinaryService.UploadImageAsync(stream, request.ImageFile.FileName);
+                isChanged = true;
+            }
+
+            if (request.VideoFile != null && request.VideoFile.Length > 0)
+            {
+                if (request.VideoFile.Length > 50 * 1024 * 1024)
+                    throw new ArgumentException("Video file size must not exceed 50MB");
+
+                using var stream = request.VideoFile.OpenReadStream();
+                advertisement.VideoUrl = await _cloudinaryService.UploadFileAsync(stream, request.VideoFile.FileName);
+                isChanged = true;
+            }
+
+            // Update Advertisement fields
+            if (!string.IsNullOrWhiteSpace(request.Title) && advertisement.Title != request.Title)
+            {
+                advertisement.Title = request.Title;
+                isChanged = true;
+            }
+
+            if (request.Content != null && advertisement.Content != request.Content)
+            {
+                advertisement.Content = request.Content;
+                isChanged = true;
+            }
+
+            // Update Promotion fields
+            if (request.Promotion != null && advertisement.Promotion != null)
+            {
+                bool promoChanged = false;
+                if (!string.IsNullOrWhiteSpace(request.Promotion.Title) && advertisement.Promotion.Title != request.Promotion.Title)
+                {
+                    advertisement.Promotion.Title = request.Promotion.Title;
+                    promoChanged = true;
+                }
+                if (request.Promotion.Description != null && advertisement.Promotion.Description != request.Promotion.Description)
+                {
+                    advertisement.Promotion.Description = request.Promotion.Description;
+                    promoChanged = true;
+                }
+                if (request.Promotion.Terms != null && advertisement.Promotion.Terms != request.Promotion.Terms)
+                {
+                    advertisement.Promotion.Terms = request.Promotion.Terms;
+                    promoChanged = true;
+                }
+
+                if (promoChanged)
+                {
+                    advertisement.Promotion.UpdatedAt = DateTime.UtcNow;
+                    isChanged = true;
+                }
+            }
+
+            // Reset status for re-approval ONLY if something actually changed
+            // and the current status is Active or Rejected
+            if (isChanged && (advertisement.Status == AdStatus.Active || advertisement.Status == AdStatus.Rejected))
+            {
+                advertisement.Status = AdStatus.PendingApproval;
+                if (advertisement.Promotion != null)
+                {
+                    advertisement.Promotion.Status = PromotionStatus.Pending;
+                }
+            }
+
+            await _advertisementRepository.UpdateAsync(advertisement);
+            await _realtimeNotifier.SendUserNotificationAsync(advertisement.AccountId, new { Type = "AD_UPDATED", AdId = advertisement.AdId, Status = advertisement.Status.ToString() });
+            return advertisement;
+        }
+
         public async Task SavePromotionAsync(Guid accountId, Guid promotionId)
         {
             var promotion = await _advertisementRepository.GetPromotionByIdAsync(promotionId);
