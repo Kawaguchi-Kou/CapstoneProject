@@ -85,6 +85,17 @@ namespace Application.Services
 
         public async Task UpdateUserPreferencesAsync(Guid accountId, List<Guid> preferenceIds)
         {
+            if (preferenceIds == null)
+            {
+                throw new ArgumentNullException(nameof(preferenceIds));
+            }
+
+            const int maxPreferences = 4;
+            if (preferenceIds.Count > maxPreferences)
+            {
+                throw new Exception($"Mỗi user chỉ được chọn tối đa {maxPreferences} preference");
+            }
+
             await _userRepository.ReplaceUserPreferences(accountId, preferenceIds);
         }
 

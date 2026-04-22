@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Security.Claims;
 using System.Text;
 using Application.Hubs;
@@ -251,6 +251,7 @@ builder.Services.AddScoped<IPlannerService, PlannerService>();
 //SignalR
 builder.Services.AddSignalR();
 builder.Services.AddSingleton<IUserIdProvider, CustomUserIdProvider>();
+builder.Services.AddScoped<IRealtimeNotifier, SignalRRealtimeNotifier>();
 
 // add CORS
 builder.Services.AddCors(options =>

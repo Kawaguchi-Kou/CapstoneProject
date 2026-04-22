@@ -14,17 +14,23 @@ namespace Application.Services
         private readonly IAccountSubscriptionService _subscriptionService;
         private readonly IPOIRepository _poiRepository;
         private readonly ICloudinaryService _cloudinaryService;
+        private readonly IRealtimeNotifier _realtimeNotifier;
+        private readonly IPreferenceRepository _preferenceRepository;
 
         public AdvertisementService(
             IAdvertisementRepository advertisementRepository,
             IAccountSubscriptionService subscriptionService,
             IPOIRepository poiRepository,
-            ICloudinaryService cloudinaryService)
+            ICloudinaryService cloudinaryService,
+            IRealtimeNotifier realtimeNotifier,
+            IPreferenceRepository preferenceRepository)
         {
             _advertisementRepository = advertisementRepository;
             _subscriptionService = subscriptionService;
             _poiRepository = poiRepository;
             _cloudinaryService = cloudinaryService;
+            _realtimeNotifier = realtimeNotifier;
+            _preferenceRepository = preferenceRepository;
         }
 
         public async Task<Advertisement> CreateAdvertisementAsync(Guid accountId, CreateAdvertisementRequest request)
@@ -166,6 +172,8 @@ namespace Application.Services
             await _advertisementRepository.UpdateAsync(advertisement);
             await _subscriptionService.IncrementAdsUsedAsync(advertisement.AccountId);
 
+            await _realtimeNotifier.SendUserNotificationAsync(advertisement.AccountId, new { Type = "AD_UPDATED", AdId = advertisement.AdId, Status = advertisement.Status.ToString() });
+
             return advertisement;
         }
 
@@ -185,6 +193,65 @@ namespace Application.Services
             {
                 advertisement.Promotion.Status = PromotionStatus.Rejected;
                 advertisement.Promotion.UpdatedAt = DateTime.UtcNow;
+            }
+
+            await _advertisementRepository.UpdateAsync(advertisement);
+            await _realtimeNotifier.SendUserNotificationAsync(advertisement.AccountId, new { Type = "AD_UPDATED", AdId = advertisement.AdId, Status = advertisement.Status.ToString() });
+            return advertisement;
+        }
+
+        public async Task<Advertisement> InactivateMyAdvertisementAsync(Guid accountId, Guid adId)
+        {
+            var advertisement = await _advertisementRepository.GetByIdAsync(adId)
+                ?? throw new KeyNotFoundException("Advertisement not found");
+
+            if (advertisement.AccountId != accountId)
+                throw new InvalidOperationException("Bạn không có quyền tắt quảng cáo này.");
+
+            var now = DateTime.UtcNow;
+            if (advertisement.StartDate > now || advertisement.EndDate < now)
+                throw new InvalidOperationException("Chỉ có thể tắt quảng cáo trong thời gian còn hiệu lực.");
+
+            if (advertisement.Status != AdStatus.Active)
+                throw new InvalidOperationException("Chỉ quảng cáo Active mới có thể tắt.");
+
+            advertisement.Status = AdStatus.Paused;
+            if (advertisement.Promotion != null && advertisement.Promotion.Status == PromotionStatus.Active)
+            {
+                advertisement.Promotion.Status = PromotionStatus.Inactive;
+                advertisement.Promotion.UpdatedAt = now;
+            }
+
+            await _advertisementRepository.UpdateAsync(advertisement);
+            return advertisement;
+        }
+
+        public async Task<Advertisement> ActivateMyAdvertisementAsync(Guid accountId, Guid adId)
+        {
+            var advertisement = await _advertisementRepository.GetByIdAsync(adId)
+                ?? throw new KeyNotFoundException("Advertisement not found");
+
+            if (advertisement.AccountId != accountId)
+                throw new InvalidOperationException("Bạn không có quyền mở quảng cáo này.");
+
+            var now = DateTime.UtcNow;
+            if (advertisement.StartDate > now || advertisement.EndDate < now)
+                throw new InvalidOperationException("Chỉ có thể mở quảng cáo trong thời gian còn hiệu lực.");
+
+            if (advertisement.Status != AdStatus.Paused)
+                throw new InvalidOperationException("Chỉ quảng cáo đang tắt (Paused) mới có thể mở lại.");
+
+            var poi = await _poiRepository.GetByIdAsync(advertisement.POIId)
+                ?? throw new KeyNotFoundException("POI not found");
+
+            if (poi.Status != POIStatus.Active)
+                throw new InvalidOperationException("Không thể mở quảng cáo vì POI liên kết đang không hoạt động.");
+
+            advertisement.Status = AdStatus.Active;
+            if (advertisement.Promotion != null)
+            {
+                advertisement.Promotion.Status = PromotionStatus.Active;
+                advertisement.Promotion.UpdatedAt = now;
             }
 
             await _advertisementRepository.UpdateAsync(advertisement);
@@ -332,9 +399,55 @@ namespace Application.Services
             return await _advertisementRepository.GetPendingAsync();
         }
 
-        public async Task<List<Advertisement>> GetActiveAsync()
+        public async Task<List<RecommendedAdsResponse>> GetActiveAsync(Guid? accountId = null)
         {
-            return await _advertisementRepository.GetActiveAsync();
+            var advertisements = await _advertisementRepository.GetActiveAsync();
+
+            HashSet<Guid> userPrefSet = new HashSet<Guid>();
+            if (accountId != null)
+            {
+                var userPreferenceIds = await _preferenceRepository.GetUserPreferenceIdsAsync(accountId.Value);
+                userPrefSet = new HashSet<Guid>(userPreferenceIds);
+            }
+
+            // Calculate Jaccard Similarity and sort before mapping to DTO
+            var scoredAds = advertisements.Select(ad =>
+            {
+                var poiPrefSet = new HashSet<Guid>(ad.POI?.PoiPreferences.Select(p => p.PreferenceId) ?? Enumerable.Empty<Guid>());
+                double score = userPrefSet.Count > 0 ? CalculateJaccardSimilarity(userPrefSet, poiPrefSet) : 0;
+                return new { Ad = ad, Score = score };
+            })
+            .OrderByDescending(x => x.Score)
+            .ThenByDescending(x => x.Ad.CreatedAt)
+            .ToList();
+
+            return scoredAds.Select(x => new RecommendedAdsResponse
+            {
+                AdId = x.Ad.AdId,
+                Title = x.Ad.Title,
+                Content = x.Ad.Content,
+                ImageUrl = x.Ad.ImageUrl,
+                MatchScore = x.Score,
+                MatchPercentage = (int)Math.Round(x.Score * 100),
+                PoiName = x.Ad.POI?.Name ?? string.Empty,
+                PartnerName = x.Ad.Account?.Name ?? string.Empty,
+                PartnerAvatarUrl = x.Ad.Account?.AvatarUrl ?? string.Empty,
+                Promotion = x.Ad.Promotion == null ? null : new RecommendedPromotionResponse
+                {
+                    Title = x.Ad.Promotion.Title,
+                    Description = x.Ad.Promotion.Description
+                }
+            }).ToList();
+        }
+
+        private static double CalculateJaccardSimilarity(HashSet<Guid> set1, HashSet<Guid> set2)
+        {
+            if (set1.Count == 0 && set2.Count == 0) return 0;
+            
+            var intersection = set1.Intersect(set2).Count();
+            var union = set1.Union(set2).Count();
+            
+            return union == 0 ? 0 : (double)intersection / union;
         }
 
         private static DateTime EnsureUtc(DateTime value)

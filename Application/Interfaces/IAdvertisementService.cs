@@ -11,6 +11,8 @@ namespace Application.Interfaces
         Task<List<Advertisement>> GetByAccountIdAsync(Guid accountId);
         Task<Advertisement> ApproveAdvertisementAsync(Guid adId);
         Task<Advertisement> RejectAdvertisementAsync(Guid adId, string? reason = null);
+        Task<Advertisement> InactivateMyAdvertisementAsync(Guid accountId, Guid adId);
+        Task<Advertisement> ActivateMyAdvertisementAsync(Guid accountId, Guid adId);
 
         Task<PagedResultResponse<PendingAdvertisementAccountItemResponse>> GetManagerAccountsAsync(
             int page,
@@ -25,7 +27,7 @@ namespace Application.Interfaces
 
         Task<List<Advertisement>> GetAllAsync();
         Task<List<Advertisement>> GetPendingAsync();
-        Task<List<Advertisement>> GetActiveAsync();
+        Task<List<RecommendedAdsResponse>> GetActiveAsync(Guid? accountId = null);
         Task<List<SavedPromotion>> GetSavedPromotionsByAccountIdAsync(Guid accountId);
         Task SavePromotionAsync(Guid accountId, Guid promotionId);
     }
