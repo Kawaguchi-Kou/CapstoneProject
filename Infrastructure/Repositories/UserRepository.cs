@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -26,7 +26,7 @@ namespace Infrastructure.Repositories
 
         public async Task<List<Account>> GetAllAsync()
         {
-            return await _context.Accounts.ToListAsync();
+            return await _context.Accounts.Include(a => a.Role).ToListAsync();
         }
 
         public async Task<Account> UpdateProfileAsync(Account user)
