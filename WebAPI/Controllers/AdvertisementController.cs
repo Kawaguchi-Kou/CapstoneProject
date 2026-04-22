@@ -91,9 +91,15 @@ namespace WebAPI.Controllers
         {
             try
             {
-                var advertisements = await _advertisementService.GetActiveAsync();
-                var response = _mapper.Map<List<AdvertisementResponse>>(advertisements);
-                return Ok(response);
+                Guid? accountId = null;
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (!string.IsNullOrEmpty(userIdClaim) && Guid.TryParse(userIdClaim, out var parsedId))
+                {
+                    accountId = parsedId;
+                }
+
+                var advertisements = await _advertisementService.GetActiveAsync(accountId);
+                return Ok(advertisements);
             }
             catch (Exception ex)
             {
@@ -115,6 +121,66 @@ namespace WebAPI.Controllers
                 var advertisements = await _advertisementService.GetByAccountIdAsync(accountId);
                 var responses = _mapper.Map<List<AdvertisementResponse>>(advertisements);
                 return Ok(responses);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpPatch("my-ads/{id}/inactivate")]
+        [Authorize(Roles = "Partner")]
+        public async Task<IActionResult> InactivateMyAdvertisement(Guid id)
+        {
+            try
+            {
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var accountId))
+                {
+                    return Unauthorized(new { message = "Invalid token: User ID not found" });
+                }
+
+                var advertisement = await _advertisementService.InactivateMyAdvertisementAsync(accountId, id);
+                var response = _mapper.Map<AdvertisementResponse>(advertisement);
+                return Ok(response);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpPatch("my-ads/{id}/activate")]
+        [Authorize(Roles = "Partner")]
+        public async Task<IActionResult> ActivateMyAdvertisement(Guid id)
+        {
+            try
+            {
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var accountId))
+                {
+                    return Unauthorized(new { message = "Invalid token: User ID not found" });
+                }
+
+                var advertisement = await _advertisementService.ActivateMyAdvertisementAsync(accountId, id);
+                var response = _mapper.Map<AdvertisementResponse>(advertisement);
+                return Ok(response);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
             }
             catch (Exception ex)
             {

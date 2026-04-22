@@ -13,8 +13,8 @@ namespace Application.DTOs.Responses
         public Guid Id { get; set; }
         public string Name { get; set; } = string.Empty;
         public string Address { get; set; } = string.Empty;
-        public string City { get; set; } = string.Empty;
         public string ApproxCost { get; set; } = string.Empty;
+
         public TimeOnly? OpenHour { get; set; }
         public TimeOnly? CloseHour { get; set; }
         public string GoogleMapLink { get; set; } = string.Empty;

@@ -190,10 +190,10 @@ namespace Infrastructure.Repositories
 
             foreach (var ad in activeAds)
             {
-                ad.Status = AdStatus.Expired;
+                ad.Status = AdStatus.Paused;
                 if (ad.Promotion != null && ad.Promotion.Status == PromotionStatus.Active)
                 {
-                    ad.Promotion.Status = PromotionStatus.Expired;
+                    ad.Promotion.Status = PromotionStatus.Inactive;
                     ad.Promotion.UpdatedAt = DateTime.UtcNow;
                 }
             }
@@ -229,7 +229,9 @@ namespace Infrastructure.Repositories
         public async Task<List<Advertisement>> GetActiveAsync()
         {
             return await _context.Advertisements
+                .Include(a => a.Account)
                 .Include(a => a.POI)
+                    .ThenInclude(p => p.PoiPreferences)
                 .Include(a => a.Promotion)
                 .Where(a => a.Status == AdStatus.Active)
                 .OrderByDescending(a => a.CreatedAt)

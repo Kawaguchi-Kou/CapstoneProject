@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -23,6 +23,14 @@ namespace Infrastructure.Repositories
         {
             return await _context.Preferences
                 .OrderBy(p => p.Name)
+                .ToListAsync();
+        }
+
+        public async Task<List<Guid>> GetUserPreferenceIdsAsync(Guid accountId)
+        {
+            return await _context.UserPreferences
+                .Where(up => up.AccountId == accountId)
+                .Select(up => up.PreferenceId)
                 .ToListAsync();
         }
     }

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -34,7 +34,8 @@ namespace Application.Mappings
             CreateMap<UpdateUserRequest, Account>();
 
             CreateMap<Account, UserResponse>();
-            CreateMap<Account, ProfileResponse>();
+            CreateMap<Account, ProfileResponse>()
+                .ForMember(dest => dest.AvtUrl, opt => opt.MapFrom(src => src.AvatarUrl));
 
             //Preference
              CreateMap<UserPreferenceItem, UserPreference>();
