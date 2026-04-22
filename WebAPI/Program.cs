@@ -145,6 +145,12 @@ builder.Services.AddScoped<IAdminService, AdminService>();
 //Location
 builder.Services.AddScoped<ILocationService, LocationService>();
 
+//Partner Statistics
+builder.Services.AddScoped<IPartnerStatisticService, PartnerStatisticService>();
+
+//Admin Statistics
+builder.Services.AddScoped<IAdminStatisticService, AdminStatisticService>();
+
 //Segment
 builder.Services.AddScoped<ITripSegmentService, TripSegmentService>();
 

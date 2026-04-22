@@ -27,6 +27,14 @@ namespace Infrastructure.Repositories
                 .FirstOrDefaultAsync(s => s.SubscriptionId == subscriptionId);
         }
 
+        public async Task<List<AccountSubscription>> GetAllAsync()
+        {
+            return await _context.accountSubscriptions
+                .Include(s => s.SubscriptionPackage)
+                .Include(s => s.Account)
+                .ToListAsync();
+        }
+
         public async Task<AccountSubscription?> GetActiveByAccountIdAsync(Guid accountId)
         {
             return await _context.accountSubscriptions

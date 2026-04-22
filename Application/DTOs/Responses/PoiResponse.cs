@@ -16,9 +16,8 @@ namespace Application.DTOs.Responses
 
         public string Address { get; set; } = string.Empty;
 
-        public string City { get; set; } = string.Empty;
-
         public string ApproxCost { get; set; } = string.Empty;
+
 
         public TimeOnly OpenHour { get; set; } 
         public TimeOnly CloseHour { get; set; }
