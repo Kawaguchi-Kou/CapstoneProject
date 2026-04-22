@@ -188,6 +188,41 @@ namespace WebAPI.Controllers
             }
         }
 
+        [HttpPut("{id}")]
+        [Authorize(Roles = "Partner")]
+        [Consumes("multipart/form-data")]
+        public async Task<IActionResult> UpdateAdvertisement(Guid id, [FromForm] UpdateAdvertisementRequest request)
+        {
+            try
+            {
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var accountId))
+                {
+                    return Unauthorized(new { message = "Invalid token: User ID not found" });
+                }
+
+                var advertisement = await _advertisementService.UpdateAdvertisementAsync(accountId, id, request);
+                var response = _mapper.Map<AdvertisementResponse>(advertisement);
+                return Ok(response);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
         [HttpPost("{id}/approve")]
         [Authorize(Roles = "Manager")]
         public async Task<IActionResult> ApproveAdvertisement(Guid id)
