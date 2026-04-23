@@ -23,5 +23,7 @@ namespace Application.DTOs.Requests
         public bool? Is24Hours { get; set; }
         public string? VisitRecommendation { get; set; }
         public POIType? Type { get; set; }
+        public Guid? LocationId { get; set; }
+        public Guid? DistrictId { get; set; }
     }
 }
