@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
@@ -66,7 +67,7 @@ namespace Application.Services
         {
             var token = _configuration["MAPBOX_ACCESS_TOKEN"];
             var url = $"https://api.mapbox.com/directions/v5/mapbox/driving/" +
-                      $"{lon1},{lat1};{lon2},{lat2}" +
+                      $"{lon1.ToString(CultureInfo.InvariantCulture)},{lat1.ToString(CultureInfo.InvariantCulture)};{lon2.ToString(CultureInfo.InvariantCulture)},{lat2.ToString(CultureInfo.InvariantCulture)}" +
                       $"?access_token={token}";
 
             var response = await _httpClient.GetAsync(url);
