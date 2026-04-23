@@ -57,6 +57,7 @@ namespace Application.Services
             await _unitOfWork.BeginTransactionAsync();
             try
             {
+                var tripUsedPoiIds = new HashSet<Guid>();
                 // ====================================================
                 // 1. LOAD SEGMENTS
                 // ====================================================
@@ -215,7 +216,8 @@ namespace Application.Services
                                 date,
                                 forecasts,
                                 details,
-                                segmentUsedPoiIds);
+                                segmentUsedPoiIds,
+                                tripUsedPoiIds);
 
                             continue;
                         }
@@ -234,7 +236,8 @@ namespace Application.Services
                                 date,
                                 forecasts,
                                 details,
-                                segmentUsedPoiIds);
+                                segmentUsedPoiIds,
+                                tripUsedPoiIds);
 
                             continue;
                         }
@@ -247,13 +250,15 @@ namespace Application.Services
 
                             await BuildSchedule(
                                 itinerary.ItineraryId,
-                                fixedPlans,
+                                day.Plan,
                                 pois,
                                 date,
+                                segment,
                                 forecasts,
                                 details,
                                 distanceCache,
-                                segmentUsedPoiIds);
+                                segmentUsedPoiIds,
+                                tripUsedPoiIds);
 
                             continue;
                         }
@@ -261,14 +266,16 @@ namespace Application.Services
                         Console.WriteLine("✅ Valid AI day → using AI");
 
                         await BuildSchedule(
-                            itinerary.ItineraryId,
-                            day.Plan,
-                            pois,
-                            date,
-                            forecasts,
-                            details,
-                            distanceCache,
-                            segmentUsedPoiIds);
+                                itinerary.ItineraryId,
+                                day.Plan,
+                                pois,
+                                date,
+                                segment,
+                                forecasts,
+                                details,
+                                distanceCache,
+                                segmentUsedPoiIds,
+                                tripUsedPoiIds);
                     }
                 }
 
@@ -358,27 +365,6 @@ namespace Application.Services
             result.AddRange(extras);
 
             return result;
-        }
-
-        private List<AIActivity> BuildFallbackPlans(List<POI> pois)
-        {
-            var random = new Random();
-
-            return pois
-                .OrderBy(x => random.Next())
-                .Take(5)
-                .Select((p, i) => new AIActivity
-                {
-                    PoiId = p.Id,
-                    Period = i switch
-                    {
-                        < 2 => "Morning",
-                        < 4 => "Noon",
-                        _ => "Evening"
-                    },
-                    DurationMinutes = 120
-                })
-                .ToList();
         }
 
         private bool ValidateDay(AIDayPlan day)
@@ -488,6 +474,7 @@ namespace Application.Services
                 - If missing ANY day → response is INVALID
                 - NEVER return partial days
                 ");
+            sb.AppendLine("🔁 GLOBAL DUPLICATION RULE:n- A POI must NOT be repeated across different days\r\n- A POI must NOT be reused in the trip");
 
             return sb.ToString();
         }
@@ -496,67 +483,77 @@ namespace Application.Services
         // BUILD SCHEDULE
         // ====================================================
         private async Task BuildSchedule(
-     Guid itineraryId,
-     List<AIActivity> plans,
-     List<POI> pois,
-     DateTime date,
-     Dictionary<DateTime, WeatherForecast> forecasts,
-     List<ItineraryDetail> details,
-     Dictionary<string, int> distanceCache,
-     HashSet<Guid> segmentUsedPoiIds)
+    Guid itineraryId,
+    List<AIActivity> plans,
+    List<POI> pois,
+    DateTime date,
+    TripSegment segment,
+    Dictionary<DateTime, WeatherForecast> forecasts,
+    List<ItineraryDetail> details,
+    Dictionary<string, int> distanceCache,
+    HashSet<Guid> segmentUsedPoiIds,
+HashSet<Guid> tripUsedPoiIds)
         {
-            var startMap = new Dictionary<string, TimeOnly>
-    {
-        { "Morning", new TimeOnly(7, 0) },
-        { "Noon", new TimeOnly(11, 30) },
-        { "Evening", new TimeOnly(17, 0) }
-    };
+            // ====================================================
+            // 1. DETERMINE DAY TIME WINDOW
+            // ====================================================
+            var dayStart = date.Date == segment.StartDate.Date
+                ? TimeOnly.FromDateTime(segment.StartDate)
+                : new TimeOnly(7, 0);
 
-            var usedPoiIds = new HashSet<Guid>(); // 🔥 prevent duplicates
+            var dayEnd = date.Date == segment.EndDate.Date
+                ? TimeOnly.FromDateTime(segment.EndDate)
+                : new TimeOnly(21, 0);
 
-            var orderedPeriods = new[] { "Morning", "Noon", "Evening" };
-
-            foreach (var period in orderedPeriods)
+            if (dayEnd <= dayStart)
             {
-                if (!plans.Any(p => string.Equals(p.Period, period, StringComparison.OrdinalIgnoreCase)))
+                dayStart = new TimeOnly(7, 0);
+                dayEnd = new TimeOnly(21, 0);
+            }
+
+            // ====================================================
+            // 2. SPLIT PERIODS DYNAMICALLY
+            // ====================================================
+            var periods = SplitPeriods(dayStart, dayEnd);
+
+            // ====================================================
+            // 3. AVAILABLE POIs (NO REPEAT IN SEGMENT)
+            // ====================================================
+            var availablePois = pois
+                .Where(p => !segmentUsedPoiIds.Contains(p.Id)
+                         && !tripUsedPoiIds.Contains(p.Id))
+                .ToList();
+
+            var random = new Random();
+
+            foreach (var period in periods)
+            {
+                var current = period.Start;
+
+                var totalMinutes = (period.End.ToTimeSpan() - period.Start.ToTimeSpan()).TotalMinutes;
+
+                if (totalMinutes <= 0)
                     continue;
 
-                var group = plans
-                    .Where(p => string.Equals(p.Period, period, StringComparison.OrdinalIgnoreCase))
+                // how many activities fit (~90-120 mins each)
+                var activityCount = (int)(totalMinutes / 120);
+                activityCount = Math.Clamp(activityCount, 1, 3);
+
+                var selected = availablePois
+                    .OrderBy(x => random.Next())
+                    .Take(activityCount)
                     .ToList();
 
-                if (!startMap.ContainsKey(period))
-                {
-                    Console.WriteLine($"⚠️ Unknown period: {period}");
-                    continue;
-                }
-
-                var current = startMap[period];
                 POI? prev = null;
 
-                foreach (var item in group.Take(2))
+                foreach (var poi in selected)
                 {
-                    if (item == null)
-                    {
-                        Console.WriteLine("⚠️ Null activity item");
-                        continue;
-                    }
-
-                    if (usedPoiIds.Contains(item.PoiId) || segmentUsedPoiIds.Contains(item.PoiId))
+                    if (segmentUsedPoiIds.Contains(poi.Id))
                         continue;
 
-                    var poi = pois.FirstOrDefault(x => x.Id == item.PoiId);
-
-                    if (poi == null)
-                    {
-                        Console.WriteLine($"⚠️ POI not found: {item.PoiId}");
-                        continue;
-                    }
-
-                    usedPoiIds.Add(poi.Id);
-                    segmentUsedPoiIds.Add(poi.Id);
-
-                    // 🚗 travel
+                    // ================================
+                    // 🚗 TRAVEL TIME
+                    // ================================
                     if (prev != null)
                     {
                         var key = $"{prev.Id}-{poi.Id}";
@@ -576,12 +573,18 @@ namespace Application.Services
                         current = current.AddMinutes(travel);
                     }
 
-                    // ⏱ SAFE duration
-                    var duration = item.DurationMinutes <= 0 ? 120 : item.DurationMinutes;
-                    duration = Math.Min(duration, 180);
-
+                    // ================================
+                    // ⏱ DURATION
+                    // ================================
+                    var duration = random.Next(90, 151); // 90–150 mins
                     var end = current.AddMinutes(duration);
 
+                    if (end > period.End)
+                        break;
+
+                    // ================================
+                    // 🌧 WEATHER
+                    // ================================
                     var risk = forecasts.TryGetValue(date, out var weather)
                         ? _riskEngine.CalculateRisk(weather, poi.IsIndoor)
                         : 0;
@@ -597,10 +600,84 @@ namespace Application.Services
                         WeatherRiskScore = risk
                     });
 
+                    tripUsedPoiIds.Add(poi.Id);
+
+                    segmentUsedPoiIds.Add(poi.Id);
                     current = end.AddMinutes(30);
                     prev = poi;
                 }
+
+                // remove used POIs
+                availablePois = availablePois
+                    .Where(p => !segmentUsedPoiIds.Contains(p.Id))
+                    .ToList();
+
+                if (!availablePois.Any())
+                    break;
             }
+        }
+
+        //=====================================================
+        //CalculateRiskSafe
+        //=====================================================
+        private double CalculateRiskSafe(
+    DateTime date,
+    Dictionary<DateTime, WeatherForecast> forecasts,
+    POI poi)
+        {
+            var weather = forecasts
+                .FirstOrDefault(x => x.Key.Date == date.Date)
+                .Value;
+
+            if (weather == null)
+            {
+                weather = new WeatherForecast
+                {
+                    PrecipitationProbability = 0.3,
+                    TemperatureCelsius = 28,
+                    WindSpeed = 10
+                };
+            }
+
+            return _riskEngine.CalculateRisk(weather, poi.IsIndoor);
+        }
+
+
+        //=====================================================
+        // SPLIT PERIODS (dynamic based on day length)
+        //=====================================================
+        private List<(string Period, TimeOnly Start, TimeOnly End)> SplitPeriods(TimeOnly start, TimeOnly end)
+        {
+            var result = new List<(string, TimeOnly, TimeOnly)>();
+
+            var totalMinutes = (end.ToTimeSpan() - start.ToTimeSpan()).TotalMinutes;
+
+            if (totalMinutes <= 0)
+                return result;
+
+            // very short day → no split
+            if (totalMinutes < 180)
+            {
+                result.Add(("Flexible", start, end));
+                return result;
+            }
+
+            var third = (int)(totalMinutes / 3);
+
+            var p1Start = start;
+            var p1End = start.AddMinutes(third);
+
+            var p2Start = p1End;
+            var p2End = p2Start.AddMinutes(third);
+
+            var p3Start = p2End;
+            var p3End = end;
+
+            result.Add(("Morning", p1Start, p1End));
+            result.Add(("Noon", p2Start, p2End));
+            result.Add(("Evening", p3Start, p3End));
+
+            return result;
         }
 
 
@@ -613,13 +690,60 @@ namespace Application.Services
     DateTime date,
     Dictionary<DateTime, WeatherForecast> forecasts,
     List<ItineraryDetail> details,
-    HashSet<Guid> segmentUsedPoiIds)
+    HashSet<Guid> segmentUsedPoiIds,
+HashSet<Guid> tripUsedPoiIds)
         {
             var random = new Random();
 
-            var selected = pois
-                .Where(p => !segmentUsedPoiIds.Contains(p.Id)) // 🔥 KEY FIX
-                .OrderBy(x => random.Next())
+            // ====================================================
+            // 1. GET WEATHER (SAFE)
+            // ====================================================
+            var weather = forecasts
+                .FirstOrDefault(x => x.Key.Date == date.Date)
+                .Value;
+
+            if (weather == null)
+            {
+                weather = new WeatherForecast
+                {
+                    PrecipitationProbability = 0.3,
+                    TemperatureCelsius = 28,
+                    WindSpeed = 10
+                };
+            }
+
+            // ====================================================
+            // 2. FILTER UNUSED POIs
+            // ====================================================
+            var availablePois = pois
+                .Where(p => !segmentUsedPoiIds.Contains(p.Id)
+         && !tripUsedPoiIds.Contains(p.Id))
+                .ToList();
+
+            // ====================================================
+            // 3. WEATHER-BASED PRIORITIZATION (🔥 YOUR LOGIC FIXED)
+            // ====================================================
+            if (weather.PrecipitationProbability > 0.6)
+            {
+                // rain → indoor first
+                availablePois = availablePois
+                    .OrderByDescending(p => p.IsIndoor)
+                    .ThenBy(x => random.Next()) // keep randomness
+                    .ToList();
+            }
+            else
+            {
+                // good weather → outdoor first
+                availablePois = availablePois
+                    .OrderBy(p => p.IsIndoor)
+                    .ThenBy(x => random.Next())
+                    .ToList();
+            }
+
+            // ====================================================
+            // 4. SELECT POIs
+            // ====================================================
+            var selected = availablePois
                 .Take(5)
                 .ToList();
 
@@ -627,18 +751,19 @@ namespace Application.Services
 
             foreach (var poi in selected)
             {
-                if (segmentUsedPoiIds.Contains(poi.Id))
+                if (segmentUsedPoiIds.Contains(poi.Id) || tripUsedPoiIds.Contains(poi.Id))
                     continue;
 
-                segmentUsedPoiIds.Add(poi.Id);
+                var duration = random.Next(90, 151);
+                var end = time.AddMinutes(duration);
 
-                var end = time.AddHours(2);
-
-                var key = date;
-
-                var risk = forecasts.TryGetValue(key, out var weather)
-                    ? _riskEngine.CalculateRisk(weather, poi.IsIndoor)
-                    : 0;
+                // ====================================================
+                // 5. REAL RISK SCORE (NO MORE 0)
+                // ====================================================
+                var risk = _riskEngine.CalculateRisk(weather, poi.IsIndoor);
+                Console.WriteLine(
+            $"[{date:yyyy-MM-dd}] Rain={weather.PrecipitationProbability}, " +
+            $"Indoor={poi.IsIndoor}, Risk={risk}");
 
                 details.Add(new ItineraryDetail
                 {
@@ -651,14 +776,29 @@ namespace Application.Services
                     WeatherRiskScore = risk
                 });
 
-                time = end.AddMinutes(45); // 🔥 better spacing
+                segmentUsedPoiIds.Add(poi.Id);
+                tripUsedPoiIds.Add(poi.Id);
+
+                time = end.AddMinutes(45);
             }
         }
 
 
         public async Task<List<TripSegment>> GetByTripIdWithDetailsAsync(Guid tripId)
         {
-            return await _plannerRepo.GetByTripIdWithDetailsAsync(tripId);
+            var segments = await _plannerRepo.GetByTripIdWithDetailsAsync(tripId);
+
+            foreach (var segment in segments)
+            {
+                foreach (var itinerary in segment.Itineraries)
+                {
+                    itinerary.ItineraryDetails = itinerary.ItineraryDetails
+                        .OrderBy(d => d.StartTime)
+                        .ToList();
+                }
+            }
+
+            return segments;
         }
     }
 }
