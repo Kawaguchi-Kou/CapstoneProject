@@ -189,6 +189,18 @@ namespace Application.Services
             poi.CloseHour = request.CloseHour;
             poi.IsIndoor = request.IsIndoor;
 
+            if (request.LocationId != Guid.Empty && request.DistrictId != Guid.Empty)
+            {
+                var district = await _districtRepository.GetByIdAsync(request.DistrictId) 
+                    ?? throw new KeyNotFoundException("District not found.");
+                
+                if (district.LocationId != request.LocationId)
+                    throw new InvalidOperationException("District không thuộc city đã chọn.");
+
+                poi.LocationId = request.LocationId;
+                poi.DistrictId = request.DistrictId;
+            }
+
             await _poiRepository.UpdateAsync(poi);
             return poi;
         }
@@ -211,6 +223,18 @@ namespace Application.Services
             poi.OpenHour = request.OpenHour;
             poi.CloseHour = request.CloseHour;
             poi.IsIndoor = request.IsIndoor;
+
+            if (request.LocationId != Guid.Empty && request.DistrictId != Guid.Empty)
+            {
+                var district = await _districtRepository.GetByIdAsync(request.DistrictId) 
+                    ?? throw new KeyNotFoundException("District not found.");
+                
+                if (district.LocationId != request.LocationId)
+                    throw new InvalidOperationException("District không thuộc city đã chọn.");
+
+                poi.LocationId = request.LocationId;
+                poi.DistrictId = request.DistrictId;
+            }
 
             if (poi.Status == POIStatus.Rejected)
                 poi.Status = POIStatus.Pending;
