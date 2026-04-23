@@ -1,4 +1,5 @@
-﻿using System.Text.Json;
+﻿using System.Globalization;
+using System.Text.Json;
 using Application.DTOs.Weather;
 using Application.Interfaces;
 using CloudinaryDotNet;
@@ -191,8 +192,8 @@ namespace Infrastructure.ExternalApis.OpenMeteo
 
             var url =
                 $"{_options.BaseUrl}" +
-                $"?latitude={latitude}" +
-                $"&longitude={longitude}" +
+                $"?latitude={latitude.ToString(CultureInfo.InvariantCulture)}" +
+                $"&longitude={longitude.ToString(CultureInfo.InvariantCulture)}" +
                 $"&daily=temperature_2m_max,precipitation_probability_max,wind_speed_10m_max" +
                 $"&start_date={from:yyyy-MM-dd}" +
                 $"&end_date={to:yyyy-MM-dd}" +
