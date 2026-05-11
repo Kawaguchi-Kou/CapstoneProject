@@ -40,12 +40,13 @@ namespace Application.Services
 
             var response = new ManagerDashboardResponse();
 
-            // 1. Pending Counts
-            response.PendingPois = pois.Count(p => p.Status == POIStatus.Pending);
+            // 1. Pending Counts (Only Partner POIs)
+            var partnerPois = pois.Where(p => p.PartnerId != null).ToList();
+            response.PendingPois = partnerPois.Count(p => p.Status == POIStatus.Pending);
             response.PendingAds = ads.Count(a => a.Status == AdStatus.PendingApproval);
 
-            // 2. POI Approval Ratio (All time since POI doesn't have CreatedAt)
-            var processedPois = pois.Where(p => p.Status == POIStatus.Active || p.Status == POIStatus.Rejected).ToList();
+            // 2. POI Approval Ratio (Only Partner POIs)
+            var processedPois = partnerPois.Where(p => p.Status == POIStatus.Active || p.Status == POIStatus.Rejected).ToList();
             if (processedPois.Any())
             {
                 response.PoiApprovalRatio.TotalProcessed = processedPois.Count;
@@ -65,8 +66,8 @@ namespace Application.Services
                 response.AdApprovalRatio.RejectedPercentage = Math.Round((double)processedAds.Count(a => a.Status == AdStatus.Rejected) / processedAds.Count * 100, 2);
             }
 
-            // 4. Top POI Categories
-            var topCategories = pois.GroupBy(p => p.Type.ToString())
+            // 4. Top POI Categories (Only Partner POIs)
+            var topCategories = partnerPois.GroupBy(p => p.Type.ToString())
                                     .Select(g => new PoiCategoryStat
                                     {
                                         CategoryName = g.Key,

@@ -22,6 +22,8 @@ namespace Domain.Entities
         public PromotionStatus Status { get; set; } = PromotionStatus.Pending;
 
         public int SaveCount { get; set; } = 0;
+        public int LimitSaveCount { get; set; } = 0;
+
 
         public DateTime CreatedAt { get; set; }
 

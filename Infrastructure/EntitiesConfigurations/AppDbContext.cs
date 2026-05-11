@@ -477,6 +477,10 @@ namespace Infrastructure.EntitiesConfigurations
 
                 entity.Property(e => e.SaveCount)
                       .HasDefaultValue(0);
+                
+                entity.Property(e => e.LimitSaveCount)
+                      .HasDefaultValue(0);
+
 
                 entity.Property(e => e.CreatedAt)
                       .HasDefaultValueSql("NOW()");

@@ -13,5 +13,9 @@ namespace Application.DTOs.Requests
 
         [MaxLength(500)]
         public string Terms { get; set; } = string.Empty;
+
+        [Range(0, int.MaxValue, ErrorMessage = "LimitSaveCount must be at least 0")]
+        public int LimitSaveCount { get; set; }
     }
 }
+

@@ -32,5 +32,8 @@ namespace Application.DTOs.Requests
 
         [MaxLength(500)]
         public string? Terms { get; set; }
+
+        public int? LimitSaveCount { get; set; }
     }
 }
+
