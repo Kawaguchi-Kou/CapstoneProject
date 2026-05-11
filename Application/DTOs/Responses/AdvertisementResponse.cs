@@ -27,7 +27,9 @@ namespace Application.DTOs.Responses
         public string Terms { get; set; } = string.Empty;
         public PromotionStatus Status { get; set; }
         public int SaveCount { get; set; }
+        public int LimitSaveCount { get; set; }
     }
+
 
     public class SavedPromotionResponse
     {

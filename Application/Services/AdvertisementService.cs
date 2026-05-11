@@ -128,6 +128,7 @@ namespace Application.Services
                 Terms = request.Promotion.Terms,
                 Status = PromotionStatus.Pending,
                 SaveCount = 0,
+                LimitSaveCount = request.Promotion.LimitSaveCount,
                 CreatedAt = DateTime.UtcNow
             };
 
@@ -348,6 +349,11 @@ namespace Application.Services
                     advertisement.Promotion.Terms = request.Promotion.Terms;
                     promoChanged = true;
                 }
+                if (request.Promotion.LimitSaveCount.HasValue && advertisement.Promotion.LimitSaveCount != request.Promotion.LimitSaveCount.Value)
+                {
+                    advertisement.Promotion.LimitSaveCount = request.Promotion.LimitSaveCount.Value;
+                    promoChanged = true;
+                }
 
                 if (promoChanged)
                 {
@@ -405,6 +411,11 @@ namespace Application.Services
             if (alreadySaved)
             {
                 throw new InvalidOperationException("Promotion already saved");
+            }
+
+            if (promotion.LimitSaveCount > 0 && promotion.SaveCount >= promotion.LimitSaveCount)
+            {
+                throw new InvalidOperationException("Khuyến mãi đã đạt giới hạn lượt lưu.");
             }
 
             var savedPromotion = new SavedPromotion
@@ -549,8 +560,11 @@ namespace Application.Services
                 Promotion = x.Ad.Promotion == null ? null : new RecommendedPromotionResponse
                 {
                     Title = x.Ad.Promotion.Title,
-                    Description = x.Ad.Promotion.Description
+                    Description = x.Ad.Promotion.Description,
+                    SaveCount = x.Ad.Promotion.SaveCount,
+                    LimitSaveCount = x.Ad.Promotion.LimitSaveCount
                 }
+
             }).ToList();
         }
 
