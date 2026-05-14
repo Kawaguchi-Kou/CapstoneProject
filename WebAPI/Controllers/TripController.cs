@@ -1,4 +1,4 @@
-﻿using Application.DTOs.Requests;
+using Application.DTOs.Requests;
 using Application.DTOs.Responses;
 using Application.Interfaces;
 using Application.Services;
@@ -149,6 +149,46 @@ namespace WebAPI.Controllers
                 {
                     message = "Internal server error",
                     detail = ex.Message
+                });
+            }
+        }
+
+        [HttpGet("{tripId}/route-suggestions")]
+        [Authorize]
+        public async Task<IActionResult> GetRouteSuggestions(Guid tripId)
+        {
+            try
+            {
+                var suggestions = await _tripSegmentService.GetRouteSuggestionsAsync(tripId);
+                return Ok(suggestions);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpPost("{tripId}/apply-route")]
+        [Authorize]
+        public async Task<IActionResult> ApplyRoute(
+    Guid tripId,
+    [FromBody] ApplyRouteRequest request)
+        {
+            try
+            {
+                await _tripSegmentService
+                    .ApplyRouteAsync(tripId, request.RouteId);
+
+                return Ok(new
+                {
+                    message = "Route applied successfully"
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new
+                {
+                    message = ex.Message
                 });
             }
         }

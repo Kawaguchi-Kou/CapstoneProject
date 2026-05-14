@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -30,5 +30,13 @@ namespace Application.Interfaces
         Task UpdateSegmentDatesAsync(
     Guid tripId,
     List<UpdateSegmentDatesRequest> updates);
+
+        /// <summary>
+        /// Finds the top-5 shortest routes between the trip's start and end location
+        /// using the Vietnam travel graph, fetches weather data for each stop,
+        /// and returns an AI-generated recommendation in Vietnamese per route.
+        /// </summary>
+        Task<List<RouteSuggestionResponse>> GetRouteSuggestionsAsync(Guid tripId);
+        Task ApplyRouteAsync(Guid tripId, string routeId);
     }
 }

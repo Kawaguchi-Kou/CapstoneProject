@@ -155,6 +155,23 @@ builder.Services.AddScoped<IAdminStatisticService, AdminStatisticService>();
 //Segment
 builder.Services.AddScoped<ITripSegmentService, TripSegmentService>();
 
+//RouteGraph (singleton — JSON is static)
+var graphPath = Path.Combine(
+    AppContext.BaseDirectory,
+    "..", "..", "..", "..",   // up from WebAPI/bin/Debug/net8.0 → solution root
+    "Infrastructure", "Graph", "vietnam_phuot_graph.json");
+
+if (!File.Exists(graphPath))
+{
+    // fallback: try relative to ContentRootPath
+    graphPath = Path.Combine(
+        builder.Environment.ContentRootPath,
+        "..", "Infrastructure", "Graph", "vietnam_phuot_graph.json");
+}
+
+builder.Services.AddSingleton<IRouteGraphService>(
+    _ => new RouteGraphService(Path.GetFullPath(graphPath)));
+
 //Gemini
 builder.Services.AddHttpClient<IGeminiService, GeminiService>()
    .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler

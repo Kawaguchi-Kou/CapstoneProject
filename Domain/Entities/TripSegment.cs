@@ -19,8 +19,7 @@ namespace Domain.Entities
 
         [Required]
         public Guid LocationId { get; set; }
-        [Required]
-        public Guid DistrictId { get; set; }
+        public Guid? DistrictId { get; set; }
 
         [Required]
         public int OrderIndex { get; set; }   // Thứ tự chặng
