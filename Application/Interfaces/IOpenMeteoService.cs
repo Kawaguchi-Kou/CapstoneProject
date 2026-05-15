@@ -32,5 +32,15 @@ namespace Application.Interfaces
         Task<WeatherForecast> GetAsync(
             Guid locationId,
             DateTime date);
+
+        Task<List<WeatherForecast>> GetForecastRangeAsync(
+    Guid locationId,
+    List<DateTime> dates);
+
+        Task<List<WeatherForecast>> GetForecastRangeAsync(
+    double latitude,
+    double longitude,
+    DateTime from,
+    DateTime to);
     }
 }

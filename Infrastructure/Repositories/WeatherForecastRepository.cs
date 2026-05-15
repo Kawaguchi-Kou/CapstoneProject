@@ -54,7 +54,7 @@ namespace Infrastructure.Repositories
             return await _context.WeatherForecasts
                 .FirstOrDefaultAsync(x =>
                     x.LocationId == locationId &&
-                    x.ForecastDate == date);
+                    x.ForecastDate.Date == date.Date);
         }
 
         public async Task<List<WeatherForecast>> GetRangeAsync(
@@ -86,8 +86,6 @@ namespace Infrastructure.Repositories
                     existing.FetchedAt = DateTime.UtcNow;
                 }
             }
-
-            await _context.SaveChangesAsync();
         }
 
         public async Task UpsertAsync(WeatherForecast forecast)
@@ -129,50 +127,32 @@ namespace Infrastructure.Repositories
             );
         }
 
-        public async Task SaveChangesAsync()
+        public async Task UpsertRangeAsync(List<WeatherForecast> forecasts)
         {
-            await _context.SaveChangesAsync();
+            foreach (var forecast in forecasts)
+            {
+                await _context.Database.ExecuteSqlRawAsync(@"
+            INSERT INTO weather_forecast
+            (""Id"", ""City"", ""FetchedAt"", ""ForecastDate"", ""LocationId"",
+             ""PrecipitationProbability"", ""TemperatureCelsius"", ""WindSpeed"")
+            VALUES ({0}, {1}, {2}, {3}, {4}, {5}, {6}, {7})
+            ON CONFLICT (""LocationId"", ""ForecastDate"")
+            DO UPDATE SET
+                ""PrecipitationProbability"" = EXCLUDED.""PrecipitationProbability"",
+                ""TemperatureCelsius"" = EXCLUDED.""TemperatureCelsius"",
+                ""WindSpeed"" = EXCLUDED.""WindSpeed"",
+                ""FetchedAt"" = EXCLUDED.""FetchedAt"";
+        ",
+                forecast.Id,
+                forecast.City,
+                forecast.FetchedAt,
+                forecast.ForecastDate.Date,
+                forecast.LocationId,
+                forecast.PrecipitationProbability,
+                forecast.TemperatureCelsius,
+                forecast.WindSpeed);
+            }
         }
-
-        //public async Task UpsertAsync(WeatherForecast forecast)
-        //{
-        //    // 1. Normalize DateTimes for PostgreSQL (CRITICAL)
-        //    // Ensure ForecastDate is UTC and stripped of time components for consistent lookup
-        //    forecast.ForecastDate = DateTime.SpecifyKind(forecast.ForecastDate, DateTimeKind.Utc);
-        //    // Ensure FetchedAt is UTC
-        //    forecast.FetchedAt = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc);
-
-        //    // 2. Check for existing record based on your LocationId + ForecastDate logic
-        //    var existing = await _context.WeatherForecasts
-        //        .FirstOrDefaultAsync(x =>
-        //            x.LocationId == forecast.LocationId &&
-        //            x.ForecastDate == forecast.ForecastDate);
-
-        //    if (existing == null)
-        //    {
-        //        // 3. New record
-        //        await _context.WeatherForecasts.AddAsync(forecast);
-        //    }
-        //    else
-        //    {
-        //        // 4. Update existing using your preferred SetValues method
-        //        // Note: SetValues updates all mapped properties from the input object
-        //        _context.Entry(existing).CurrentValues.SetValues(forecast);
-
-        //        // Ensure the ID of the existing tracked entity isn't overwritten if forecast.Id is empty
-        //        _context.Entry(existing).Property(x => x.Id).IsModified = false;
-        //    }
-
-        //    try
-        //    {
-        //        await _context.SaveChangesAsync();
-        //    }
-        //    catch (DbUpdateException ex)
-        //    {
-        //        // If you get a 23505 error here, ensure your DB index matches (LocationId, ForecastDate)
-        //        throw new Exception($"Failed to upsert weather for Location {forecast.LocationId} on {forecast.ForecastDate:yyyy-MM-dd}", ex);
-        //    }
-        //}
 
         public async Task<List<WeatherForecast>> GetByLocationAndDates(
         Guid locationId,

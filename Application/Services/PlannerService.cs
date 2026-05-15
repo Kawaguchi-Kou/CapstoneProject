@@ -1,4 +1,4 @@
-﻿using System.Text;
+using System.Text;
 using System.Text.Json;
 using Application.DTOs.AIResponse;
 using Application.Interfaces;
@@ -800,5 +800,9 @@ HashSet<Guid> tripUsedPoiIds)
 
             return segments;
         }
+
+        /// <inheritdoc />
+        public Task PreloadTripWeatherAsync(Guid tripId)
+            => _weatherService.PreloadTripWeatherAsync(tripId);
     }
 }
