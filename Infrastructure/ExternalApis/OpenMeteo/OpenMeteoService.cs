@@ -27,147 +27,6 @@ namespace Infrastructure.ExternalApis.OpenMeteo
             _locationRepo = locationRepo;
         }
 
-        //public async Task<IReadOnlyList<DailyWeatherDto>> GetDailyAsync(
-        //    double latitude,
-        //    double longitude,
-        //    DateTime from,
-        //    DateTime to)
-        //{
-
-        //    if (to < from)
-        //        throw new ArgumentException("End date must be after start date.");
-
-        //    var days = to.DayNumber - from.DayNumber + 1;
-
-        //    if (days > 7)
-        //        throw new ArgumentException("Forecast period cannot exceed 7 days.");
-
-        //    var today = DateTime.FromDateTime(DateTime.UtcNow);
-
-        //    if (from < today)
-        //        throw new ArgumentException("Cannot forecast past dates.");
-
-        //    var url =
-        //        $"{_options.BaseUrl}" +
-        //        $"?latitude={latitude}" +
-        //        $"&longitude={longitude}" +
-        //        $"&daily=temperature_2m_max,precipitation_probability_max,wind_speed_10m_max" +
-        //        $"&start_date={from:yyyy-MM-dd}" +
-        //        $"&end_date={to:yyyy-MM-dd}" +
-        //        $"&timezone=auto";
-
-        //    var response = await _http.GetAsync(url);
-        //    response.EnsureSuccessStatusCode();
-
-        //    var json = await response.Content.ReadAsStringAsync();
-        //    if (!response.IsSuccessStatusCode)
-        //    {
-        //        throw new OpenMeteoApiException(
-        //            response.StatusCode,
-        //            json
-        //        );
-        //    }
-        //    var data = JsonSerializer.Deserialize<OpenMeteoDailyResponse>(json)!;
-
-        //    var result = new List<DailyWeatherDto>();
-
-        //    for (int i = 0; i < data.Daily.Time.Count; i++)
-        //    {
-        //        result.Add(new DailyWeatherDto
-        //        {
-        //            Date = DateTime.Parse(data.Daily.Time[i]),
-        //            MaxTemperature = data.Daily.TemperatureMax[i],
-        //            PrecipitationProbability = data.Daily.PrecipitationProbabilityMax[i],
-        //            MaxWindSpeed = data.Daily.WindSpeedMax[i]
-        //        });
-        //    }
-
-        //    return result;
-        //}
-
-        //public async Task<IReadOnlyList<DailyWeatherDto>> GetDailyAsync(
-        //    double latitude,
-        //    double longitude,
-        //    DateTime from,
-        //    DateTime to)
-        //{
-        //    if (to < from)
-        //        throw new ArgumentException("End date must be after start date.");
-
-        //    var today = DateTime.FromDateTime(DateTime.Now); // ✅ LOCAL TIME
-
-        //    // 🔥 FIX 1: auto-adjust instead of throw
-        //    if (from < today)
-        //        from = today;
-
-        //    var days = to.DayNumber - from.DayNumber + 1;
-
-        //    if (days <= 0)
-        //        return new List<DailyWeatherDto>();
-
-        //    if (days > 7)
-        //        throw new ArgumentException("Forecast period cannot exceed 7 days.");
-
-        //    var url =
-        //        $"{_options.BaseUrl}" +
-        //        $"?latitude={latitude}" +
-        //        $"&longitude={longitude}" +
-        //        $"&daily=temperature_2m_max,precipitation_probability_max,wind_speed_10m_max" +
-        //        $"&start_date={from:yyyy-MM-dd}" +
-        //        $"&end_date={to:yyyy-MM-dd}" +
-        //        $"&timezone=auto";
-
-        //    int retry = 0;
-
-        //    while (retry < 3)
-        //    {
-        //        await _apiLimiter.WaitAsync(); // 🔥 FIX 2: limit concurrency
-
-        //        try
-        //        {
-        //            var response = await _http.GetAsync(url);
-
-        //            var json = await response.Content.ReadAsStringAsync();
-
-        //            if (!response.IsSuccessStatusCode)
-        //                throw new OpenMeteoApiException(response.StatusCode, json);
-
-        //            var data = JsonSerializer.Deserialize<OpenMeteoDailyResponse>(json)!;
-
-        //            var result = new List<DailyWeatherDto>();
-
-        //            for (int i = 0; i < data.Daily.Time.Count; i++)
-        //            {
-        //                result.Add(new DailyWeatherDto
-        //                {
-        //                    Date = DateTime.Parse(data.Daily.Time[i]),
-        //                    MaxTemperature = data.Daily.TemperatureMax[i],
-        //                    PrecipitationProbability = data.Daily.PrecipitationProbabilityMax[i],
-        //                    MaxWindSpeed = data.Daily.WindSpeedMax[i]
-        //                });
-        //            }
-
-        //            return result;
-        //        }
-        //        catch (HttpRequestException ex) when (retry < 3)
-        //        {
-        //            retry++;
-        //            Console.WriteLine($"⚠️ Retry {retry}: {ex.Message}");
-        //            await Task.Delay(500 * retry);
-        //        }
-        //        catch (TaskCanceledException ex) when (retry < 3)
-        //        {
-        //            retry++;
-        //            Console.WriteLine($"⚠️ Timeout retry {retry}: {ex.Message}");
-        //            await Task.Delay(500 * retry);
-        //        }
-        //        finally
-        //        {
-        //            _apiLimiter.Release();
-        //        }
-        //    }
-        //}
-
         public async Task<IReadOnlyList<DailyWeatherDto>> GetDailyAsync(
     double latitude,
     double longitude,
@@ -182,7 +41,7 @@ namespace Infrastructure.ExternalApis.OpenMeteo
             if (from < today)
                 from = today;
 
-            var days = to.Day - from.Day + 1;
+            var days = (to.Date - from.Date).Days + 1;
 
             if (days <= 0)
                 return new List<DailyWeatherDto>();
@@ -300,6 +159,72 @@ namespace Infrastructure.ExternalApis.OpenMeteo
             await _repo.UpsertAsync(new List<WeatherForecast> { entity });
 
             return entity;
+        }
+
+        public async Task<List<WeatherForecast>> GetForecastRangeAsync(
+    Guid locationId,
+    List<DateTime> dates)
+        {
+            if (dates == null || !dates.Any())
+                return new List<WeatherForecast>();
+
+            dates = dates
+                .Select(x => x.Date)
+                .Distinct()
+                .OrderBy(x => x)
+                .ToList();
+
+            var location = await _locationRepo.GetByIdAsync(locationId)
+                ?? throw new Exception("Location not found");
+
+            var from = dates.Min();
+            var to = dates.Max();
+
+            var apiData = await GetDailyAsync(
+                location.Latitude,
+                location.Longitude,
+                from,
+                to);
+
+            return apiData
+                .Where(x => dates.Contains(x.Date.Date))
+                .Select(x => new WeatherForecast
+                {
+                    Id = Guid.NewGuid(),
+                    LocationId = locationId,
+                    City = location.LocationName,
+                    ForecastDate = x.Date.Date,
+                    TemperatureCelsius = x.MaxTemperature,
+                    PrecipitationProbability = x.PrecipitationProbability,
+                    WindSpeed = x.MaxWindSpeed,
+                    FetchedAt = DateTime.UtcNow
+                })
+                .ToList();
+        }
+
+        public async Task<List<WeatherForecast>> GetForecastRangeAsync(
+    double latitude,
+    double longitude,
+    DateTime from,
+    DateTime to)
+        {
+            var apiData = await GetDailyAsync(
+                latitude,
+                longitude,
+                from,
+                to);
+
+            return apiData
+                .Select(x => new WeatherForecast
+                {
+                    Id = Guid.NewGuid(),
+                    ForecastDate = x.Date.Date,
+                    TemperatureCelsius = x.MaxTemperature,
+                    PrecipitationProbability = x.PrecipitationProbability,
+                    WindSpeed = x.MaxWindSpeed,
+                    FetchedAt = DateTime.UtcNow
+                })
+                .ToList();
         }
     }
 }
