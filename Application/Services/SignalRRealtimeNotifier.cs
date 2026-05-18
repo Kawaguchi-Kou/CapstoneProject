@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -29,6 +29,13 @@ namespace Application.Services
         {
             await _hubContext.Clients
                 .User(userId.ToString()) // ⭐ FIX
+                .SendAsync("ReceiveNotification", notification);
+        }
+
+        public async Task SendBroadcastNotificationAsync(object notification)
+        {
+            await _hubContext.Clients
+                .All
                 .SendAsync("ReceiveNotification", notification);
         }
     }

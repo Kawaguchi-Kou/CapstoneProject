@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -82,6 +82,12 @@ namespace Infrastructure.Repositories
             }
 
             return await query.ToListAsync();
+        }
+
+        public async Task<Role?> GetRoleByNameAsync(string roleName)
+        {
+            return await _context.Roles
+                .FirstOrDefaultAsync(r => r.Name.ToLower() == roleName.ToLower());
         }
 
     }

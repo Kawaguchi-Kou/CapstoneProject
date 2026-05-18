@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -42,5 +42,9 @@ namespace Domain.Entities
         public ICollection<SavedPromotion> SavedPromotions { get; set; } = new List<SavedPromotion>();
         public ICollection<Participant> Participants { get; set; }
         public ICollection<POI> POIs { get; set; }
+
+        // Partner
+        public ICollection<PartnerRequest> PartnerRequests { get; set; } = new List<PartnerRequest>();
+        public PartnerProfile? PartnerProfile { get; set; }
     }
 }

@@ -15,17 +15,20 @@ namespace Application.Services
         private readonly IAdvertisementRepository _advertisementRepository;
         private readonly IUserRepository _userRepository;
         private readonly IPaymentRepository _paymentRepository;
+        private readonly IPartnerRequestRepository _partnerRequestRepository;
 
         public ManagerStatisticService(
             IPOIRepository poiRepository,
             IAdvertisementRepository advertisementRepository,
             IUserRepository userRepository,
-            IPaymentRepository paymentRepository)
+            IPaymentRepository paymentRepository,
+            IPartnerRequestRepository partnerRequestRepository)
         {
             _poiRepository = poiRepository;
             _advertisementRepository = advertisementRepository;
             _userRepository = userRepository;
             _paymentRepository = paymentRepository;
+            _partnerRequestRepository = partnerRequestRepository;
         }
 
         public async Task<ManagerDashboardResponse> GetManagerDashboardStatisticsAsync(string period = "daily", DateTime? startDate = null, DateTime? endDate = null)
@@ -34,6 +37,7 @@ namespace Application.Services
             var ads = await _advertisementRepository.GetAllAsync();
             var users = await _userRepository.GetAllAsync();
             var payments = await _paymentRepository.GetAllAsync();
+            var partnerRequests = await _partnerRequestRepository.GetAllAsync();
 
             var end = endDate?.Date ?? DateTime.UtcNow.Date;
             var start = startDate?.Date ?? end.AddDays(-7);
@@ -90,12 +94,15 @@ namespace Application.Services
             response.AdStatusBreakdown.Expired = ads.Count(a => a.Status == AdStatus.Expired);
             response.AdStatusBreakdown.Rejected = ads.Count(a => a.Status == AdStatus.Rejected);
 
-            // 6. New Partners Growth
-            var partners = users.Where(u => u.Role != null && u.Role.Name == "Partner" && u.CreatedAt.Date >= start && u.CreatedAt.Date <= end).ToList();
+            // 6. New Partners Growth (Tính từ ngày yêu cầu đối tác được duyệt thành công)
+            var approvedRequests = partnerRequests.Where(r => r.Status == PartnerRequestStatus.Approved 
+                                                                && r.ReviewedAt.HasValue 
+                                                                && r.ReviewedAt.Value.Date >= start 
+                                                                && r.ReviewedAt.Value.Date <= end).ToList();
             
             if (period.ToLower() == "monthly")
             {
-                var growthStats = partners.GroupBy(u => new { u.CreatedAt.Year, u.CreatedAt.Month })
+                var growthStats = approvedRequests.GroupBy(r => new { r.ReviewedAt!.Value.Year, r.ReviewedAt!.Value.Month })
                     .Select(g => new DailyPartnerGrowth { Date = $"{g.Key.Year}-{g.Key.Month:D2}", NewPartners = g.Count() }).ToList();
 
                 var allMonths = new List<string>();
@@ -115,7 +122,7 @@ namespace Application.Services
             }
             else
             {
-                var growthStats = partners.GroupBy(u => u.CreatedAt.Date)
+                var growthStats = approvedRequests.GroupBy(r => r.ReviewedAt!.Value.Date)
                     .Select(g => new DailyPartnerGrowth { Date = g.Key.ToString("yyyy-MM-dd"), NewPartners = g.Count() }).ToList();
 
                 var totalDays = (end - start).Days;
