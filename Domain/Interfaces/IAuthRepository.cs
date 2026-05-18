@@ -1,4 +1,4 @@
-﻿using Domain.Entities;
+using Domain.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,6 +17,7 @@ namespace Domain.Interfaces
         Task ChangePasswordAsync(Account account);
         Task<List<Account>> GetAllAccountsAsync();
         Task<List<Account>> GetFilteredAccountsAsync(string? roleName, bool? isActive, string? name);
+        Task<Role?> GetRoleByNameAsync(string roleName);
 
     }
 }

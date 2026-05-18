@@ -43,6 +43,10 @@ namespace Infrastructure.EntitiesConfigurations
         public DbSet<Promotion> Promotions { get; set; }
         public DbSet<SavedPromotion> SavedPromotions { get; set; }
 
+        //Partner
+        public DbSet<PartnerRequest> PartnerRequests { get; set; }
+        public DbSet<PartnerProfile> PartnerProfiles { get; set; }
+
         //Weather Forecast
         public DbSet<WeatherForecast> WeatherForecasts { get; set; }
 
@@ -589,6 +593,99 @@ namespace Infrastructure.EntitiesConfigurations
                 entity.HasOne(p => p.Trip)
                       .WithMany(t => t.Participants)
                       .HasForeignKey(p => p.TripId)
+                      .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // =========================
+            // PARTNER REQUEST
+            // =========================
+            modelBuilder.Entity<PartnerRequest>(entity =>
+            {
+                entity.ToTable("partner_requests");
+
+                entity.HasKey(e => e.Id);
+
+                entity.Property(e => e.BusinessName)
+                      .IsRequired()
+                      .HasMaxLength(255);
+
+                entity.Property(e => e.BusinessAddress)
+                      .HasMaxLength(500);
+
+                entity.Property(e => e.BusinessPhone)
+                      .HasMaxLength(20);
+
+                entity.Property(e => e.BusinessEmail)
+                      .HasMaxLength(255);
+
+                entity.Property(e => e.BusinessLicenseUrl)
+                      .IsRequired(false);
+
+                entity.Property(e => e.Status)
+                      .HasConversion<int>()
+                      .IsRequired();
+
+                entity.Property(e => e.AdminNote)
+                      .HasMaxLength(1000);
+
+                entity.Property(e => e.CreatedAt)
+                      .HasDefaultValueSql("NOW()");
+
+                entity.Property(e => e.ReviewedAt)
+                      .IsRequired(false);
+
+                entity.Property(e => e.ReviewedBy)
+                      .IsRequired(false);
+
+                entity.HasIndex(e => e.AccountId);
+
+                entity.HasOne(e => e.Account)
+                      .WithMany(a => a.PartnerRequests)
+                      .HasForeignKey(e => e.AccountId)
+                      .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // =========================
+            // PARTNER PROFILE
+            // =========================
+            modelBuilder.Entity<PartnerProfile>(entity =>
+            {
+                entity.ToTable("partner_profiles");
+
+                entity.HasKey(e => e.Id);
+
+                entity.Property(e => e.BusinessName)
+                      .IsRequired()
+                      .HasMaxLength(255);
+
+                entity.Property(e => e.BusinessAddress)
+                      .HasMaxLength(500);
+
+                entity.Property(e => e.BusinessPhone)
+                      .HasMaxLength(20);
+
+                entity.Property(e => e.BusinessEmail)
+                      .HasMaxLength(255);
+
+                entity.Property(e => e.BusinessLicenseUrl)
+                      .IsRequired(false);
+
+                entity.Property(e => e.BusinessAvatarUrl)
+                      .IsRequired(false);
+
+                entity.Property(e => e.CreatedAt)
+                      .HasDefaultValueSql("NOW()");
+
+                entity.Property(e => e.UpdatedAt)
+                      .IsRequired(false);
+
+                // 1-1 relationship with Account (unique index)
+                entity.HasIndex(e => e.AccountId)
+                      .IsUnique();
+
+                entity.HasOne(e => e.Account)
+                      .WithOne(a => a.PartnerProfile)
+                      .HasForeignKey<PartnerProfile>(e => e.AccountId)
                       .OnDelete(DeleteBehavior.Cascade);
             });
         }

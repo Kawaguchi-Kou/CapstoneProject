@@ -239,6 +239,13 @@ builder.Services.AddScoped<INotificationRecipientRepository, NotificationRecipie
 //Participant
 builder.Services.AddScoped<IParticipantService, ParticipantService>();
 
+//Partner
+builder.Services.AddScoped<IPartnerRequestRepository, PartnerRequestRepository>();
+builder.Services.AddScoped<IPartnerProfileRepository, PartnerProfileRepository>();
+builder.Services.AddScoped<IPartnerRequestService, PartnerRequestService>();
+builder.Services.AddScoped<IPartnerProfileService, PartnerProfileService>();
+
+
 //WeatherRiskScan
 builder.Services.AddScoped<IWeatherRiskScanService, WeatherRiskScanService>();
 
@@ -263,12 +270,19 @@ builder.Services.AddScoped<IRealtimeNotifier, SignalRRealtimeNotifier>();
 // add CORS
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowSpecificOrigins", builder =>
+    options.AddPolicy("AllowSpecificOrigins", policy =>
     {
-        builder.WithOrigins("http://localhost:3000")
-               .AllowAnyHeader()
-               .AllowAnyMethod()
-               .AllowCredentials();
+        policy.WithOrigins(
+                "http://localhost:3000",
+                "https://localhost:3000",
+                "http://localhost:7176",
+                "https://localhost:7176",
+                "http://localhost:5173",
+                "https://localhost:5173"
+              )
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials();
     });
     //options.AddPolicy("AllowFrontend",
     //    policy =>
