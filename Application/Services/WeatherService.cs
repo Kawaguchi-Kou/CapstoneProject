@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -14,15 +14,21 @@ namespace Application.Services
         private readonly IWeatherForecastRepository _weatherRepo;
         private readonly IOpenMeteoService _openMeteoService;
         private readonly ILocationRepository _locationRepo;
+        private readonly ITripSegmentRepository _segmentRepo;
+        private readonly IUnitOfWork _unitOfWork;
 
         public WeatherService(
             IWeatherForecastRepository weatherRepo,
             IOpenMeteoService openMeteoService,
-            ILocationRepository locationRepo)
+            ILocationRepository locationRepo,
+            ITripSegmentRepository segmentRepo,
+            IUnitOfWork unitOfWork)
         {
             _weatherRepo = weatherRepo;
             _openMeteoService = openMeteoService;
             _locationRepo = locationRepo;
+            _segmentRepo = segmentRepo;
+            _unitOfWork = unitOfWork;
         }
 
         public async Task<WeatherForecast> GetAsync(Guid locationId, DateTime date)
@@ -116,72 +122,118 @@ namespace Application.Services
             return result;
         }
 
-        public async Task<Dictionary<DateTime, WeatherForecast>>
-    GetRangeOptimizedAsync(Guid locationId, List<DateTime> dates)
-        {
-            var today = DateTime.Now;
+        //    public async Task<Dictionary<DateTime, WeatherForecast>>
+        //GetRangeOptimizedAsync(Guid locationId, List<DateTime> dates)
+        //    {
+        //        var today = DateTime.Now;
 
-            var validDates = dates
-                .Where(d => d >= today)
+        //        var validDates = dates
+        //            .Where(d => d >= today)
+        //            .Distinct()
+        //            .OrderBy(d => d)
+        //            .ToList();
+
+        //        var result = new Dictionary<DateTime, WeatherForecast>();
+
+        //        // ================= LOAD CACHE =================
+        //        foreach (var date in validDates)
+        //        {
+        //            var cached = await _weatherRepo.GetAsync(locationId, date);
+
+        //            if (cached != null &&
+        //                cached.FetchedAt >= DateTime.Now.AddHours(-6))
+        //            {
+        //                result[date] = cached;
+        //            }
+        //        }
+
+        //        // ================= MISSING DATES =================
+        //        var missingDates = validDates
+        //            .Where(d => !result.ContainsKey(d))
+        //            .ToList();
+
+        //        if (!missingDates.Any())
+        //            return result;
+
+        //        var from = missingDates.Min();
+        //        var to = missingDates.Max();
+
+        //        // 🔥 ONE API CALL
+        //        var loc = await _locationRepo.GetByIdAsync(locationId);
+
+        //        var apiData = await _openMeteoService.GetDailyAsync(
+        //            loc.Latitude,
+        //            loc.Longitude,
+        //            from,
+        //            to);
+
+        //        var newForecasts = new List<WeatherForecast>();
+
+        //        foreach (var dto in apiData)
+        //        {
+        //            var entity = new WeatherForecast
+        //            {
+        //                Id = Guid.NewGuid(),
+        //                LocationId = locationId,
+        //                ForecastDate = dto.Date,
+        //                TemperatureCelsius = dto.MaxTemperature,
+        //                PrecipitationProbability = dto.PrecipitationProbability,
+        //                WindSpeed = dto.MaxWindSpeed,
+        //                FetchedAt = DateTime.Now
+        //            };
+
+        //            newForecasts.Add(entity);
+        //            result[dto.Date] = entity;
+        //        }
+
+        //        // 🔥 SAVE ONCE
+        //        await _weatherRepo.UpsertAsync(newForecasts);
+
+        //        return result;
+        //    }
+
+        public async Task<Dictionary<DateTime, WeatherForecast>>
+GetRangeOptimizedAsync(Guid locationId, List<DateTime> dates)
+        {
+            dates = dates
+                .Select(x => x.Date)
                 .Distinct()
-                .OrderBy(d => d)
+                .OrderBy(x => x)
                 .ToList();
 
-            var result = new Dictionary<DateTime, WeatherForecast>();
+            var existingForecasts = await _weatherRepo
+                .GetByLocationAndDates(locationId, dates);
 
-            // ================= LOAD CACHE =================
-            foreach (var date in validDates)
-            {
-                var cached = await _weatherRepo.GetAsync(locationId, date);
+            var result = existingForecasts
+                .ToDictionary(x => x.ForecastDate.Date);
 
-                if (cached != null &&
-                    cached.FetchedAt >= DateTime.Now.AddHours(-6))
-                {
-                    result[date] = cached;
-                }
-            }
-
-            // ================= MISSING DATES =================
-            var missingDates = validDates
+            var missingDates = dates
                 .Where(d => !result.ContainsKey(d))
                 .ToList();
 
             if (!missingDates.Any())
                 return result;
 
-            var from = missingDates.Min();
-            var to = missingDates.Max();
+            var location = await _locationRepo.GetByIdAsync(locationId);
 
-            // 🔥 ONE API CALL
-            var loc = await _locationRepo.GetByIdAsync(locationId);
+            if (location == null)
+                return result;
 
-            var apiData = await _openMeteoService.GetDailyAsync(
-                loc.Latitude,
-                loc.Longitude,
-                from,
-                to);
+            // ONE API CALL
+            var apiForecasts = await _openMeteoService
+                .GetForecastRangeAsync(
+                    location.Latitude,
+                    location.Longitude,
+                    missingDates.Min(),
+                    missingDates.Max());
 
-            var newForecasts = new List<WeatherForecast>();
-
-            foreach (var dto in apiData)
+            foreach (var item in apiForecasts)
             {
-                var entity = new WeatherForecast
-                {
-                    Id = Guid.NewGuid(),
-                    LocationId = locationId,
-                    ForecastDate = dto.Date,
-                    TemperatureCelsius = dto.MaxTemperature,
-                    PrecipitationProbability = dto.PrecipitationProbability,
-                    WindSpeed = dto.MaxWindSpeed,
-                    FetchedAt = DateTime.Now
-                };
-
-                newForecasts.Add(entity);
-                result[dto.Date] = entity;
+                result[item.ForecastDate.Date] = item;
             }
 
-            // 🔥 SAVE ONCE
-            await _weatherRepo.UpsertAsync(newForecasts);
+            // ONE SAVE
+            await _weatherRepo.UpsertRangeAsync(apiForecasts);
 
             return result;
         }
@@ -191,6 +243,74 @@ namespace Application.Services
             foreach (var date in dates)
             {
                 await GetAsync(locationId, date);
+            }
+        }
+
+        /// <inheritdoc />
+        //public async Task PreloadTripWeatherAsync(Guid tripId)
+        //{
+        //    var segments = await _segmentRepo.GetByTripIdAsync(tripId);
+
+        //    // Group segments by location so we make ONE batched API call per location.
+        //    var byLocation = segments
+        //        .Where(s => s.LocationId != Guid.Empty)
+        //        .GroupBy(s => s.LocationId);
+
+        //    foreach (var group in byLocation)
+        //    {
+        //        var locationId = group.Key;
+
+        //        // Collect all dates across segments that share this location.
+        //        var dates = group
+        //            .SelectMany(s => Enumerable.Range(
+        //                0, (s.EndDate.Date - s.StartDate.Date).Days + 1)
+        //                .Select(d => s.StartDate.Date.AddDays(d)))
+        //            .Distinct()
+        //            .OrderBy(d => d)
+        //            .ToList();
+
+        //        // GetRangeOptimizedAsync issues a single OpenMeteo request for the
+        //        // min-to-max date range and upserts results into the DB.
+        //        await GetRangeOptimizedAsync(locationId, dates);
+        //    }
+        //}
+
+        public async Task PreloadTripWeatherAsync(Guid tripId)
+        {
+            await _unitOfWork.BeginTransactionAsync();
+
+            try
+            {
+                var segments = await _segmentRepo.GetByTripIdAsync(tripId);
+
+                var byLocation = segments
+                    .Where(s => s.LocationId != Guid.Empty)
+                    .GroupBy(s => s.LocationId);
+
+                foreach (var group in byLocation)
+                {
+                    var locationId = group.Key;
+
+                    var dates = group
+                        .SelectMany(s => Enumerable.Range(
+                            0,
+                            (s.EndDate.Date - s.StartDate.Date).Days + 1)
+                            .Select(d => s.StartDate.Date.AddDays(d)))
+                        .Distinct()
+                        .OrderBy(d => d)
+                        .ToList();
+
+                    await GetRangeOptimizedAsync(locationId, dates);
+                }
+
+                await _unitOfWork.SaveChangesAsync();
+
+                await _unitOfWork.CommitAsync();
+            }
+            catch
+            {
+                await _unitOfWork.RollbackAsync();
+                throw;
             }
         }
     }

@@ -30,6 +30,6 @@ namespace Domain.Interfaces
     Guid locationId,
     List<DateTime> dates);
 
-        Task SaveChangesAsync();
+        Task UpsertRangeAsync(List<WeatherForecast> forecasts);
     }
 }

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -18,5 +18,10 @@ namespace Application.Interfaces
             GetRangeOptimizedAsync(Guid locationId, List<DateTime> dates);
 
         Task PreloadAsync(Guid locationId, List<DateTime> dates);
+
+        /// <summary>
+        /// Fetches and caches fresh weather data from OpenMeteo for every segment of the given trip.
+        /// </summary>
+        Task PreloadTripWeatherAsync(Guid tripId);
     }
 }
