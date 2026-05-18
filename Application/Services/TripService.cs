@@ -1,4 +1,4 @@
-﻿using Application.Interfaces;
+using Application.Interfaces;
 using Domain.Entities;
 using Domain.Enums;
 using Domain.Interfaces;
@@ -8,15 +8,17 @@ namespace Application.Services
     public class TripService : ITripService
     {
         private readonly ITripRepository _tripRepo;
-        private readonly IBackgroundJobService _jobService;
         private readonly ILocationRepository _locationRepository;
         private readonly ITripSegmentRepository _segmentRepo;
         private readonly IUnitOfWork _unitOfWork;
 
-        public TripService(ITripRepository tripRepo, IBackgroundJobService jobService, ILocationRepository locationRepository, ITripSegmentRepository segmentRepo, IUnitOfWork unitOfWork)
+        public TripService(
+            ITripRepository tripRepo,
+            ILocationRepository locationRepository,
+            ITripSegmentRepository segmentRepo,
+            IUnitOfWork unitOfWork)
         {
             _tripRepo = tripRepo;
-            _jobService = jobService;
             _locationRepository = locationRepository;
             _segmentRepo = segmentRepo;
             _unitOfWork = unitOfWork;
@@ -83,8 +85,7 @@ namespace Application.Services
                 await _unitOfWork.SaveChangesAsync();
                 await _unitOfWork.CommitAsync();
 
-                _jobService.EnqueueWeatherPreload(newTrip.TripId);
-
+                // Weather preload is triggered separately via POST /api/trip/{tripId}/weather/preload
                 return newTrip;
             }
             catch

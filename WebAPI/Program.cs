@@ -240,9 +240,9 @@ builder.Services.AddScoped<IParticipantRepository, ParticipantRepository>();
 builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
 
 //BackGroundJob
-builder.Services.AddScoped<IWeatherMonitorJob, WeatherMonitorJob>();
-builder.Services.AddScoped<IWeatherPreloadJob, WeatherPreloadJob>();
+//builder.Services.AddScoped<IWeatherMonitorJob, WeatherMonitorJob>();
 builder.Services.AddScoped<IPaymentExpiryJob, PaymentExpiryJob>();
+// IWeatherPreloadJob removed — weather preload is now triggered on-demand via TripWeatherController
 
 //RiskEngine
 builder.Services.AddScoped<IAdaptiveWeatherRiskEngine, AdaptiveWeatherRiskEngine>();
@@ -257,12 +257,12 @@ builder.Services.AddScoped<INotificationRecipientRepository, NotificationRecipie
 builder.Services.AddScoped<IParticipantService, ParticipantService>();
 
 //WeatherRiskScan
-builder.Services.AddScoped<IWeatherRiskScanService, WeatherRiskScanService>();
+//builder.Services.AddScoped<IWeatherRiskScanService, WeatherRiskScanService>();
 
 //Weatherforecast
 builder.Services.AddScoped<IWeatherForecastRepository, WeatherForecastRepository>();
 builder.Services.AddScoped<IWeatherService, WeatherService>();
-builder.Services.AddScoped<IBackgroundJobService, HangfireJobService>();
+// IBackgroundJobService / HangfireJobService removed — no longer used for weather preload
 
 //Trip
 builder.Services.AddScoped<ITripRepository, TripRepository>();
