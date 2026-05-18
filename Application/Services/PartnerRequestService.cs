@@ -15,6 +15,7 @@ namespace Application.Services
         private readonly IAuthRepository _authRepo;
         private readonly ICloudinaryService _cloudinaryService;
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IRealtimeNotifier _realtimeNotifier;
         private readonly ILogger<PartnerRequestService> _logger;
 
         public PartnerRequestService(
@@ -23,6 +24,7 @@ namespace Application.Services
             IAuthRepository authRepo,
             ICloudinaryService cloudinaryService,
             IUnitOfWork unitOfWork,
+            IRealtimeNotifier realtimeNotifier,
             ILogger<PartnerRequestService> logger)
         {
             _requestRepo = requestRepo;
@@ -30,6 +32,7 @@ namespace Application.Services
             _authRepo = authRepo;
             _cloudinaryService = cloudinaryService;
             _unitOfWork = unitOfWork;
+            _realtimeNotifier = realtimeNotifier;
             _logger = logger;
         }
 
@@ -76,7 +79,22 @@ namespace Application.Services
             var created = await _requestRepo.CreateAsync(request);
             _logger.LogInformation("Partner request created: {RequestId} by Account: {AccountId}", created.Id, accountId);
 
-            return MapToResponse(created, account);
+            var response = MapToResponse(created, account);
+
+            try
+            {
+                await _realtimeNotifier.SendBroadcastNotificationAsync(new
+                {
+                    Type = "PARTNER_REQUEST_CREATED",
+                    Request = response
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to send SignalR notification for Partner Request creation.");
+            }
+
+            return response;
         }
 
         public async Task<PartnerRequestResponse?> GetMyLatestRequestAsync(Guid accountId)
@@ -129,7 +147,39 @@ namespace Application.Services
                 _logger.LogInformation("Partner request rejected: {RequestId} by Reviewer: {ReviewerId}", requestId, reviewerId);
             }
 
-            return MapToResponse(request, request.Account);
+            var response = MapToResponse(request, request.Account);
+
+            try
+            {
+                await _realtimeNotifier.SendUserNotificationAsync(request.AccountId, new
+                {
+                    Type = "PARTNER_REQUEST_REVIEWED",
+                    RequestId = request.Id,
+                    Status = request.Status.ToString(),
+                    AdminNote = request.AdminNote
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to send SignalR user notification for Partner Request review.");
+            }
+
+            try
+            {
+                await _realtimeNotifier.SendBroadcastNotificationAsync(new
+                {
+                    Type = "PARTNER_REQUEST_REVIEWED",
+                    RequestId = request.Id,
+                    Status = request.Status.ToString(),
+                    AdminNote = request.AdminNote
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to send SignalR broadcast notification for Partner Request review.");
+            }
+
+            return response;
         }
 
         /// <summary>

@@ -42,6 +42,8 @@ namespace Application.DTOs.Responses
 
         public Guid DistrictId { get; set; }
 
+        public Guid? PartnerId { get; set; }
+
         public string LocationName { get; set; } = string.Empty;
 
         public List<string> Preferences { get; set; } = new List<string>();
