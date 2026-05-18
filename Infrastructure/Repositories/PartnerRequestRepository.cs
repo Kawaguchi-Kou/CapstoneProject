@@ -69,6 +69,11 @@ namespace Infrastructure.Repositories
             return request;
         }
 
+        public async Task<List<PartnerRequest>> GetAllAsync()
+        {
+            return await _context.PartnerRequests.AsNoTracking().ToListAsync();
+        }
+
         public async Task SaveChangesAsync()
         {
             await _context.SaveChangesAsync();

@@ -12,6 +12,7 @@ namespace Domain.Interfaces
         Task<List<PartnerRequest>> GetByStatusAsync(PartnerRequestStatus status, int skip, int take);
         Task<int> CountByStatusAsync(PartnerRequestStatus status);
         Task<PartnerRequest> UpdateAsync(PartnerRequest request);
+        Task<List<PartnerRequest>> GetAllAsync();
         Task SaveChangesAsync();
     }
 }
