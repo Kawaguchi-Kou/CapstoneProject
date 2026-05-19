@@ -228,12 +228,15 @@ namespace Infrastructure.Repositories
 
         public async Task<List<Advertisement>> GetActiveAsync()
         {
+            var now = DateTime.UtcNow;
             return await _context.Advertisements
                 .Include(a => a.Account)
                 .Include(a => a.POI)
                     .ThenInclude(p => p.PoiPreferences)
                 .Include(a => a.Promotion)
-                .Where(a => a.Status == AdStatus.Active)
+                .Where(a => a.Status == AdStatus.Active
+                          && a.StartDate <= now
+                          && a.EndDate >= now)
                 .OrderByDescending(a => a.CreatedAt)
                 .ToListAsync();
         }

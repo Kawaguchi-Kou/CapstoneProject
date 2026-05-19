@@ -163,11 +163,25 @@ namespace Application.Services
                     "Không thể approve quảng cáo. Subscription đã hết hạn mức hoặc không active.");
             }
 
-            advertisement.Status = AdStatus.Active;
-            if (advertisement.Promotion != null)
+            var now = DateTime.UtcNow;
+
+            if (advertisement.StartDate > now)
             {
-                advertisement.Promotion.Status = PromotionStatus.Active;
-                advertisement.Promotion.UpdatedAt = DateTime.UtcNow;
+                advertisement.Status = AdStatus.Scheduled;
+                if (advertisement.Promotion != null)
+                {
+                    advertisement.Promotion.Status = PromotionStatus.Pending;
+                    advertisement.Promotion.UpdatedAt = now;
+                }
+            }
+            else
+            {
+                advertisement.Status = AdStatus.Active;
+                if (advertisement.Promotion != null)
+                {
+                    advertisement.Promotion.Status = PromotionStatus.Active;
+                    advertisement.Promotion.UpdatedAt = now;
+                }
             }
 
             await _advertisementRepository.UpdateAsync(advertisement);

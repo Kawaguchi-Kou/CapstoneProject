@@ -225,6 +225,7 @@ builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
 //BackGroundJob
 //builder.Services.AddScoped<IWeatherMonitorJob, WeatherMonitorJob>();
 builder.Services.AddScoped<IPaymentExpiryJob, PaymentExpiryJob>();
+builder.Services.AddScoped<IAdSchedulingJob, AdSchedulingJob>();
 // IWeatherPreloadJob removed — weather preload is now triggered on-demand via TripWeatherController
 
 //RiskEngine
@@ -425,6 +426,11 @@ RecurringJob.AddOrUpdate<IWeatherMonitorJob>(
     "weather-hourly-scan",
     x => x.ScanUpcomingTripsAsync(),
     Cron.Hourly);
+
+RecurringJob.AddOrUpdate<IAdSchedulingJob>(
+    "ad-scheduling-scan",
+    x => x.ProcessScheduledAndExpiredAdsAsync(),
+    "*/5 * * * *");  // Mỗi 5 phút
 
 
 
