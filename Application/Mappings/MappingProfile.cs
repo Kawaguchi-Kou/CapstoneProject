@@ -72,6 +72,8 @@ namespace Application.Mappings
             CreateMap<POI, PoiResponse>()
                 .ForMember(dest => dest.LocationName,
                 opt => opt.MapFrom(src => src.Location.LocationName))
+                .ForMember(dest => dest.PartnerName,
+                    opt => opt.MapFrom(src => src.Partner != null ? src.Partner.Name : null))
                 .ForMember(dest => dest.Preferences,
                     opt => opt.MapFrom(src =>
                         src.PoiPreferences

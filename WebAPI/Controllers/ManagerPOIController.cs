@@ -44,7 +44,8 @@ namespace WebAPI.Controllers
         {
             var poi = await _poiService.GetByIdAsync(id);
             if (poi == null) return NotFound();
-            return Ok(poi);
+            var response = _mapper.Map<PoiResponse>(poi);
+            return Ok(response);
         }
 
         [HttpGet("pending")]
@@ -148,7 +149,8 @@ namespace WebAPI.Controllers
             try
             {
                 var poi = await _poiService.RejectPartnerPoiAsync(id);
-                return Ok(new { poi, reason = request?.Reason });
+                var response = _mapper.Map<PoiResponse>(poi);
+                return Ok(new { poi = response, reason = request?.Reason });
             }
             catch (KeyNotFoundException ex)
             {
@@ -166,9 +168,10 @@ namespace WebAPI.Controllers
             try
             {
                 var (poi, affectedAds) = await _poiService.InactivatePoiAsync(Guid.Empty, id, true, confirmCascade);
+                var poiResponse = _mapper.Map<PoiResponse>(poi);
                 return Ok(new
                 {
-                    poi,
+                    poi = poiResponse,
                     affectedAds,
                     message = affectedAds > 0
                         ? $"POI đã inactive và {affectedAds} ads liên quan đã được inactive."
@@ -191,7 +194,8 @@ namespace WebAPI.Controllers
             try
             {
                 var poi = await _poiService.ActivatePoiAsync(id);
-                return Ok(poi);
+                var response = _mapper.Map<PoiResponse>(poi);
+                return Ok(response);
             }
             catch (KeyNotFoundException ex)
             {
