@@ -18,12 +18,13 @@ namespace Application.DTOs.Requests
         public IFormFile? POIImgUrl { get; set; }
         public string? Name { get; set; } = string.Empty;
 
-        public TimeOnly? OpenHour { get; set; }
-        public TimeOnly? CloseHour { get; set; }
+        public string? OpenHour { get; set; }
+        public string? CloseHour { get; set; }
         public bool? Is24Hours { get; set; }
         public string? VisitRecommendation { get; set; }
         public POIType? Type { get; set; }
         public Guid? LocationId { get; set; }
         public Guid? DistrictId { get; set; }
+        public List<string>? PoiPreferences { get; set; }
     }
 }

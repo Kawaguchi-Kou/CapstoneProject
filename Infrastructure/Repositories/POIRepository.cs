@@ -1,4 +1,4 @@
-﻿using System.Linq;
+using System.Linq;
 using Application.DTOs.Requests;
 using Domain.Entities;
 using Domain.Enums;
@@ -22,6 +22,8 @@ namespace Infrastructure.Repositories
             return await _context.POIs
                 .Include(p => p.Location)
                 .Include(p => p.Partner)
+                .Include(p => p.PoiPreferences)
+                    .ThenInclude(pp => pp.Preference)
                 .FirstOrDefaultAsync(p => p.Id == poiId);
         }
 
@@ -41,6 +43,8 @@ namespace Infrastructure.Repositories
             return await _context.POIs
                 .Include(p => p.Location)
                 .Include(p => p.Partner)
+                .Include(p => p.PoiPreferences)
+                    .ThenInclude(pp => pp.Preference)
                 .OrderByDescending(p => p.Id)
                 .ToListAsync();
         }
@@ -52,6 +56,7 @@ namespace Infrastructure.Repositories
             return await _context.POIs
                 .AsNoTracking()
                 .Include(x => x.PoiPreferences)
+                    .ThenInclude(pp => pp.Preference)
                 .Where(x =>
                     x.Status == POIStatus.Active &&
                     x.LocationId == locationId &&
@@ -71,6 +76,7 @@ namespace Infrastructure.Repositories
             var raw = await _context.POIs
                 .AsNoTracking()
                 .Include(p => p.PoiPreferences)
+                    .ThenInclude(pp => pp.Preference)
                 .Where(p =>
                     locationIds.Contains(p.LocationId) &&
                     districtIds.Contains(p.DistrictId))
@@ -90,6 +96,8 @@ namespace Infrastructure.Repositories
         {
             return await _context.POIs
                 .Include(p => p.Location)
+                .Include(p => p.PoiPreferences)
+                    .ThenInclude(pp => pp.Preference)
                 .Where(p => p.PartnerId == partnerId)
                 .OrderByDescending(p => p.Id)
                 .ToListAsync();
@@ -99,6 +107,8 @@ namespace Infrastructure.Repositories
         {
             return await _context.POIs
                 .Include(p => p.Location)
+                .Include(p => p.PoiPreferences)
+                    .ThenInclude(pp => pp.Preference)
                 .Where(p => p.PartnerId == partnerId)
                 .OrderByDescending(p => p.Id)
                 .Skip(skip)
@@ -118,6 +128,8 @@ namespace Infrastructure.Repositories
             return await _context.POIs
                 .Include(p => p.Location)
                 .Include(p => p.Partner)
+                .Include(p => p.PoiPreferences)
+                    .ThenInclude(pp => pp.Preference)
                 .Where(p => p.PartnerId != null && p.Status == POIStatus.Pending)
                 .OrderByDescending(p => p.Id)
                 .ToListAsync();
@@ -128,6 +140,8 @@ namespace Infrastructure.Repositories
             return await _context.POIs
                 .Include(p => p.Location)
                 .Include(p => p.Partner)
+                .Include(p => p.PoiPreferences)
+                    .ThenInclude(pp => pp.Preference)
                 .Where(p => p.PartnerId != null && p.Status == POIStatus.Pending)
                 .OrderByDescending(p => p.Id)
                 .Skip(skip)
