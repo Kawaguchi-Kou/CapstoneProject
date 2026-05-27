@@ -56,6 +56,17 @@ namespace Application.Services
             string businessLicenseUrl = string.Empty;
             if (dto.BusinessLicenseFile != null && dto.BusinessLicenseFile.Length > 0)
             {
+                var contentType = dto.BusinessLicenseFile.ContentType.ToLower();
+                var allowedImageTypes = new[] { "image/jpeg", "image/png", "image/gif", "image/webp", "image/bmp" };
+                
+                var extension = Path.GetExtension(dto.BusinessLicenseFile.FileName).ToLower();
+                var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp" };
+
+                if (!allowedImageTypes.Contains(contentType) || !allowedExtensions.Contains(extension))
+                {
+                    throw new InvalidOperationException("Giấy phép kinh doanh phải là file ảnh (JPG, JPEG, PNG, GIF, WEBP, BMP). Không chấp nhận các định dạng file văn bản hoặc PDF.");
+                }
+
                 using var stream = dto.BusinessLicenseFile.OpenReadStream();
                 businessLicenseUrl = await _cloudinaryService.UploadFileAsync(
                     stream,

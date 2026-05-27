@@ -1,4 +1,5 @@
 using System.Net;
+using Application.DTOs.Requests;
 using Application.DTOs.Responses;
 using Application.Helper;
 using Application.Interfaces;
@@ -130,7 +131,7 @@ namespace Application.Services
 
         public async Task<List<POI>> GetAllAsync() 
         {
-            return await _poiRepository.GetAllWithPreferencesAsync();  
+            return await _poiRepository.GetAllAsync();  
         } 
 
         public async Task<POI?> GetByIdAsync(Guid id)
@@ -178,34 +179,94 @@ namespace Application.Services
             return request;
         }
 
-        public async Task<POI> UpdateAsync(Guid id, POI request)
+        public async Task<POI> UpdateAsync(Guid id, UpdatePoiRequest request, string? poiImgUrl = null)
         {
             var poi = await _poiRepository.GetByIdAsync(id) ?? throw new KeyNotFoundException("POI not found");
 
+            if (!string.IsNullOrWhiteSpace(request.Name)) poi.Name = request.Name;
             if (!string.IsNullOrWhiteSpace(request.Address)) poi.Address = request.Address;
             if (!string.IsNullOrWhiteSpace(request.ApproxCost)) poi.ApproxCost = request.ApproxCost;
             if (!string.IsNullOrWhiteSpace(request.GoogleMapLink)) poi.GoogleMapLink = request.GoogleMapLink;
-            poi.OpenHour = request.OpenHour;
-            poi.CloseHour = request.CloseHour;
-            poi.IsIndoor = request.IsIndoor;
+            if (!string.IsNullOrWhiteSpace(poiImgUrl)) poi.POIImgUrl = poiImgUrl;
 
-            if (request.LocationId != Guid.Empty && request.DistrictId != Guid.Empty)
+            if (request.OpenHour != null)
             {
-                var district = await _districtRepository.GetByIdAsync(request.DistrictId) 
+                if (string.IsNullOrWhiteSpace(request.OpenHour))
+                {
+                    poi.OpenHour = null;
+                }
+                else if (TimeOnly.TryParse(request.OpenHour, out var openTime))
+                {
+                    poi.OpenHour = openTime;
+                }
+            }
+
+            if (request.CloseHour != null)
+            {
+                if (string.IsNullOrWhiteSpace(request.CloseHour))
+                {
+                    poi.CloseHour = null;
+                }
+                else if (TimeOnly.TryParse(request.CloseHour, out var closeTime))
+                {
+                    poi.CloseHour = closeTime;
+                }
+            }
+
+            if (request.Is24Hours.HasValue) poi.Is24Hours = request.Is24Hours.Value;
+            if (request.IsIndoor.HasValue) poi.IsIndoor = request.IsIndoor.Value;
+            if (request.Type.HasValue) poi.Type = request.Type.Value;
+            if (!string.IsNullOrWhiteSpace(request.VisitRecommendation)) poi.VisitRecommendation = request.VisitRecommendation;
+
+            if (request.LocationId.HasValue && request.LocationId != Guid.Empty &&
+                request.DistrictId.HasValue && request.DistrictId != Guid.Empty)
+            {
+                var district = await _districtRepository.GetByIdAsync(request.DistrictId.Value) 
                     ?? throw new KeyNotFoundException("District not found.");
                 
-                if (district.LocationId != request.LocationId)
+                if (district.LocationId != request.LocationId.Value)
                     throw new InvalidOperationException("District không thuộc city đã chọn.");
 
-                poi.LocationId = request.LocationId;
-                poi.DistrictId = request.DistrictId;
+                poi.LocationId = request.LocationId.Value;
+                poi.DistrictId = request.DistrictId.Value;
+            }
+
+            if (request.PoiPreferences != null)
+            {
+                var validPreferenceIds = request.PoiPreferences
+                    .Select(pStr => Guid.TryParse(pStr, out var g) ? g : Guid.Empty)
+                    .Where(g => g != Guid.Empty)
+                    .ToList();
+
+                poi.PoiPreferences ??= new List<POIPreference>();
+                
+                var toRemove = poi.PoiPreferences
+                    .Where(pp => !validPreferenceIds.Contains(pp.PreferenceId))
+                    .ToList();
+                foreach (var pp in toRemove)
+                {
+                    poi.PoiPreferences.Remove(pp);
+                }
+
+                var existingPrefIds = poi.PoiPreferences.Select(pp => pp.PreferenceId).ToHashSet();
+                foreach (var prefId in validPreferenceIds)
+                {
+                    if (!existingPrefIds.Contains(prefId))
+                    {
+                        poi.PoiPreferences.Add(new POIPreference
+                        {
+                            PoiId = poi.Id,
+                            PreferenceId = prefId
+                        });
+                    }
+                }
             }
 
             await _poiRepository.UpdateAsync(poi);
             return poi;
         }
 
-        public async Task<POI> UpdatePartnerPoiAsync(Guid partnerId, Guid id, POI request)
+        public async Task<POI> UpdatePartnerPoiAsync(Guid partnerId, Guid id, UpdatePoiRequest request, string? poiImgUrl = null)
         {
             var poi = await _poiRepository.GetByIdAsync(id) ?? throw new KeyNotFoundException("POI not found");
 
@@ -219,21 +280,79 @@ namespace Application.Services
             if (!string.IsNullOrWhiteSpace(request.Address)) poi.Address = request.Address;
             if (!string.IsNullOrWhiteSpace(request.ApproxCost)) poi.ApproxCost = request.ApproxCost;
             if (!string.IsNullOrWhiteSpace(request.GoogleMapLink)) poi.GoogleMapLink = request.GoogleMapLink;
-            if (!string.IsNullOrWhiteSpace(request.POIImgUrl)) poi.POIImgUrl = request.POIImgUrl;
-            poi.OpenHour = request.OpenHour;
-            poi.CloseHour = request.CloseHour;
-            poi.IsIndoor = request.IsIndoor;
+            if (!string.IsNullOrWhiteSpace(poiImgUrl)) poi.POIImgUrl = poiImgUrl;
 
-            if (request.LocationId != Guid.Empty && request.DistrictId != Guid.Empty)
+            if (request.OpenHour != null)
             {
-                var district = await _districtRepository.GetByIdAsync(request.DistrictId) 
+                if (string.IsNullOrWhiteSpace(request.OpenHour))
+                {
+                    poi.OpenHour = null;
+                }
+                else if (TimeOnly.TryParse(request.OpenHour, out var openTime))
+                {
+                    poi.OpenHour = openTime;
+                }
+            }
+
+            if (request.CloseHour != null)
+            {
+                if (string.IsNullOrWhiteSpace(request.CloseHour))
+                {
+                    poi.CloseHour = null;
+                }
+                else if (TimeOnly.TryParse(request.CloseHour, out var closeTime))
+                {
+                    poi.CloseHour = closeTime;
+                }
+            }
+
+            if (request.Is24Hours.HasValue) poi.Is24Hours = request.Is24Hours.Value;
+            if (request.IsIndoor.HasValue) poi.IsIndoor = request.IsIndoor.Value;
+            if (request.Type.HasValue) poi.Type = request.Type.Value;
+            if (!string.IsNullOrWhiteSpace(request.VisitRecommendation)) poi.VisitRecommendation = request.VisitRecommendation;
+
+            if (request.LocationId.HasValue && request.LocationId != Guid.Empty &&
+                request.DistrictId.HasValue && request.DistrictId != Guid.Empty)
+            {
+                var district = await _districtRepository.GetByIdAsync(request.DistrictId.Value) 
                     ?? throw new KeyNotFoundException("District not found.");
                 
-                if (district.LocationId != request.LocationId)
+                if (district.LocationId != request.LocationId.Value)
                     throw new InvalidOperationException("District không thuộc city đã chọn.");
 
-                poi.LocationId = request.LocationId;
-                poi.DistrictId = request.DistrictId;
+                poi.LocationId = request.LocationId.Value;
+                poi.DistrictId = request.DistrictId.Value;
+            }
+
+            if (request.PoiPreferences != null)
+            {
+                var validPreferenceIds = request.PoiPreferences
+                    .Select(pStr => Guid.TryParse(pStr, out var g) ? g : Guid.Empty)
+                    .Where(g => g != Guid.Empty)
+                    .ToList();
+
+                poi.PoiPreferences ??= new List<POIPreference>();
+                
+                var toRemove = poi.PoiPreferences
+                    .Where(pp => !validPreferenceIds.Contains(pp.PreferenceId))
+                    .ToList();
+                foreach (var pp in toRemove)
+                {
+                    poi.PoiPreferences.Remove(pp);
+                }
+
+                var existingPrefIds = poi.PoiPreferences.Select(pp => pp.PreferenceId).ToHashSet();
+                foreach (var prefId in validPreferenceIds)
+                {
+                    if (!existingPrefIds.Contains(prefId))
+                    {
+                        poi.PoiPreferences.Add(new POIPreference
+                        {
+                            PoiId = poi.Id,
+                            PreferenceId = prefId
+                        });
+                    }
+                }
             }
 
             if (poi.Status == POIStatus.Rejected)

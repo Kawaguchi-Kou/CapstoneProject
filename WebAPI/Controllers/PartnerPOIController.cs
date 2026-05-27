@@ -112,16 +112,15 @@ namespace WebAPI.Controllers
                     return Unauthorized(new { message = "Invalid token: User ID not found" });
                 }
 
-                var poi = _mapper.Map<POI>(request);
-
+                string? poiImgUrl = null;
                 // Upload ảnh mới nếu có
                 if (request.POIImgUrl != null && request.POIImgUrl.Length > 0)
                 {
                     using var stream = request.POIImgUrl.OpenReadStream();
-                    poi.POIImgUrl = await _cloudinaryService.UploadImageAsync(stream, request.POIImgUrl.FileName);
+                    poiImgUrl = await _cloudinaryService.UploadImageAsync(stream, request.POIImgUrl.FileName);
                 }
 
-                var response = await _poiService.UpdatePartnerPoiAsync(partnerId, id, poi);
+                var response = await _poiService.UpdatePartnerPoiAsync(partnerId, id, request, poiImgUrl);
                 var mapped = _mapper.Map<PoiResponse>(response);
                 return Ok(mapped);
             }

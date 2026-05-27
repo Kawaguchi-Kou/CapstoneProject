@@ -119,9 +119,7 @@ namespace WebAPI.Controllers
                 {
                     return BadRequest($"File upload failed: {ex.Message}");
                 }
-                var poi = _mapper.Map<POI>(request);
-                poi.POIImgUrl = POIImgUrl!;
-                var updatedPOI = await _poiService.UpdateAsync(id, poi);
+                var updatedPOI = await _poiService.UpdateAsync(id, request, POIImgUrl);
                 var response = _mapper.Map<PoiResponse>(updatedPOI);
 
                 return Ok(response);

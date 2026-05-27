@@ -13,8 +13,8 @@ namespace Application.Interfaces
         Task<POI?> GetByIdAsync(Guid id);
         Task<POI> CreateAsync(POI request, List<Guid> preferenceIds, Guid locationId, Guid districtId);
         Task<POI> CreatePartnerPoiAsync(Guid partnerId, POI request, List<Guid> preferenceIds, Guid locationId, Guid districtId);
-        Task<POI> UpdateAsync(Guid id, POI request);
-        Task<POI> UpdatePartnerPoiAsync(Guid partnerId, Guid id, POI request);
+        Task<POI> UpdateAsync(Guid id, UpdatePoiRequest request, string? poiImgUrl = null);
+        Task<POI> UpdatePartnerPoiAsync(Guid partnerId, Guid id, UpdatePoiRequest request, string? poiImgUrl = null);
         Task<List<PoiResponse>> GetPoisByDistrictAsync(
        Guid locationId,
        Guid districtId,
