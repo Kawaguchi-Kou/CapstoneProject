@@ -131,7 +131,7 @@ namespace Application.Services
 
         public async Task<List<POI>> GetAllAsync() 
         {
-            return await _poiRepository.GetAllWithPreferencesAsync();  
+            return await _poiRepository.GetAllAsync();  
         } 
 
         public async Task<POI?> GetByIdAsync(Guid id)
