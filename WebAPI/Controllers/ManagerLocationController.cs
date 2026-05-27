@@ -7,7 +7,7 @@ namespace WebAPI.Controllers
 {
     [ApiController]
     [Route("api/manager/locations")]
-    [Authorize(Roles = "Manager,Partner")]
+    [Authorize(Roles = "Admin,Manager,Partner")]
     public class ManagerLocationController : ControllerBase
     {
         private readonly ILocationService _locationService;
@@ -38,7 +38,7 @@ namespace WebAPI.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "Manager")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Create(CreateLocationRequest request)
         {
             var location = await _locationService.CreateAsync(request);
@@ -46,7 +46,7 @@ namespace WebAPI.Controllers
         }
 
         [HttpPut("{id}")]
-        [Authorize(Roles = "Manager")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Update(Guid id, UpdateLocationRequest request)
         {
             var location = await _locationService.UpdateAsync(id, request);
@@ -54,7 +54,7 @@ namespace WebAPI.Controllers
         }
 
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Manager")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Delete(Guid id)
         {
             await _locationService.DeleteAsync(id);
@@ -62,7 +62,7 @@ namespace WebAPI.Controllers
         }
 
         [HttpPost("import")]
-        [Authorize(Roles = "Manager")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> ImportExcel(IFormFile file)
         {
             if (file == null || file.Length == 0)

@@ -1,4 +1,4 @@
-﻿using Application.DTOs.Requests;
+using Application.DTOs.Requests;
 using Application.DTOs.Responses;
 using Application.Interfaces;
 using AutoMapper;
@@ -9,7 +9,7 @@ namespace WebAPI.Controllers
 {
     [ApiController]
     [Route("api/districts")]
-    [Authorize(Roles = "Manager")]
+    [Authorize(Roles = "Admin,Manager")]
     public class DistrictController : ControllerBase
     {
         private readonly IDistrictService _districtService;
@@ -57,6 +57,7 @@ namespace WebAPI.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Create([FromBody] CreateDistrictRequest request)
         {
             try
