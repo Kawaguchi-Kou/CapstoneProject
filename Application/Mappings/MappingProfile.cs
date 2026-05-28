@@ -73,7 +73,9 @@ namespace Application.Mappings
                 .ForMember(dest => dest.LocationName,
                 opt => opt.MapFrom(src => src.Location.LocationName))
                 .ForMember(dest => dest.PartnerName,
-                    opt => opt.MapFrom(src => src.Partner != null ? src.Partner.Name : null))
+                    opt => opt.MapFrom(src => src.Partner != null 
+                        ? (src.Partner.PartnerProfile != null && !string.IsNullOrEmpty(src.Partner.PartnerProfile.BusinessName) ? src.Partner.PartnerProfile.BusinessName : src.Partner.Name) 
+                        : null))
                 .ForMember(dest => dest.Preferences,
                     opt => opt.MapFrom(src =>
                         src.PoiPreferences
