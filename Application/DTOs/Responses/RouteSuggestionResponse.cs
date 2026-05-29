@@ -1,25 +1,27 @@
-using System.Collections.Generic;
+using Application.DTOs.Responses;
 
-namespace Application.DTOs.Responses
+public class RouteSuggestionResponse
 {
-    public class RouteSuggestionResponse
-    {
-        public string RouteId { get; set; } = string.Empty;
+    public string RouteId { get; set; } = "";
 
-        public int RouteIndex { get; set; }
+    public int RouteIndex { get; set; }
 
-        public List<RouteStopDto> Stops { get; set; } = new();
+    public List<RouteStopDto> Stops { get; set; } = new();
 
-        public double TotalDistanceKm { get; set; }
+    public double TotalDistanceKm { get; set; }
 
-        public string WeatherSummary { get; set; } = string.Empty;
+    // overall weather description
+    public string WeatherSummary { get; set; } = "";
 
-        public string AiRecommendation { get; set; } = string.Empty;
+    // AI natural language advice
+    public string TravelAdvice { get; set; } = "";
 
-        public bool Recommended { get; set; }
+    // suggested activity types
+    public List<string> RecommendedActivities { get; set; } = new();
 
-        public double Score { get; set; }
+    // warnings
+    public List<string> Warnings { get; set; } = new();
 
-        public List<SegmentReasonDetail> Reasons { get; set; } = new();
-    }
+    // for Google Maps Polyline
+    public List<RoutePolylinePointDto> Polyline { get; set; } = new();
 }

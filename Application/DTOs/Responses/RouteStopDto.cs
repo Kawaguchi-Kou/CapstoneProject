@@ -10,6 +10,9 @@ namespace Application.DTOs.Responses
     {
         public string NodeId { get; set; } = string.Empty;
         public string Label { get; set; } = string.Empty;
+        public double? Latitude { get; set; }
+
+        public double? Longitude { get; set; }
 
         /// <summary>Km from the previous stop (0 for the first stop).</summary>
         public double DistanceFromPrevKm { get; set; }

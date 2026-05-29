@@ -36,7 +36,20 @@ namespace Application.Interfaces
         /// using the Vietnam travel graph, fetches weather data for each stop,
         /// and returns an AI-generated recommendation in Vietnamese per route.
         /// </summary>
-        Task<List<RouteSuggestionResponse>> GetRouteSuggestionsAsync(Guid tripId);
-        Task ApplyRouteAsync(Guid tripId, string routeId);
+        Task<RouteSuggestionResponse>
+    GetRouteSuggestionAsync(
+        Guid tripId,
+        string routeId);
+        Task ApplyRouteAsync(
+    Guid tripId,
+    RouteOptionDTO selectedRoute);
+
+        Task<List<RouteOptionDTO>>
+    GetAvailableRoutesAsync(Guid tripId);
+
+        Task UpdateSegmentAsync(
+    Guid tripId,
+    Guid segmentId,
+    TripSegment updatedSegment);
     }
 }

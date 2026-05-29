@@ -83,7 +83,7 @@ namespace Infrastructure.ExternalApis.OpenMeteo
                         {
                             Date = DateTime.Parse(data.Daily.Time[i]),
                             MaxTemperature = data.Daily.TemperatureMax[i],
-                            PrecipitationProbability = data.Daily.PrecipitationProbabilityMax[i],
+                            PrecipitationProbability = data.Daily.PrecipitationProbabilityMax[i] / 100.0,
                             MaxWindSpeed = data.Daily.WindSpeedMax[i]
                         });
                     }

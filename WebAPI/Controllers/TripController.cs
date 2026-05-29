@@ -153,13 +153,13 @@ namespace WebAPI.Controllers
             }
         }
 
-        [HttpGet("{tripId}/route-suggestions")]
+        [HttpGet("{tripId}/available-routes")]
         [Authorize]
-        public async Task<IActionResult> GetRouteSuggestions(Guid tripId)
+        public async Task<IActionResult> GetAvailableRoute(Guid tripId)
         {
             try
             {
-                var suggestions = await _tripSegmentService.GetRouteSuggestionsAsync(tripId);
+                var suggestions = await _tripSegmentService.GetAvailableRoutesAsync(tripId);
                 return Ok(suggestions);
             }
             catch (Exception ex)
@@ -168,16 +168,42 @@ namespace WebAPI.Controllers
             }
         }
 
+        [HttpGet("{routeId}/advice-and-reccommendation")]
+        [Authorize]
+        public async Task<IActionResult>
+            GetRouteSuggestion(
+                Guid tripId,
+                string routeId)
+        {
+            try
+            {
+                var result =
+                    await _tripSegmentService
+                        .GetRouteSuggestionAsync(
+                            tripId,
+                            routeId);
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new
+                {
+                    message = ex.Message
+                });
+            }
+        }
+
         [HttpPost("{tripId}/apply-route")]
         [Authorize]
         public async Task<IActionResult> ApplyRoute(
     Guid tripId,
-    [FromBody] ApplyRouteRequest request)
+    [FromBody] RouteOptionDTO request)
         {
             try
             {
                 await _tripSegmentService
-                    .ApplyRouteAsync(tripId, request.RouteId);
+                    .ApplyRouteAsync(tripId, request);
 
                 return Ok(new
                 {
@@ -206,6 +232,26 @@ namespace WebAPI.Controllers
             {
                 return BadRequest(ex.Message);
             }
+        }
+
+        [HttpPut("{tripId}/segments/{segmentId}")]
+        public async Task<IActionResult> UpdateSegment(
+    Guid tripId,
+    Guid segmentId,
+    [FromBody] UpdateSegmentRequest request)
+        {
+
+            var segment = _mapper.Map<TripSegment>(request);
+
+            await _tripSegmentService.UpdateSegmentAsync(
+                tripId,
+                segmentId,
+                segment);
+
+            return Ok(new
+            {
+                message = "Segment updated successfully"
+            });
         }
 
         // 🔷 Owner add
