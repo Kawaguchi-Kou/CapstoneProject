@@ -19,7 +19,7 @@ namespace Infrastructure.Repositories
             _context = context;
         }
 
-        public async Task<District?> GetByIdAsync(Guid id)
+        public async Task<District?> GetByIdAsync(Guid? id)
         {
             return await _context.Districts.FirstOrDefaultAsync(d => d.Id == id);
         }

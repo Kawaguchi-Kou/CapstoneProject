@@ -43,15 +43,15 @@ var connectionString = Environment.GetEnvironmentVariable("SUPABASE");
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(connectionString));
 
-//Hangfire configuration 
-builder.Services.AddHangfire(config =>
-    config.UsePostgreSqlStorage(options =>
-        options.UseNpgsqlConnection(connectionString)
-    ));
-builder.Services.AddHangfireServer(options =>
-{
-    options.WorkerCount = 2; 
-});
+////Hangfire configuration 
+//builder.Services.AddHangfire(config =>
+//    config.UsePostgreSqlStorage(options =>
+//        options.UseNpgsqlConnection(connectionString)
+//    ));
+//builder.Services.AddHangfireServer(options =>
+//{
+//    options.WorkerCount = 2; 
+//});
 
 // =====================
 // WEATHER - OPEN METEO
@@ -154,6 +154,23 @@ builder.Services.AddScoped<IAdminStatisticService, AdminStatisticService>();
 
 //Segment
 builder.Services.AddScoped<ITripSegmentService, TripSegmentService>();
+
+//RouteGraph (singleton — JSON is static)
+var graphPath = Path.Combine(
+    AppContext.BaseDirectory,
+    "..", "..", "..", "..",   // up from WebAPI/bin/Debug/net8.0 → solution root
+    "Infrastructure", "Graph", "vietnam_phuot_graph.json");
+
+if (!File.Exists(graphPath))
+{
+    // fallback: try relative to ContentRootPath
+    graphPath = Path.Combine(
+        builder.Environment.ContentRootPath,
+        "..", "Infrastructure", "Graph", "vietnam_phuot_graph.json");
+}
+
+builder.Services.AddSingleton<IRouteGraphService>(
+    _ => new RouteGraphService(Path.GetFullPath(graphPath)));
 
 //Gemini
 builder.Services.AddHttpClient<IGeminiService, GeminiService>()
@@ -414,7 +431,7 @@ app.UseAuthorization();
 app.UseSwagger();
 app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "ProjectName API v1"));
 
-app.UseHangfireDashboard("/hangfire");
+//app.UseHangfireDashboard("/hangfire");
 
 app.MapControllers();
 app.MapHub<NotificationHub>("/hubs/notification");
@@ -422,10 +439,10 @@ app.MapHub<NotificationHub>("/hubs/notification");
 // ============================
 // HANGFIRE RECURRING JOB
 // ============================
-RecurringJob.AddOrUpdate<IWeatherMonitorJob>(
-    "weather-hourly-scan",
-    x => x.ScanUpcomingTripsAsync(),
-    Cron.Hourly);
+//RecurringJob.AddOrUpdate<IWeatherMonitorJob>(
+//    "weather-hourly-scan",
+//    x => x.ScanUpcomingTripsAsync(),
+//    Cron.Hourly);
 
 RecurringJob.AddOrUpdate<IAdSchedulingJob>(
     "ad-scheduling-scan",

@@ -54,7 +54,9 @@ namespace Infrastructure.Repositories
             return await _context.WeatherForecasts
                 .FirstOrDefaultAsync(x =>
                     x.LocationId == locationId &&
-                    x.ForecastDate.Date == date.Date);
+                    DateTime.SpecifyKind(
+                    x.ForecastDate.Date,
+                    DateTimeKind.Utc) == date.Date);
         }
 
         public async Task<List<WeatherForecast>> GetRangeAsync(
@@ -104,18 +106,26 @@ namespace Infrastructure.Repositories
             //    _context.Entry(existing).CurrentValues.SetValues(forecast);
             //}
 
+            forecast.ForecastDate = DateTime.SpecifyKind(
+        forecast.ForecastDate.Date,
+        DateTimeKind.Utc);
+
+            forecast.FetchedAt = DateTime.SpecifyKind(
+                forecast.FetchedAt,
+                DateTimeKind.Utc);
+
             await _context.Database.ExecuteSqlRawAsync(@"
-                INSERT INTO weather_forecast 
-                (""Id"", ""City"", ""FetchedAt"", ""ForecastDate"", ""LocationId"", 
-                 ""PrecipitationProbability"", ""TemperatureCelsius"", ""WindSpeed"")
-                VALUES ({0}, {1}, {2}, {3}, {4}, {5}, {6}, {7})
-                ON CONFLICT (""LocationId"", ""ForecastDate"")
-                DO UPDATE SET
-                    ""PrecipitationProbability"" = EXCLUDED.""PrecipitationProbability"",
-                    ""TemperatureCelsius"" = EXCLUDED.""TemperatureCelsius"",
-                    ""WindSpeed"" = EXCLUDED.""WindSpeed"",
-                    ""FetchedAt"" = EXCLUDED.""FetchedAt"";
-            ",
+        INSERT INTO weather_forecast 
+        (""Id"", ""City"", ""FetchedAt"", ""ForecastDate"", ""LocationId"", 
+         ""PrecipitationProbability"", ""TemperatureCelsius"", ""WindSpeed"")
+        VALUES ({0}, {1}, {2}, {3}, {4}, {5}, {6}, {7})
+        ON CONFLICT (""LocationId"", ""ForecastDate"")
+        DO UPDATE SET
+            ""PrecipitationProbability"" = EXCLUDED.""PrecipitationProbability"",
+            ""TemperatureCelsius"" = EXCLUDED.""TemperatureCelsius"",
+            ""WindSpeed"" = EXCLUDED.""WindSpeed"",
+            ""FetchedAt"" = EXCLUDED.""FetchedAt"";
+    ",
             forecast.Id,
             forecast.City,
             forecast.FetchedAt,
@@ -131,6 +141,15 @@ namespace Infrastructure.Repositories
         {
             foreach (var forecast in forecasts)
             {
+
+                forecast.ForecastDate = DateTime.SpecifyKind(
+                    forecast.ForecastDate.Date,
+                    DateTimeKind.Utc);
+
+                forecast.FetchedAt = DateTime.SpecifyKind(
+                    forecast.FetchedAt,
+                    DateTimeKind.Utc);
+
                 await _context.Database.ExecuteSqlRawAsync(@"
             INSERT INTO weather_forecast
             (""Id"", ""City"", ""FetchedAt"", ""ForecastDate"", ""LocationId"",

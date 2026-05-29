@@ -1,0 +1,870 @@
+﻿{
+    "graph": {
+        "nodes": [
+            {
+                "id": "HaNoi",
+                "label": "Hà Nội",
+                "type": "city"
+            },
+            {
+                "id": "HaiPhong",
+                "label": "Hải Phòng",
+                "type": "city"
+            },
+            {
+                "id": "DaNang",
+                "label": "Đà Nẵng",
+                "type": "city"
+            },
+            {
+                "id": "HoChiMinh",
+                "label": "Hồ Chí Minh",
+                "type": "city"
+            },
+            {
+                "id": "CanTho",
+                "label": "Cần Thơ",
+                "type": "city"
+            },
+            {
+                "id": "HaGiang",
+                "label": "Hà Giang",
+                "type": "province"
+            },
+            {
+                "id": "CaoBang",
+                "label": "Cao Bằng",
+                "type": "province"
+            },
+            {
+                "id": "LaiChau",
+                "label": "Lai Châu",
+                "type": "province"
+            },
+            {
+                "id": "LaoCai",
+                "label": "Lào Cai",
+                "type": "province"
+            },
+            {
+                "id": "TuyenQuang",
+                "label": "Tuyên Quang",
+                "type": "province"
+            },
+            {
+                "id": "LangSon",
+                "label": "Lạng Sơn",
+                "type": "province"
+            },
+            {
+                "id": "BacKan",
+                "label": "Bắc Kạn",
+                "type": "province"
+            },
+            {
+                "id": "ThaiNguyen",
+                "label": "Thái Nguyên",
+                "type": "province"
+            },
+            {
+                "id": "YenBai",
+                "label": "Yên Bái",
+                "type": "province"
+            },
+            {
+                "id": "SonLa",
+                "label": "Sơn La",
+                "type": "province"
+            },
+            {
+                "id": "PhuTho",
+                "label": "Phú Thọ",
+                "type": "province"
+            },
+            {
+                "id": "VinhPhuc",
+                "label": "Vĩnh Phúc",
+                "type": "province"
+            },
+            {
+                "id": "QuangNinh",
+                "label": "Quảng Ninh",
+                "type": "province"
+            },
+            {
+                "id": "BacGiang",
+                "label": "Bắc Giang",
+                "type": "province"
+            },
+            {
+                "id": "BacNinh",
+                "label": "Bắc Ninh",
+                "type": "province"
+            },
+            {
+                "id": "HaiDuong",
+                "label": "Hải Dương",
+                "type": "province"
+            },
+            {
+                "id": "HungYen",
+                "label": "Hưng Yên",
+                "type": "province"
+            },
+            {
+                "id": "HoaBinh",
+                "label": "Hòa Bình",
+                "type": "province"
+            },
+            {
+                "id": "HaNam",
+                "label": "Hà Nam",
+                "type": "province"
+            },
+            {
+                "id": "NamDinh",
+                "label": "Nam Định",
+                "type": "province"
+            },
+            {
+                "id": "ThaiBinh",
+                "label": "Thái Bình",
+                "type": "province"
+            },
+            {
+                "id": "NinhBinh",
+                "label": "Ninh Bình",
+                "type": "province"
+            },
+            {
+                "id": "ThanhHoa",
+                "label": "Thanh Hóa",
+                "type": "province"
+            },
+            {
+                "id": "NgheAn",
+                "label": "Nghệ An",
+                "type": "province"
+            },
+            {
+                "id": "HaTinh",
+                "label": "Hà Tĩnh",
+                "type": "province"
+            },
+            {
+                "id": "QuangBinh",
+                "label": "Quảng Bình",
+                "type": "province"
+            },
+            {
+                "id": "QuangTri",
+                "label": "Quảng Trị",
+                "type": "province"
+            },
+            {
+                "id": "ThuaThienHue",
+                "label": "Thừa Thiên Huế",
+                "type": "province"
+            },
+            {
+                "id": "QuangNam",
+                "label": "Quảng Nam",
+                "type": "province"
+            },
+            {
+                "id": "QuangNgai",
+                "label": "Quảng Ngãi",
+                "type": "province"
+            },
+            {
+                "id": "BinhDinh",
+                "label": "Bình Định",
+                "type": "province"
+            },
+            {
+                "id": "PhuYen",
+                "label": "Phú Yên",
+                "type": "province"
+            },
+            {
+                "id": "KhanhHoa",
+                "label": "Khánh Hòa",
+                "type": "province"
+            },
+            {
+                "id": "NinhThuan",
+                "label": "Ninh Thuận",
+                "type": "province"
+            },
+            {
+                "id": "BinhThuan",
+                "label": "Bình Thuận",
+                "type": "province"
+            },
+            {
+                "id": "KonTum",
+                "label": "Kon Tum",
+                "type": "province"
+            },
+            {
+                "id": "GiaLai",
+                "label": "Gia Lai",
+                "type": "province"
+            },
+            {
+                "id": "DakLak",
+                "label": "Đắk Lắk",
+                "type": "province"
+            },
+            {
+                "id": "DakNong",
+                "label": "Đắk Nông",
+                "type": "province"
+            },
+            {
+                "id": "LamDong",
+                "label": "Lâm Đồng",
+                "type": "province"
+            },
+            {
+                "id": "BinhPhuoc",
+                "label": "Bình Phước",
+                "type": "province"
+            },
+            {
+                "id": "TayNinh",
+                "label": "Tây Ninh",
+                "type": "province"
+            },
+            {
+                "id": "BinhDuong",
+                "label": "Bình Dương",
+                "type": "province"
+            },
+            {
+                "id": "DongNai",
+                "label": "Đồng Nai",
+                "type": "province"
+            },
+            {
+                "id": "BaRiaVungTau",
+                "label": "Bà Rịa - Vũng Tàu",
+                "type": "province"
+            },
+            {
+                "id": "LongAn",
+                "label": "Long An",
+                "type": "province"
+            },
+            {
+                "id": "TienGiang",
+                "label": "Tiền Giang",
+                "type": "province"
+            },
+            {
+                "id": "BenTre",
+                "label": "Bến Tre",
+                "type": "province"
+            },
+            {
+                "id": "TraVinh",
+                "label": "Trà Vinh",
+                "type": "province"
+            },
+            {
+                "id": "VinhLong",
+                "label": "Vĩnh Long",
+                "type": "province"
+            },
+            {
+                "id": "DongThap",
+                "label": "Đồng Tháp",
+                "type": "province"
+            },
+            {
+                "id": "AnGiang",
+                "label": "An Giang",
+                "type": "province"
+            },
+            {
+                "id": "KienGiang",
+                "label": "Kiên Giang",
+                "type": "province"
+            },
+            {
+                "id": "HauGiang",
+                "label": "Hậu Giang",
+                "type": "province"
+            },
+            {
+                "id": "SocTrang",
+                "label": "Sóc Trăng",
+                "type": "province"
+            },
+            {
+                "id": "BacLieu",
+                "label": "Bạc Liêu",
+                "type": "province"
+            },
+            {
+                "id": "CaMau",
+                "label": "Cà Mau",
+                "type": "province"
+            }
+        ],
+        "edges": [
+            {
+                "source": "LaiChau",
+                "target": "DienBien",
+                "distance_km": 146,
+                "route_type": "Tuyến đường khác"
+            },
+            {
+                "source": "LaiChau",
+                "target": "LaoCai",
+                "distance_km": 70,
+                "route_type": "Tuyến đường khác"
+            },
+            {
+                "source": "DienBien",
+                "target": "SonLa",
+                "distance_km": 156,
+                "route_type": "Quốc lộ"
+            },
+            {
+                "source": "LaoCai",
+                "target": "HaGiang",
+                "distance_km": 211,
+                "route_type": "Tuyến đường khác"
+            },
+            {
+                "source": "LaoCai",
+                "target": "YenBai",
+                "distance_km": 168,
+                "route_type": "Tuyến đường khác"
+            },
+            {
+                "source": "HaGiang",
+                "target": "TuyenQuang",
+                "distance_km": 151,
+                "route_type": "Quốc lộ"
+            },
+            {
+                "source": "HaGiang",
+                "target": "CaoBang",
+                "distance_km": 200,
+                "route_type": "Tuyến đường khác"
+            },
+            {
+                "source": "CaoBang",
+                "target": "BacKan",
+                "distance_km": 120,
+                "route_type": "Quốc lộ"
+            },
+            {
+                "source": "CaoBang",
+                "target": "LangSon",
+                "distance_km": 164,
+                "route_type": "Tuyến đường khác"
+            },
+            {
+                "source": "LangSon",
+                "target": "BacGiang",
+                "distance_km": 104,
+                "route_type": "Quốc lộ 1A"
+            },
+            {
+                "source": "LangSon",
+                "target": "QuangNinh",
+                "distance_km": 86,
+                "route_type": "Tuyến đường khác"
+            },
+            {
+                "source": "BacKan",
+                "target": "ThaiNguyen",
+                "distance_km": 85,
+                "route_type": "Quốc lộ"
+            },
+            {
+                "source": "TuyenQuang",
+                "target": "PhuTho",
+                "distance_km": 58,
+                "route_type": "Quốc lộ"
+            },
+            {
+                "source": "TuyenQuang",
+                "target": "ThaiNguyen",
+                "distance_km": 84,
+                "route_type": "Quốc lộ"
+            },
+            {
+                "source": "YenBai",
+                "target": "PhuTho",
+                "distance_km": 66,
+                "route_type": "Quốc lộ"
+            },
+            {
+                "source": "SonLa",
+                "target": "HoaBinh",
+                "distance_km": 115,
+                "route_type": "Quốc lộ"
+            },
+            {
+                "source": "HoaBinh",
+                "target": "HaNoi",
+                "distance_km": 70,
+                "route_type": "Quốc lộ"
+            },
+            {
+                "source": "HoaBinh",
+                "target": "ThanhHoa",
+                "distance_km": 114,
+                "route_type": "Đường Hồ Chí Minh"
+            },
+            {
+                "source": "PhuTho",
+                "target": "VinhPhuc",
+                "distance_km": 58,
+                "route_type": "Quốc lộ"
+            },
+            {
+                "source": "VinhPhuc",
+                "target": "HaNoi",
+                "distance_km": 50,
+                "route_type": "Quốc lộ"
+            },
+            {
+                "source": "ThaiNguyen",
+                "target": "HaNoi",
+                "distance_km": 85,
+                "route_type": "Quốc lộ"
+            },
+            {
+                "source": "BacGiang",
+                "target": "BacNinh",
+                "distance_km": 21,
+                "route_type": "Quốc lộ 1A"
+            },
+            {
+                "source": "BacNinh",
+                "target": "HaNoi",
+                "distance_km": 47,
+                "route_type": "Quốc lộ 1A"
+            },
+            {
+                "source": "BacNinh",
+                "target": "HaiDuong",
+                "distance_km": 45,
+                "route_type": "Quốc lộ"
+            },
+            {
+                "source": "HaNoi",
+                "target": "HaiDuong",
+                "distance_km": 55,
+                "route_type": "Quốc lộ"
+            },
+            {
+                "source": "HaNoi",
+                "target": "HungYen",
+                "distance_km": 56,
+                "route_type": "Quốc lộ"
+            },
+            {
+                "source": "HaNoi",
+                "target": "HaNam",
+                "distance_km": 56,
+                "route_type": "Quốc lộ 1A"
+            },
+            {
+                "source": "HaiDuong",
+                "target": "HaiPhong",
+                "distance_km": 45,
+                "route_type": "Quốc lộ"
+            },
+            {
+                "source": "HaiPhong",
+                "target": "QuangNinh",
+                "distance_km": 70,
+                "route_type": "Quốc lộ"
+            },
+            {
+                "source": "HaiPhong",
+                "target": "ThaiBinh",
+                "distance_km": 70,
+                "route_type": "Quốc lộ"
+            },
+            {
+                "source": "HungYen",
+                "target": "HaNam",
+                "distance_km": 27,
+                "route_type": "Quốc lộ"
+            },
+            {
+                "source": "HungYen",
+                "target": "ThaiBinh",
+                "distance_km": 48,
+                "route_type": "Quốc lộ"
+            },
+            {
+                "source": "ThaiBinh",
+                "target": "NamDinh",
+                "distance_km": 19,
+                "route_type": "Quốc lộ"
+            },
+            {
+                "source": "HaNam",
+                "target": "NamDinh",
+                "distance_km": 38,
+                "route_type": "Quốc lộ"
+            },
+            {
+                "source": "HaNam",
+                "target": "NinhBinh",
+                "distance_km": 31,
+                "route_type": "Quốc lộ 1A"
+            },
+            {
+                "source": "NamDinh",
+                "target": "NinhBinh",
+                "distance_km": 32,
+                "route_type": "Quốc lộ"
+            },
+            {
+                "source": "NinhBinh",
+                "target": "ThanhHoa",
+                "distance_km": 63,
+                "route_type": "Quốc lộ 1A"
+            },
+            {
+                "source": "ThanhHoa",
+                "target": "NgheAn",
+                "distance_km": 141,
+                "route_type": "Quốc lộ 1A"
+            },
+            {
+                "source": "NgheAn",
+                "target": "HaTinh",
+                "distance_km": 50,
+                "route_type": "Quốc lộ 1A"
+            },
+            {
+                "source": "HaTinh",
+                "target": "QuangBinh",
+                "distance_km": 150,
+                "route_type": "Quốc lộ 1A"
+            },
+            {
+                "source": "QuangBinh",
+                "target": "QuangTri",
+                "distance_km": 109,
+                "route_type": "Quốc lộ 1A"
+            },
+            {
+                "source": "QuangTri",
+                "target": "ThuaThienHue",
+                "distance_km": 72,
+                "route_type": "Quốc lộ 1A"
+            },
+            {
+                "source": "ThuaThienHue",
+                "target": "DaNang",
+                "distance_km": 105,
+                "route_type": "Quốc lộ 1A"
+            },
+            {
+                "source": "DaNang",
+                "target": "QuangNam",
+                "distance_km": 28,
+                "route_type": "Quốc lộ 1A"
+            },
+            {
+                "source": "QuangNam",
+                "target": "KonTum",
+                "distance_km": 302,
+                "route_type": "Đường Hồ Chí Minh"
+            },
+            {
+                "source": "QuangNam",
+                "target": "QuangNgai",
+                "distance_km": 118,
+                "route_type": "Quốc lộ 1A"
+            },
+            {
+                "source": "QuangNgai",
+                "target": "BinhDinh",
+                "distance_km": 172,
+                "route_type": "Quốc lộ 1A"
+            },
+            {
+                "source": "BinhDinh",
+                "target": "PhuYen",
+                "distance_km": 96,
+                "route_type": "Quốc lộ 1A"
+            },
+            {
+                "source": "PhuYen",
+                "target": "KhanhHoa",
+                "distance_km": 122,
+                "route_type": "Quốc lộ 1A"
+            },
+            {
+                "source": "KhanhHoa",
+                "target": "NinhThuan",
+                "distance_km": 93,
+                "route_type": "Quốc lộ 1A"
+            },
+            {
+                "source": "KonTum",
+                "target": "GiaLai",
+                "distance_km": 48,
+                "route_type": "Đường Hồ Chí Minh"
+            },
+            {
+                "source": "GiaLai",
+                "target": "BinhDinh",
+                "distance_km": 163,
+                "route_type": "Quốc lộ"
+            },
+            {
+                "source": "GiaLai",
+                "target": "DakLak",
+                "distance_km": 181,
+                "route_type": "Đường Hồ Chí Minh"
+            },
+            {
+                "source": "DakLak",
+                "target": "PhuYen",
+                "distance_km": 194,
+                "route_type": "Quốc lộ"
+            },
+            {
+                "source": "DakLak",
+                "target": "KhanhHoa",
+                "distance_km": 194,
+                "route_type": "Quốc lộ"
+            },
+            {
+                "source": "DakLak",
+                "target": "LamDong",
+                "distance_km": 206,
+                "route_type": "Quốc lộ"
+            },
+            {
+                "source": "DakLak",
+                "target": "DakNong",
+                "distance_km": 125,
+                "route_type": "Đường Hồ Chí Minh"
+            },
+            {
+                "source": "LamDong",
+                "target": "KhanhHoa",
+                "distance_km": 138,
+                "route_type": "Quốc lộ"
+            },
+            {
+                "source": "LamDong",
+                "target": "NinhThuan",
+                "distance_km": 106,
+                "route_type": "Quốc lộ"
+            },
+            {
+                "source": "LamDong",
+                "target": "BinhThuan",
+                "distance_km": 162,
+                "route_type": "Quốc lộ"
+            },
+            {
+                "source": "LamDong",
+                "target": "DongNai",
+                "distance_km": 270,
+                "route_type": "Quốc lộ"
+            },
+            {
+                "source": "DakNong",
+                "target": "BinhPhuoc",
+                "distance_km": 107,
+                "route_type": "Đường Hồ Chí Minh"
+            },
+            {
+                "source": "NinhThuan",
+                "target": "BinhThuan",
+                "distance_km": 152,
+                "route_type": "Quốc lộ 1A"
+            },
+            {
+                "source": "BinhThuan",
+                "target": "DongNai",
+                "distance_km": 159,
+                "route_type": "Quốc lộ 1A"
+            },
+            {
+                "source": "BinhThuan",
+                "target": "BaRiaVungTau",
+                "distance_km": 152,
+                "route_type": "Quốc lộ"
+            },
+            {
+                "source": "BinhPhuoc",
+                "target": "TayNinh",
+                "distance_km": 92,
+                "route_type": "Tuyến đường khác"
+            },
+            {
+                "source": "BinhPhuoc",
+                "target": "BinhDuong",
+                "distance_km": 107,
+                "route_type": "Quốc lộ"
+            },
+            {
+                "source": "TayNinh",
+                "target": "HoChiMinh",
+                "distance_km": 90,
+                "route_type": "Quốc lộ"
+            },
+            {
+                "source": "BinhDuong",
+                "target": "HoChiMinh",
+                "distance_km": 24,
+                "route_type": "Quốc lộ"
+            },
+            {
+                "source": "BinhDuong",
+                "target": "DongNai",
+                "distance_km": 24,
+                "route_type": "Quốc lộ"
+            },
+            {
+                "source": "DongNai",
+                "target": "HoChiMinh",
+                "distance_km": 35,
+                "route_type": "Quốc lộ 1A"
+            },
+            {
+                "source": "DongNai",
+                "target": "BaRiaVungTau",
+                "distance_km": 91,
+                "route_type": "Quốc lộ"
+            },
+            {
+                "source": "HoChiMinh",
+                "target": "LongAn",
+                "distance_km": 47,
+                "route_type": "Quốc lộ 1A"
+            },
+            {
+                "source": "HoChiMinh",
+                "target": "BaRiaVungTau",
+                "distance_km": 100,
+                "route_type": "Đường Thủy"
+            },
+            {
+                "source": "LongAn",
+                "target": "DongThap",
+                "distance_km": 91,
+                "route_type": "Quốc lộ"
+            },
+            {
+                "source": "LongAn",
+                "target": "TienGiang",
+                "distance_km": 23,
+                "route_type": "Quốc lộ 1A"
+            },
+            {
+                "source": "TienGiang",
+                "target": "BenTre",
+                "distance_km": 14,
+                "route_type": "Quốc lộ"
+            },
+            {
+                "source": "TienGiang",
+                "target": "VinhLong",
+                "distance_km": 69,
+                "route_type": "Quốc lộ 1A"
+            },
+            {
+                "source": "BenTre",
+                "target": "TraVinh",
+                "distance_km": 45,
+                "route_type": "Quốc lộ"
+            },
+            {
+                "source": "VinhLong",
+                "target": "TraVinh",
+                "distance_km": 67,
+                "route_type": "Quốc lộ"
+            },
+            {
+                "source": "VinhLong",
+                "target": "DongThap",
+                "distance_km": 26,
+                "route_type": "Quốc lộ"
+            },
+            {
+                "source": "VinhLong",
+                "target": "CanTho",
+                "distance_km": 41,
+                "route_type": "Quốc lộ 1A"
+            },
+            {
+                "source": "DongThap",
+                "target": "AnGiang",
+                "distance_km": 36,
+                "route_type": "Quốc lộ"
+            },
+            {
+                "source": "AnGiang",
+                "target": "KienGiang",
+                "distance_km": 72,
+                "route_type": "Quốc lộ"
+            },
+            {
+                "source": "CanTho",
+                "target": "KienGiang",
+                "distance_km": 120,
+                "route_type": "Quốc lộ"
+            },
+            {
+                "source": "CanTho",
+                "target": "HauGiang",
+                "distance_km": 50,
+                "route_type": "Quốc lộ 1A"
+            },
+            {
+                "source": "CanTho",
+                "target": "SocTrang",
+                "distance_km": 62,
+                "route_type": "Quốc lộ 1A"
+            },
+            {
+                "source": "HauGiang",
+                "target": "KienGiang",
+                "distance_km": 53,
+                "route_type": "Quốc lộ"
+            },
+            {
+                "source": "HauGiang",
+                "target": "BacLieu",
+                "distance_km": 80,
+                "route_type": "Đường Hồ Chí Minh"
+            },
+            {
+                "source": "SocTrang",
+                "target": "BacLieu",
+                "distance_km": 50,
+                "route_type": "Quốc lộ 1A"
+            },
+            {
+                "source": "BacLieu",
+                "target": "CaMau",
+                "distance_km": 69,
+                "route_type": "Quốc lộ 1A"
+            },
+            {
+                "source": "KienGiang",
+                "target": "CaMau",
+                "distance_km": 130,
+                "route_type": "Tuyến đường khác"
+            }
+        ]
+    }
+}

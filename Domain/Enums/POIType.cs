@@ -30,6 +30,6 @@ namespace Domain.Enums
         Bar,
         Nightlife,
         Resort
-
+        
     }
 }

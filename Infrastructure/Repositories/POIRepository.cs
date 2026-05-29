@@ -65,7 +65,7 @@ namespace Infrastructure.Repositories
         }
 
         public async Task<List<POI>> GetByLocationDistrictPairsAsync(
-    List<(Guid LocationId, Guid DistrictId)> keys)
+    List<(Guid LocationId, Guid? DistrictId)> keys)
         {
             if (keys == null || !keys.Any())
                 return new List<POI>();

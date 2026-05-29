@@ -145,6 +145,13 @@ namespace Application.Mappings
                        .GroupBy(d => d.VisitDate.Date)
                 ));
 
+            CreateMap<UpdateSegmentRequest, TripSegment>()
+                .ForMember(dest => dest.SegmentId, opt => opt.Ignore())
+                .ForMember(dest => dest.TripId, opt => opt.Ignore())
+                .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
+                .ForMember(dest => dest.OrderIndex, opt => opt.Ignore())
+                .ForMember(dest => dest.DistanceKm, opt => opt.Ignore());
+
             // 🔥 GROUP → DAY
             CreateMap<IGrouping<DateTime, ItineraryDetail>, DayPlanResponse>()
                 .ForMember(dest => dest.Date, opt => opt.MapFrom(src => src.Key))

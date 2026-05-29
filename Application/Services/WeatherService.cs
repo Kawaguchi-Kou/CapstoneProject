@@ -196,7 +196,8 @@ namespace Application.Services
 GetRangeOptimizedAsync(Guid locationId, List<DateTime> dates)
         {
             dates = dates
-                .Select(x => x.Date)
+                //.Select(x => x.Date)
+                .Select(x => DateTime.SpecifyKind(x.Date, DateTimeKind.Utc))
                 .Distinct()
                 .OrderBy(x => x)
                 .ToList();
@@ -205,7 +206,9 @@ GetRangeOptimizedAsync(Guid locationId, List<DateTime> dates)
                 .GetByLocationAndDates(locationId, dates);
 
             var result = existingForecasts
-                .ToDictionary(x => x.ForecastDate.Date);
+                .ToDictionary(x => DateTime.SpecifyKind(
+    x.ForecastDate.Date,
+    DateTimeKind.Utc));
 
             var missingDates = dates
                 .Where(d => !result.ContainsKey(d))
@@ -227,9 +230,24 @@ GetRangeOptimizedAsync(Guid locationId, List<DateTime> dates)
                     missingDates.Min(),
                     missingDates.Max());
 
+            foreach (var forecast in apiForecasts)
+            {
+                forecast.LocationId = locationId;
+
+                forecast.ForecastDate = DateTime.SpecifyKind(
+                    forecast.ForecastDate.Date,
+                    DateTimeKind.Utc);
+
+                forecast.FetchedAt = DateTime.UtcNow;
+            }
+
             foreach (var item in apiForecasts)
             {
-                result[item.ForecastDate.Date] = item;
+                var key = DateTime.SpecifyKind(
+                    item.ForecastDate.Date,
+                    DateTimeKind.Utc);
+
+                result[key] = item;
             }
 
             // ONE SAVE
