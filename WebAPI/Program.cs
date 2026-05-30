@@ -43,15 +43,15 @@ var connectionString = Environment.GetEnvironmentVariable("SUPABASE");
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(connectionString));
 
-////Hangfire configuration 
-//builder.Services.AddHangfire(config =>
-//    config.UsePostgreSqlStorage(options =>
-//        options.UseNpgsqlConnection(connectionString)
-//    ));
-//builder.Services.AddHangfireServer(options =>
-//{
-//    options.WorkerCount = 2; 
-//});
+//Hangfire configuration 
+builder.Services.AddHangfire(config =>
+    config.UsePostgreSqlStorage(options =>
+        options.UseNpgsqlConnection(connectionString)
+    ));
+builder.Services.AddHangfireServer(options =>
+{
+    options.WorkerCount = 2;
+});
 
 // =====================
 // WEATHER - OPEN METEO
@@ -431,7 +431,7 @@ app.UseAuthorization();
 app.UseSwagger();
 app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "ProjectName API v1"));
 
-//app.UseHangfireDashboard("/hangfire");
+app.UseHangfireDashboard("/hangfire");
 
 app.MapControllers();
 app.MapHub<NotificationHub>("/hubs/notification");
@@ -447,6 +447,11 @@ app.MapHub<NotificationHub>("/hubs/notification");
 RecurringJob.AddOrUpdate<IAdSchedulingJob>(
     "ad-scheduling-scan",
     x => x.ProcessScheduledAndExpiredAdsAsync(),
+    "*/5 * * * *");  // Mỗi 5 phút
+
+RecurringJob.AddOrUpdate<IPaymentExpiryJob>(
+    "payment-expiry-scan",
+    x => x.ExpirePendingPaymentsAsync(),
     "*/5 * * * *");  // Mỗi 5 phút
 
 
