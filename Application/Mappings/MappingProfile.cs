@@ -98,15 +98,6 @@ namespace Application.Mappings
                 .ForMember(dest => dest.PoiPreferences, opt => opt.Ignore());
             CreateMap<Location, DTOs.Responses.LocationResponse>();
 
-            //Trip Risk Profile
-            CreateMap<Trip, TripRiskContextResponse>();
-
-            CreateMap<TripSegment, SegmentRiskContextResponse>();
-
-            CreateMap<ItineraryDetail, ItineraryRiskContextResponse>()
-                .ForMember(d => d.StoredRiskScore,
-                    opt => opt.MapFrom(s => s.WeatherRiskScore));
-
             //Trip
             CreateMap<TripRequest, Trip>();
             CreateMap<Trip, TripResponse>();
@@ -173,7 +164,9 @@ namespace Application.Mappings
                 .ForMember(dest => dest.IsIndoor, opt => opt.MapFrom(src => src.POI!.IsIndoor))
                 .ForMember(dest => dest.StartTime, opt => opt.MapFrom(src => src.StartTime))
                 .ForMember(dest => dest.EndTime, opt => opt.MapFrom(src => src.EndTime))
-                .ForMember(dest => dest.WeatherRiskScore, opt => opt.MapFrom(src => src.WeatherRiskScore));
+                .ForMember(dest => dest.Weather!.TemperatureCelsius, opt => opt.MapFrom(src => src.TemperatureCelsius))
+                .ForMember(dest => dest.Weather!.WindSpeed, opt => opt.MapFrom(src => src.WindSpeed))
+                .ForMember(dest => dest.Weather!.PrecipitationProbability, opt => opt.MapFrom(src => src.PrecipitationProbability));
         }
     }
 }

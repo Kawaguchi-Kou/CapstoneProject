@@ -1,6 +1,7 @@
 using System.Text;
 using System.Text.Json;
 using Application.DTOs.AIResponse;
+using Application.DTOs.Responses;
 using Application.Interfaces;
 using Domain.Entities;
 using Domain.Interfaces;
@@ -585,9 +586,7 @@ HashSet<Guid> tripUsedPoiIds)
                     // ================================
                     // 🌧 WEATHER
                     // ================================
-                    var risk = forecasts.TryGetValue(date, out var weather)
-                        ? _riskEngine.CalculateRisk(weather, poi.IsIndoor)
-                        : 0;
+                    var hasForecast = forecasts.TryGetValue(date, out var weather);
 
                     details.Add(new ItineraryDetail
                     {
@@ -597,7 +596,14 @@ HashSet<Guid> tripUsedPoiIds)
                         VisitDate = date,
                         StartTime = current,
                         EndTime = end,
-                        WeatherRiskScore = risk
+                        TemperatureCelsius =
+                            hasForecast ? weather.TemperatureCelsius : 0,
+
+                                            PrecipitationProbability =
+                            hasForecast ? weather.PrecipitationProbability : 0,
+
+                                            WindSpeed =
+                            hasForecast ? weather.WindSpeed : 0
                     });
 
                     tripUsedPoiIds.Add(poi.Id);
@@ -760,11 +766,6 @@ HashSet<Guid> tripUsedPoiIds)
                 // ====================================================
                 // 5. REAL RISK SCORE (NO MORE 0)
                 // ====================================================
-                var risk = _riskEngine.CalculateRisk(weather, poi.IsIndoor);
-                Console.WriteLine(
-            $"[{date:yyyy-MM-dd}] Rain={weather.PrecipitationProbability}, " +
-            $"Indoor={poi.IsIndoor}, Risk={risk}");
-
                 details.Add(new ItineraryDetail
                 {
                     DetailId = Guid.NewGuid(),
@@ -773,7 +774,9 @@ HashSet<Guid> tripUsedPoiIds)
                     VisitDate = date,
                     StartTime = time,
                     EndTime = end,
-                    WeatherRiskScore = risk
+                    TemperatureCelsius = weather.TemperatureCelsius,
+                    PrecipitationProbability = weather.PrecipitationProbability,
+                    WindSpeed = weather.WindSpeed,
                 });
 
                 segmentUsedPoiIds.Add(poi.Id);

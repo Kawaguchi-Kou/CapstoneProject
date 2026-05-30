@@ -9,6 +9,6 @@ namespace Application.Interfaces
 {
     public interface ITripQueryService
     {
-        Task<TripRiskContextResponse> GetRiskContextAsync(Guid tripId);
+        //Task<TripRiskContextResponse> GetRiskContextAsync(Guid tripId);
     }
 }
