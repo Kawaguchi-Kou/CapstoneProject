@@ -67,7 +67,8 @@ namespace WebAPI.Controllers
                     transactionContent = paymentResponse.TransactionContent,
                     amount = paymentResponse.Amount,
                     qrCodeUrl = paymentResponse.QrCodeUrl,
-                    status = paymentResponse.Status.ToString()
+                    status = paymentResponse.Status.ToString(),
+                    expiresAt = paymentResponse.ExpiresAt
                 });
             }
             catch (KeyNotFoundException ex)

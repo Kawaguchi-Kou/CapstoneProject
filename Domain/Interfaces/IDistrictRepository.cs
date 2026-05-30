@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -14,5 +14,7 @@ namespace Domain.Interfaces
         Task<List<District>> GetByLocationIdAsync(Guid locationId);
         Task<District?> GetByNameAndLocationIdAsync(string name, Guid locationId);
         Task AddAsync(District district);
+        Task UpdateAsync(District district);
+        Task DeleteAsync(District district);
     }
 }

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -45,6 +45,18 @@ namespace Infrastructure.Repositories
         public async Task AddAsync(District district)
         {
             await _context.Districts.AddAsync(district);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task UpdateAsync(District district)
+        {
+            _context.Districts.Update(district);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task DeleteAsync(District district)
+        {
+            _context.Districts.Remove(district);
             await _context.SaveChangesAsync();
         }
     }
