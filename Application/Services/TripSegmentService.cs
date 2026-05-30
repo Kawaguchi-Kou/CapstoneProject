@@ -437,7 +437,14 @@ namespace Application.Services
                         RouteId = BuildRouteId(path.Nodes),
                         RouteIndex = index + 1,
                         TotalDistanceKm = path.TotalDistanceKm,
-                        Nodes = path.Nodes,
+                        NodeIds = path.Nodes,
+
+                        Nodes = path.Nodes
+                            .Select(id =>
+                                _routeGraph.Nodes.TryGetValue(id, out var node)
+                                    ? node.Label
+                                    : id)
+                            .ToList(),
                         Polyline = polyline
                     };
                 })
@@ -1000,7 +1007,7 @@ namespace Application.Services
                 // 4. Extract middle nodes from route
                 // ============================================
 
-                var middleNodeIds = selectedRoute.Nodes
+                var middleNodeIds = selectedRoute.NodeIds
                     .Skip(1)
                     .SkipLast(1)
                     .ToList();
