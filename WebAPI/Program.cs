@@ -432,6 +432,11 @@ RecurringJob.AddOrUpdate<IAdSchedulingJob>(
     x => x.ProcessScheduledAndExpiredAdsAsync(),
     "*/5 * * * *");  // Mỗi 5 phút
 
+RecurringJob.AddOrUpdate<IPaymentExpiryJob>(
+    "payment-expiry-scan",
+    x => x.ExpirePendingPaymentsAsync(),
+    "*/5 * * * *");  // Mỗi 5 phút
+
 
 
 app.Run();
