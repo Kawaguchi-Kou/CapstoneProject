@@ -228,5 +228,13 @@ namespace Infrastructure.Repositories
                 .Where(x => x.LocationId == locationId && x.Status == POIStatus.Active)
                 .ToListAsync();
         }
+
+        public async Task<List<POI>> GetAllWithLocationDistrictAsync()
+        {
+            return await _context.POIs
+                .Include(x => x.Location)
+                .Include(x => x.District)
+                .ToListAsync();
+        }
     }
 }

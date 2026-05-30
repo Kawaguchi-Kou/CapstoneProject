@@ -37,5 +37,8 @@ namespace Application.Interfaces
         Task<List<RecommendedPoiResponse>> GetPoisByLocationSortedByPreferenceAsync(
     Guid accountId,
     Guid locationId);
+
+        Task<List<LocationPOIGroupResponse>>
+    GetAllGroupedPOIsAsync();
     }
 }

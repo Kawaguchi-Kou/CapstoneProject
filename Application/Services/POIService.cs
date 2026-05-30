@@ -552,6 +552,57 @@ namespace Application.Services
                 .ToList();
         }
 
+        public async Task<List<LocationPOIGroupResponse>>
+    GetAllGroupedPOIsAsync()
+        {
+            var pois = await _poiRepository
+                .GetAllWithLocationDistrictAsync();
+
+            var result = pois
+                .GroupBy(p => new
+                {
+                    p.LocationId,
+                    p.Location.LocationName
+                })
+                .Select(locationGroup => new LocationPOIGroupResponse
+                {
+                    LocationId = locationGroup.Key.LocationId,
+                    LocationName = locationGroup.Key.LocationName,
+
+                    Districts = locationGroup
+                        .GroupBy(d => new
+                        {
+                            d.DistrictId,
+                            d.District.Name
+                        })
+                        .Select(districtGroup =>
+                            new DistrictPOIGroupResponse
+                            {
+                                DistrictId = districtGroup.Key.DistrictId,
+                                DistrictName = districtGroup.Key.Name,
+
+                                POIs = districtGroup
+                                    .Select(p => new POIItemResponse
+                                    {
+                                        Id = p.Id,
+                                        Name = p.Name,
+                                        Address = p.Address,
+                                        POIImgUrl = p.POIImgUrl,
+                                        Type = p.Type,
+                                        IsIndoor = p.IsIndoor
+                                    })
+                                    .OrderBy(x => x.Name)
+                                    .ToList()
+                            })
+                        .OrderBy(x => x.DistrictName)
+                        .ToList()
+                })
+                .OrderBy(x => x.LocationName)
+                .ToList();
+
+            return result;
+        }
+
         public async Task ImportExcelAsync(IFormFile file)
         {
             using var stream = new MemoryStream();
