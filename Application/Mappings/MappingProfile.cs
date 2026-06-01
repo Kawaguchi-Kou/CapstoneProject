@@ -159,6 +159,7 @@ namespace Application.Mappings
                 ))
 
                 .ForMember(dest => dest.PoiName, opt => opt.MapFrom(src => src.POI!.Name))
+                .ForMember(dest => dest.POIImg, opt => opt.MapFrom(src => src.POI!.POIImgUrl))
                 .ForMember(dest => dest.Address, opt => opt.MapFrom(src => src.POI!.Address))
                 .ForMember(dest => dest.LocationName, opt => opt.MapFrom(src => src.POI!.Location.LocationName))
                 .ForMember(dest => dest.IsIndoor, opt => opt.MapFrom(src => src.POI!.IsIndoor))

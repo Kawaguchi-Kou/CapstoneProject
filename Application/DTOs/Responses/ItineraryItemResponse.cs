@@ -13,7 +13,7 @@ namespace Application.DTOs.Responses
         public string Address { get; set; } = default!;
         public string LocationName { get; set; } = default!;
         public bool IsIndoor { get; set; }
-
+        public string POIImg { get; set; } = default!;
         public TimeOnly StartTime { get; set; }
         public TimeOnly EndTime { get; set; }
         public string Period { get; set; } = default!;
