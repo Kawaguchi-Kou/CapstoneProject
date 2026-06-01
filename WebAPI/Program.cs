@@ -46,11 +46,16 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 //Hangfire configuration 
 builder.Services.AddHangfire(config =>
     config.UsePostgreSqlStorage(options =>
-        options.UseNpgsqlConnection(connectionString)
-    ));
+    {
+        options.UseNpgsqlConnection(connectionString);
+        // Tùy chỉnh timeout để tránh chờ quá lâu khi bị kẹt khóa (mặc định là 10 phút)
+        options.DistributedLockTimeout = TimeSpan.FromMinutes(1);
+    }));
 builder.Services.AddHangfireServer(options =>
 {
     options.WorkerCount = 2;
+    // Tăng thời gian chờ tắt server để Hangfire giải phóng các khóa đang giữ một cách mượt mà
+    options.ShutdownTimeout = TimeSpan.FromSeconds(15);
 });
 
 // =====================
@@ -63,25 +68,25 @@ builder.Services.AddHttpClient<IOpenMeteoService, OpenMeteoService>()
     .ConfigurePrimaryHttpMessageHandler(() =>
         new SocketsHttpHandler
         {
-            // 🔥 FIX SSL / EOF issue
+            // FIX SSL / EOF issue
             SslOptions = new System.Net.Security.SslClientAuthenticationOptions
             {
                 EnabledSslProtocols = System.Security.Authentication.SslProtocols.Tls12
             },
 
-            // 🔥 FIX VN network instability
+            // FIX VN network instability
             PooledConnectionLifetime = TimeSpan.FromMinutes(2),
             MaxConnectionsPerServer = 5,
 
-            // 🔥 avoid weird decompression bugs
+            //avoid weird decompression bugs
             AutomaticDecompression = System.Net.DecompressionMethods.All
         })
     .ConfigureHttpClient(client =>
     {
-        // 🔥 CRITICAL: disable HTTP/2 (causes EOF a lot)
+        // CRITICAL: disable HTTP/2 (causes EOF a lot)
         client.DefaultRequestVersion = HttpVersion.Version11;
 
-        // 🔥 timeout
+        // timeout
         client.Timeout = TimeSpan.FromSeconds(10);
     });
 
@@ -437,22 +442,33 @@ app.MapControllers();
 app.MapHub<NotificationHub>("/hubs/notification");
 
 // ============================
-// HANGFIRE RECURRING JOB
+// HANGFIRE RECURRING JOB (Đăng ký an toàn để tránh crash app)
 // ============================
-//RecurringJob.AddOrUpdate<IWeatherMonitorJob>(
-//    "weather-hourly-scan",
-//    x => x.ScanUpcomingTripsAsync(),
-//    Cron.Hourly);
+app.Lifetime.ApplicationStarted.Register(() =>
+{
+    try
+    {
+        //RecurringJob.AddOrUpdate<IWeatherMonitorJob>(
+        //    "weather-hourly-scan",
+        //    x => x.ScanUpcomingTripsAsync(),
+        //    Cron.Hourly);
 
-RecurringJob.AddOrUpdate<IAdSchedulingJob>(
-    "ad-scheduling-scan",
-    x => x.ProcessScheduledAndExpiredAdsAsync(),
-    "*/5 * * * *");  // Mỗi 5 phút
+        RecurringJob.AddOrUpdate<IAdSchedulingJob>(
+            "ad-scheduling-scan",
+            x => x.ProcessScheduledAndExpiredAdsAsync(),
+            "*/5 * * * *");  // Mỗi 5 phút
 
-RecurringJob.AddOrUpdate<IPaymentExpiryJob>(
-    "payment-expiry-scan",
-    x => x.ExpirePendingPaymentsAsync(),
-    "*/5 * * * *");  // Mỗi 5 phút
+        RecurringJob.AddOrUpdate<IPaymentExpiryJob>(
+            "payment-expiry-scan",
+            x => x.ExpirePendingPaymentsAsync(),
+            "*/5 * * * *");  // Mỗi 5 phút
+    }
+    catch (Exception ex)
+    {
+        // Ghi log lỗi thay vì làm sập ứng dụng lúc khởi động
+        app.Logger.LogError(ex, "Lỗi xảy ra khi đăng ký Hangfire Recurring Jobs.");
+    }
+});
 
 
 
