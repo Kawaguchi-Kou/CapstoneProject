@@ -46,11 +46,12 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 //Hangfire configuration 
 builder.Services.AddHangfire(config =>
     config.UsePostgreSqlStorage(options =>
-    {
-        options.UseNpgsqlConnection(connectionString);
-        // Tùy chỉnh timeout để tránh chờ quá lâu khi bị kẹt khóa (mặc định là 10 phút)
-        options.DistributedLockTimeout = TimeSpan.FromMinutes(1);
-    }));
+        options.UseNpgsqlConnection(connectionString),
+        new Hangfire.PostgreSql.PostgreSqlStorageOptions
+        {
+            // Tùy chỉnh timeout để tránh chờ quá lâu khi bị kẹt khóa (mặc định là 10 phút)
+            DistributedLockTimeout = TimeSpan.FromMinutes(1),
+        }));
 builder.Services.AddHangfireServer(options =>
 {
     options.WorkerCount = 2;
