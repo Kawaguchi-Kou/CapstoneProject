@@ -111,11 +111,12 @@ namespace Infrastructure.Repositories
                 var normalizedKeyword = keyword.Trim().ToLower();
                 query = query.Where(a =>
                     a.Email.ToLower().Contains(normalizedKeyword) ||
-                    a.Name.ToLower().Contains(normalizedKeyword));
+                    a.Name.ToLower().Contains(normalizedKeyword) ||
+                    (a.PartnerProfile != null && a.PartnerProfile.BusinessName.ToLower().Contains(normalizedKeyword)));
             }
 
             var rows = await query
-                .OrderBy(a => a.Name)
+                .OrderBy(a => a.PartnerProfile != null ? a.PartnerProfile.BusinessName : a.Name)
                 .ThenBy(a => a.Email)
                 .Skip(skip)
                 .Take(take)
@@ -123,7 +124,7 @@ namespace Infrastructure.Repositories
                 {
                     a.Id,
                     a.Email,
-                    a.Name,
+                    Name = a.PartnerProfile != null ? a.PartnerProfile.BusinessName : a.Name,
                     PendingAdsCount = a.Advertisements.Count(ad => ad.Status == AdStatus.PendingApproval)
                 })
                 .ToListAsync();
@@ -146,7 +147,8 @@ namespace Infrastructure.Repositories
                 var normalizedKeyword = keyword.Trim().ToLower();
                 query = query.Where(a =>
                     a.Email.ToLower().Contains(normalizedKeyword) ||
-                    a.Name.ToLower().Contains(normalizedKeyword));
+                    a.Name.ToLower().Contains(normalizedKeyword) ||
+                    (a.PartnerProfile != null && a.PartnerProfile.BusinessName.ToLower().Contains(normalizedKeyword)));
             }
 
             return await query.CountAsync();
