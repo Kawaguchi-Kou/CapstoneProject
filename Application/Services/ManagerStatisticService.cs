@@ -58,20 +58,19 @@ namespace Application.Services
                 response.PoiApprovalRatio.RejectedPercentage = Math.Round((double)processedPois.Count(p => p.Status == POIStatus.Rejected) / processedPois.Count * 100, 2);
             }
 
-            // 3. Ad Approval Ratio (Current month)
-            var firstDayOfMonth = new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month, 1);
-            var processedAds = ads.Where(a => a.CreatedAt >= firstDayOfMonth && (a.Status == AdStatus.Active || a.Status == AdStatus.Rejected || a.Status == AdStatus.Paused || a.Status == AdStatus.Expired)).ToList();
+            // 3. Ad Approval Ratio (All-time processed Ads)
+            var processedAds = ads.Where(a => a.Status != AdStatus.PendingApproval).ToList();
             if (processedAds.Any())
             {
-                // Active, Paused, Expired mean they were approved
-                int approvedAds = processedAds.Count(a => a.Status != AdStatus.Rejected && a.Status != AdStatus.PendingApproval);
+                // Active, Paused, Expired, Scheduled mean they were approved
+                int approvedAds = processedAds.Count(a => a.Status == AdStatus.Active || a.Status == AdStatus.Paused || a.Status == AdStatus.Expired || a.Status == AdStatus.Scheduled);
                 response.AdApprovalRatio.TotalProcessed = processedAds.Count;
                 response.AdApprovalRatio.ApprovedPercentage = Math.Round((double)approvedAds / processedAds.Count * 100, 2);
                 response.AdApprovalRatio.RejectedPercentage = Math.Round((double)processedAds.Count(a => a.Status == AdStatus.Rejected) / processedAds.Count * 100, 2);
             }
 
-            // 4. Top POI Categories (Only Partner POIs)
-            var topCategories = partnerPois.GroupBy(p => p.Type.ToString())
+            // 4. Top POI Categories (All POIs - both Partner and System)
+            var topCategories = pois.GroupBy(p => p.Type.ToString())
                                     .Select(g => new PoiCategoryStat
                                     {
                                         CategoryName = g.Key,
