@@ -4,6 +4,7 @@ using Application.DTOs.AIResponse;
 using Application.DTOs.Responses;
 using Application.Interfaces;
 using Domain.Entities;
+using Domain.Enums;
 using Domain.Interfaces;
 using Domain.Weather;
 using Newtonsoft.Json.Linq;
@@ -55,7 +56,7 @@ namespace Application.Services
 
         public async Task GenerateAsync(Guid tripId)
         {
-            await _unitOfWork.BeginTransactionAsync();
+            // await _unitOfWork.BeginTransactionAsync();
             try
             {
                 var tripUsedPoiIds = new HashSet<Guid>();
@@ -94,7 +95,21 @@ namespace Application.Services
 
                 var allPois = await _poiRepo.GetByLocationDistrictPairsAsync(keys);
 
-                var poiCache = allPois
+                var foodPois = allPois
+                    .Where(p =>
+                        p.Type == POIType.Restaurant ||
+                        p.Type == POIType.StreetFood)
+                    .ToList();
+
+                var activityPois = allPois
+                    .Where(p =>
+                        p.Type != POIType.Restaurant &&
+                        p.Type != POIType.StreetFood &&
+                        !p.PoiPreferences.Any(pp =>
+                            prefIds.Contains(pp.PreferenceId)))
+                    .ToList();
+
+                var poiCache = activityPois
                     .GroupBy(p => $"{p.LocationId}-{p.DistrictId}")
                     .ToDictionary(g => g.Key, g =>
                         g.OrderByDescending(x =>
@@ -124,6 +139,12 @@ namespace Application.Services
                     var key = $"{segment.LocationId}-{segment.DistrictId}";
                     var segmentUsedPoiIds = new HashSet<Guid>();
 
+                    var segmentFoodPois = foodPois
+                        .Where(p =>
+                            p.LocationId == segment.LocationId &&
+                            p.DistrictId == segment.DistrictId)
+                        .ToList();
+
                     if (!poiCache.TryGetValue(key, out var pois) || !pois.Any()){
                         Console.WriteLine($"No POIs for segment {segment.OrderIndex}");
 
@@ -136,11 +157,7 @@ namespace Application.Services
                             .Take(15)
                             .ToList();
 
-                        if (!pois.Any())
-                        {
-                            Console.WriteLine("No POIs in entire system → skipping segment");
-                            continue;
-                        }
+                        pois ??= new List<POI>();
                     }
 
                     // ====================================================
@@ -170,7 +187,7 @@ namespace Application.Services
 
                     if (!aiCache.TryGetValue(aiKey, out var cachedAi))
                     {
-                        var generated = await GenerateSafe(segment, pois, forecasts);
+                        var generated = await GenerateSafe(segment, pois, segmentFoodPois, forecasts);
 
                         // 🔥 HARD VALIDATION (prevent partial AI)
                         if (generated != null &&
@@ -286,14 +303,18 @@ namespace Application.Services
                 // ====================================================
                 // SAVE ONCE (good practice)
                 // ====================================================
+                await _unitOfWork.BeginTransactionAsync();
+
                 await _itineraryRepo.AddRangeAsync(itineraries);
                 await _detailRepo.AddRangeAsync(details);
 
-                await _unitOfWork.CommitAsync(); // 🔥 THIS IS WHY YOU SEE NOTHING
+                await _unitOfWork.SaveChangesAsync();
+
+                await _unitOfWork.CommitAsync(); 
             }
             catch
             {
-                await _unitOfWork.RollbackAsync();      // 🔥 rollback everything
+                await _unitOfWork.RollbackAsync();      // rollback everything
                 throw;
             }
         }
@@ -304,14 +325,15 @@ namespace Application.Services
         // ====================================================
         private async Task<SegmentAIResponse?> GenerateSafe(
             TripSegment segment,
-            List<POI> pois,
+            List<POI> activityPois,
+            List<POI> foodPois,
             Dictionary<DateTime, WeatherForecast> forecasts)
         {
             for (int i = 0; i < 3; i++)
             {
                 try
                 {
-                    var prompt = BuildPrompt(segment, pois, forecasts);
+                    var prompt = BuildPrompt(segment, activityPois, foodPois, forecasts);
                     var raw = await _gemini.GenerateAsync(prompt);
 
                     Console.WriteLine($"RAW RESPONSE: {raw}");
@@ -385,7 +407,8 @@ namespace Application.Services
 
         private string BuildPrompt(
             TripSegment segment,
-            List<POI> pois,
+            List<POI> activityPois,
+            List<POI> foodPois,
             Dictionary<DateTime, WeatherForecast> forecasts)
         {
             var sb = new StringBuilder();
@@ -399,10 +422,25 @@ namespace Application.Services
 
             sb.AppendLine($"Dates: {segment.StartDate:yyyy-MM-dd} to {segment.EndDate:yyyy-MM-dd}");
 
-            sb.AppendLine("POIs:");
-            foreach (var p in pois.Take(12))
-                sb.AppendLine($"{p.Id} | {p.Name}");
+            if (!activityPois.Any())
+            {
+                sb.AppendLine("Activity POIs: NONE AVAILABLE");
+            }
+            else
+            {
+                foreach (var p in activityPois.Take(12))
+                    sb.AppendLine($"{p.Id} | {p.Name}");
+            }
 
+            if (!foodPois.Any())
+            {
+                sb.AppendLine("Food POIs: NONE AVAILABLE");
+            }
+            else
+            {
+                foreach (var p in foodPois.Take(12))
+                    sb.AppendLine($"{p.Id} | {p.Name}");
+            }
             sb.AppendLine("Weather:");
             foreach (var w in forecasts.Take(5))
                 sb.AppendLine($"{w.Key:yyyy-MM-dd} rain:{w.Value.PrecipitationProbability}");
@@ -413,11 +451,13 @@ namespace Application.Services
                   ""days"": [
                     {
                       ""date"": ""2026-01-01"",
+                      ""dayReason"": ""Sunny weather, outdoor attractions prioritized. Activities grouped to reduce travel time."",
                       ""plan"": [
                         {
                           ""poiId"": ""guid"",
                           ""period"": ""Morning | Noon | Evening"",
-                          ""durationMinutes"": 60-180
+                          ""durationMinutes"": 60-180,
+                          ""reason"": ""Popular cultural attraction and close to the next POI.""
                         }
                       ]
                     }
@@ -434,6 +474,50 @@ namespace Application.Services
                   - Evening
                 - Each period MUST have at least 1 activity
                 - Distribute activities naturally across periods
+
+                🍽 FOOD PLANNING RULES
+                - Every day MUST include food experiences.
+                - At least:
+                - 1 Breakfast
+                - 1 Lunch
+                - 1 Dinner
+                - Breakfast, Lunch and Dinner must use POIs from the FOOD POI list.
+                - Food activities should be naturally distributed throughout the day.
+                - Do NOT schedule only sightseeing activities.
+
+
+                REASON RULES
+                - Every day must contain dayReason.
+                - dayReason should explain the overall plan for the day.
+                - Every activity must contain reason.
+                - reason should explain why the POI was selected.
+                - Consider weather, POI type, food options, and travel distance.
+                - Keep explanations under 20 words.
+
+                - Mix:
+                - Attractions
+                - Cultural experiences
+                - Food experiences
+
+                - Every day must contain at least one Restaurant or StreetFood POI.
+
+                - Prefer different food POIs across different days.
+
+                MISSING DATA RULES
+
+                - Activity POI list may be empty.
+                - Food POI list may be empty.
+
+                - If Activity POIs are unavailable:
+                return null for sightseeing activities.
+
+                - Use only POIs from the Food POI list.
+                - If Food POI list is empty, skip food activities.
+                - Never return poiId = null.
+                - Every plan item must contain a valid poiId from the provided lists.
+
+                - Never invent POIs.
+
 
                 ⏱️ DURATION:
                 - Each activity: 60 → 180 minutes
@@ -540,9 +624,16 @@ HashSet<Guid> tripUsedPoiIds)
                 var activityCount = (int)(totalMinutes / 120);
                 activityCount = Math.Clamp(activityCount, 1, 3);
 
+                var periodPlans = plans
+                    .Where(x =>
+                        x.PoiId.HasValue &&
+                        x.Period.Equals(period.Period,
+                            StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+
                 var selected = availablePois
-                    .OrderBy(x => random.Next())
-                    .Take(activityCount)
+                    .Where(p =>
+                        periodPlans.Any(x => x.PoiId == p.Id))
                     .ToList();
 
                 POI? prev = null;
@@ -553,7 +644,7 @@ HashSet<Guid> tripUsedPoiIds)
                         continue;
 
                     // ================================
-                    // 🚗 TRAVEL TIME
+                    // TRAVEL TIME
                     // ================================
                     if (prev != null)
                     {
@@ -588,6 +679,9 @@ HashSet<Guid> tripUsedPoiIds)
                     // ================================
                     var hasForecast = forecasts.TryGetValue(date, out var weather);
 
+                    var plan = plans.FirstOrDefault(x => x.PoiId == poi.Id);
+                    
+
                     details.Add(new ItineraryDetail
                     {
                         DetailId = Guid.NewGuid(),
@@ -603,7 +697,8 @@ HashSet<Guid> tripUsedPoiIds)
                             hasForecast ? weather.PrecipitationProbability : 0,
 
                                             WindSpeed =
-                            hasForecast ? weather.WindSpeed : 0
+                            hasForecast ? weather.WindSpeed : 0,
+                        AIReason = plan?.Reason
                     });
 
                     tripUsedPoiIds.Add(poi.Id);
@@ -622,32 +717,6 @@ HashSet<Guid> tripUsedPoiIds)
                     break;
             }
         }
-
-        //=====================================================
-        //CalculateRiskSafe
-        //=====================================================
-        private double CalculateRiskSafe(
-    DateTime date,
-    Dictionary<DateTime, WeatherForecast> forecasts,
-    POI poi)
-        {
-            var weather = forecasts
-                .FirstOrDefault(x => x.Key.Date == date.Date)
-                .Value;
-
-            if (weather == null)
-            {
-                weather = new WeatherForecast
-                {
-                    PrecipitationProbability = 0.3,
-                    TemperatureCelsius = 28,
-                    WindSpeed = 10
-                };
-            }
-
-            return _riskEngine.CalculateRisk(weather, poi.IsIndoor);
-        }
-
 
         //=====================================================
         // SPLIT PERIODS (dynamic based on day length)

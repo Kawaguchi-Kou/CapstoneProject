@@ -9,6 +9,7 @@ namespace Application.DTOs.Responses
     public class DayPlanResponse
     {
         public DateTime Date { get; set; }
+        public string? DayReason { get; set; }
         public List<ItineraryItemResponse> Items { get; set; } = new();
     }
 }

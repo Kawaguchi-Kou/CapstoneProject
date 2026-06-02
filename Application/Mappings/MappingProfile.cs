@@ -152,12 +152,6 @@ namespace Application.Mappings
 
             // 🔥 DETAIL → ITEM
             CreateMap<ItineraryDetail, ItineraryItemResponse>()
-                .ForMember(dest => dest.Period, opt => opt.MapFrom(src =>
-                    src.StartTime.Hour < 11 ? "Morning" :
-                    src.StartTime.Hour < 15 ? "Noon" :
-                    "Evening"
-                ))
-
                 .ForMember(dest => dest.PoiName, opt => opt.MapFrom(src => src.POI!.Name))
                 .ForMember(dest => dest.POIImg, opt => opt.MapFrom(src => src.POI!.POIImgUrl))
                 .ForMember(dest => dest.Address, opt => opt.MapFrom(src => src.POI!.Address))
