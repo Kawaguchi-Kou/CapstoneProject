@@ -157,8 +157,6 @@ namespace Application.Mappings
                 .ForMember(dest => dest.Address, opt => opt.MapFrom(src => src.POI!.Address))
                 .ForMember(dest => dest.LocationName, opt => opt.MapFrom(src => src.POI!.Location.LocationName))
                 .ForMember(dest => dest.IsIndoor, opt => opt.MapFrom(src => src.POI!.IsIndoor))
-                .ForMember(dest => dest.StartTime, opt => opt.MapFrom(src => src.StartTime))
-                .ForMember(dest => dest.EndTime, opt => opt.MapFrom(src => src.EndTime))
                 .ForMember(dest => dest.Weather, opt => opt.MapFrom(src =>
                     new WeatherSnapshotDto
                     {

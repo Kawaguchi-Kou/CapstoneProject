@@ -26,6 +26,7 @@ using System.Text.Json.Serialization;
 using System.Net;
 using Polly;
 using Polly.Extensions.Http;
+using Polly.Timeout;
 
 
 AppContext.SetSwitch("System.Net.DisableIPv6", true);
@@ -179,15 +180,23 @@ builder.Services.AddSingleton<IRouteGraphService>(
     _ => new RouteGraphService(Path.GetFullPath(graphPath)));
 
 //Gemini
-builder.Services.AddHttpClient<IGeminiService, GeminiService>()
-   .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
-   {
-       ServerCertificateCustomValidationCallback =
-            HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
-   })
-   .AddTransientHttpErrorPolicy(policyBuilder =>
-    // Retries 3 times. Wait 500ms, then 1s, then 2s.
-    policyBuilder.WaitAndRetryAsync(3, retryAttempt => TimeSpan.FromMilliseconds(500 * Math.Pow(2, retryAttempt - 1))));
+builder.Services
+    .AddHttpClient<IGeminiService, GeminiService>()
+    .AddPolicyHandler(
+        Policy.TimeoutAsync<HttpResponseMessage>(
+            TimeSpan.FromMinutes(5)))
+    .ConfigurePrimaryHttpMessageHandler(() =>
+        new HttpClientHandler
+        {
+            ServerCertificateCustomValidationCallback =
+                HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+        })
+    .AddTransientHttpErrorPolicy(policyBuilder =>
+        policyBuilder.WaitAndRetryAsync(
+            3,
+            retryAttempt =>
+                TimeSpan.FromSeconds(Math.Pow(2, retryAttempt))
+        ));
 
 //Add repositories
 //Auth
