@@ -14,6 +14,8 @@ namespace Application.DTOs.Responses
         public string LocationName { get; set; } = string.Empty;
         public bool IsIndoor { get; set; }
         public string POIImg { get; set; } = string.Empty;
+        public TimeOnly StartTime { get; set; }
+        public TimeOnly EndTime { get; set; }
         public string? AIReason { get; set; }
         public WeatherSnapshotDto? Weather { get; set; }
     }

@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Application.DTOs.AIResponse
 {
-    public class TripAIResponse
+    public class SegmentAIResponse
     {
         public List<AIDayPlan> Days { get; set; } = new();
     }
