@@ -69,7 +69,6 @@ namespace Application.Services
                 response.AdApprovalRatio.RejectedPercentage = Math.Round((double)processedAds.Count(a => a.Status == AdStatus.Rejected) / processedAds.Count * 100, 2);
             }
 
-            // 4. Top POI Categories (All POIs - both Partner and System)
             var topCategories = pois.GroupBy(p => p.Type.ToString())
                                     .Select(g => new PoiCategoryStat
                                     {
@@ -77,7 +76,6 @@ namespace Application.Services
                                         Count = g.Count()
                                     })
                                     .OrderByDescending(c => c.Count)
-                                    .Take(5)
                                     .ToList();
             
             int totalCategorized = topCategories.Sum(c => c.Count);

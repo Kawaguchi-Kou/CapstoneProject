@@ -573,6 +573,7 @@ namespace Application.Services
                 PartnerAvatarUrl = x.Ad.Account?.AvatarUrl ?? string.Empty,
                 Promotion = x.Ad.Promotion == null ? null : new RecommendedPromotionResponse
                 {
+                    PromotionId = x.Ad.Promotion.PromotionId,
                     Title = x.Ad.Promotion.Title,
                     Description = x.Ad.Promotion.Description,
                     SaveCount = x.Ad.Promotion.SaveCount,
