@@ -302,7 +302,7 @@ namespace WebAPI.Controllers
             return Ok(new
             {
                 inviteUrl = link,
-                qrCode = Convert.ToBase64String(qrImage) // so FE can render it
+                qrCode = Convert.ToBase64String(qrImage) 
             });
         }
 
