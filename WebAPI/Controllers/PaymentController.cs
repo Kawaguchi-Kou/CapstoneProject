@@ -269,5 +269,24 @@ namespace WebAPI.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
+
+        [HttpGet("admin/all-transactions")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> GetAllTransactions(
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 15,
+            [FromQuery] string? status = null,
+            [FromQuery] string? sortOrder = null)
+        {
+            try
+            {
+                var response = await _paymentService.GetAllTransactionsAsync(page, pageSize, status, sortOrder);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
     }
 }

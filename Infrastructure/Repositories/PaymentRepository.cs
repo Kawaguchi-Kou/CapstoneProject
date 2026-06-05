@@ -106,5 +106,42 @@ namespace Infrastructure.Repositories
                 .ThenInclude(s => s.SubscriptionPackage)
                 .ToListAsync();
         }
+
+        public async Task<int> CountAllAsync(string? status)
+        {
+            var query = _context.adPayments.AsQueryable();
+
+            if (!string.IsNullOrEmpty(status))
+            {
+                if (Enum.TryParse<PaymentStatus>(status, true, out var parsedStatus))
+                {
+                    query = query.Where(p => p.PaymentStatus == parsedStatus);
+                }
+            }
+
+            return await query.CountAsync();
+        }
+
+        public async Task<List<AdPayment>> GetAllPagedAsync(int skip, int take, string? status, string? sortOrder)
+        {
+            var query = _context.adPayments
+                .Include(p => p.Subscription)
+                    .ThenInclude(s => s.SubscriptionPackage)
+                .AsQueryable();
+
+            if (!string.IsNullOrEmpty(status))
+            {
+                if (Enum.TryParse<PaymentStatus>(status, true, out var parsedStatus))
+                {
+                    query = query.Where(p => p.PaymentStatus == parsedStatus);
+                }
+            }
+
+            query = sortOrder?.ToLower() == "asc"
+                ? query.OrderBy(p => p.CreatedAt)
+                : query.OrderByDescending(p => p.CreatedAt);
+
+            return await query.Skip(skip).Take(take).ToListAsync();
+        }
     }
 }
