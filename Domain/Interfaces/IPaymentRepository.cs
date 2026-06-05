@@ -18,6 +18,8 @@ namespace Domain.Interfaces
         Task<AdPayment> UpdateAsync(AdPayment payment);
         Task<int> ExpirePendingPaymentsAsync(DateTime utcNow);
         Task<List<AdPayment>> GetAllAsync();
+        Task<int> CountAllAsync(string? status);
+        Task<List<AdPayment>> GetAllPagedAsync(int skip, int take, string? status, string? sortOrder);
         Task SaveChangesAsync();
     }
 }

@@ -33,5 +33,33 @@ namespace Infrastructure.Repositories
                 .Select(up => up.PreferenceId)
                 .ToListAsync();
         }
+
+        public async Task<Preference?> GetByIdAsync(Guid id)
+        {
+            return await _context.Preferences.FirstOrDefaultAsync(p => p.Id == id);
+        }
+
+        public async Task<Preference?> GetByNameAsync(string name)
+        {
+            return await _context.Preferences.FirstOrDefaultAsync(p => p.Name == name);
+        }
+
+        public async Task AddAsync(Preference preference)
+        {
+            await _context.Preferences.AddAsync(preference);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task UpdateAsync(Preference preference)
+        {
+            _context.Preferences.Update(preference);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task DeleteAsync(Preference preference)
+        {
+            _context.Preferences.Remove(preference);
+            await _context.SaveChangesAsync();
+        }
     }
 }

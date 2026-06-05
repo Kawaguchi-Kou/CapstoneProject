@@ -24,5 +24,7 @@ namespace Application.DTOs.Responses
         public DateTime CreatedAt { get; set; }
         public DateTime ExpiresAt { get; set; }
         public DateTime? PaidAt { get; set; }
+        public Guid? AccountId { get; set; }
+        public string AccountEmail { get; set; } = string.Empty;
     }
 }

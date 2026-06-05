@@ -20,6 +20,7 @@ namespace Application.DTOs.Requests
 
         public TimeOnly OpenHour { get; set; }
         public TimeOnly CloseHour { get; set; }
+        public bool Is24Hours { get; set; }
         [Required]
         public Guid LocationId { get; set; }
         [Required]
