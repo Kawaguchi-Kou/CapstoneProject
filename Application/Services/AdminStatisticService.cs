@@ -10,27 +10,23 @@ namespace Application.Services
     public class AdminStatisticService : IAdminStatisticService
     {
         private readonly IUserRepository _userRepository;
-        private readonly IPOIRepository _poiRepository;
-        private readonly IAdvertisementRepository _advertisementRepository;
+        private readonly IPaymentRepository _paymentRepository;
         private readonly IAccountSubscriptionRepository _accountSubscriptionRepository;
 
         public AdminStatisticService(
             IUserRepository userRepository,
-            IPOIRepository poiRepository,
-            IAdvertisementRepository advertisementRepository,
+            IPaymentRepository paymentRepository,
             IAccountSubscriptionRepository accountSubscriptionRepository)
         {
             _userRepository = userRepository;
-            _poiRepository = poiRepository;
-            _advertisementRepository = advertisementRepository;
+            _paymentRepository = paymentRepository;
             _accountSubscriptionRepository = accountSubscriptionRepository;
         }
 
         public async Task<AdminDashboardResponse> GetDashboardStatisticsAsync(string period = "daily", DateTime? startDate = null, DateTime? endDate = null)
         {
             var users = await _userRepository.GetAllAsync();
-            var pois = await _poiRepository.GetAllAsync();
-            var ads = await _advertisementRepository.GetAllAsync();
+            var payments = await _paymentRepository.GetAllAsync();
             var subscriptions = await _accountSubscriptionRepository.GetAllAsync();
 
             // 1. Tổng số tài khoản
@@ -112,15 +108,18 @@ namespace Application.Services
                 .OrderByDescending(p => p.UserCount)
                 .ToList();
 
-            // 5. Tổng POI và Ads
-            var totalPois = pois.Count;
-            var totalAds = ads.Count;
+            // 5. Tổng doanh thu (chỉ tính payment Completed) và số gói đang hoạt động
+            var totalRevenue = payments
+                .Where(p => p.PaymentStatus == Domain.Enums.PaymentStatus.Completed)
+                .Sum(p => p.Amount);
+            var activeSubscriptions = subscriptions
+                .Count(s => s.Status == Domain.Enums.SubStatus.Active);
 
             return new AdminDashboardResponse
             {
                 TotalAccounts = totalAccounts,
-                TotalPois = totalPois,
-                TotalAds = totalAds,
+                TotalRevenue = totalRevenue,
+                ActiveSubscriptions = activeSubscriptions,
                 AccountRoles = roleStats,
                 AccountGrowth = completeGrowthStats,
                 PackagePopularity = packageStats
