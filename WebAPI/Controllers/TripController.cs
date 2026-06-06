@@ -53,6 +53,24 @@ namespace WebAPI.Controllers
             }
         }
 
+        [HttpGet("get-all-user-trips")]
+        [Authorize]
+        public async Task<IActionResult> GetAllUserTrips()
+        {
+            try
+            {
+                var listTrips = await _tripService.GetUserTrips();
+
+                var result = _mapper.Map<List<TripResponse>>(listTrips);
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
         [HttpPost("{tripId}/segments")]
         public async Task<IActionResult> AddSegments(
         Guid tripId,
