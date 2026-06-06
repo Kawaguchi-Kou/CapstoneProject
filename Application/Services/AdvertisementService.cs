@@ -571,6 +571,8 @@ namespace Application.Services
                 PoiName = x.Ad.POI?.Name ?? string.Empty,
                 PartnerName = x.Ad.Account?.Name ?? string.Empty,
                 PartnerAvatarUrl = x.Ad.Account?.AvatarUrl ?? string.Empty,
+                StartDate = x.Ad.StartDate,
+                CreatedAt = x.Ad.CreatedAt,
                 Promotion = x.Ad.Promotion == null ? null : new RecommendedPromotionResponse
                 {
                     PromotionId = x.Ad.Promotion.PromotionId,

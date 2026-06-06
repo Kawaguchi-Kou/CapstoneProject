@@ -13,6 +13,8 @@ namespace Application.DTOs.Responses
         public string PoiName { get; set; } = string.Empty;
         public string PartnerName { get; set; } = string.Empty;
         public string PartnerAvatarUrl { get; set; } = string.Empty;
+        public DateTime StartDate { get; set; }
+        public DateTime CreatedAt { get; set; }
         public RecommendedPromotionResponse? Promotion { get; set; }
     }
 
