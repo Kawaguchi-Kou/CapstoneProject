@@ -10,5 +10,6 @@ namespace Application.Interfaces
     public interface ITripService
     {
         Task<Trip> CreateTripAsync(Trip newTrip, Guid startDistrictId, Guid endDistrictId);
+        Task<List<Trip>> GetUserTrips();
     }
 }

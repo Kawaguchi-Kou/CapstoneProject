@@ -32,6 +32,11 @@ namespace Infrastructure.Repositories
                 .FirstOrDefaultAsync(x => x.TripId == tripId);
         }
 
+        public async Task<List<Trip>> GetUserTrips(Guid userId)
+        {
+            return await _db.Trips.Where(x => x.OwnerId == userId).ToListAsync();
+        }
+
         public async Task AddAsync(Trip trip)
         {
             _db.Trips.Add(trip);

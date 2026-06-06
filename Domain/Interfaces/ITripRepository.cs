@@ -18,5 +18,7 @@ namespace Domain.Interfaces
         Task<Trip?> GetByIdAsync(Guid tripId);
 
         Task UpdateAsync(Trip trip);
+
+        Task<List<Trip>> GetUserTrips(Guid userId)
     }
 }

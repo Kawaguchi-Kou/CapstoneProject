@@ -10,18 +10,21 @@ namespace Application.Services
         private readonly ITripRepository _tripRepo;
         private readonly ILocationRepository _locationRepository;
         private readonly ITripSegmentRepository _segmentRepo;
+        private readonly IAuthService _authService;
         private readonly IUnitOfWork _unitOfWork;
 
         public TripService(
             ITripRepository tripRepo,
             ILocationRepository locationRepository,
             ITripSegmentRepository segmentRepo,
-            IUnitOfWork unitOfWork)
+            IUnitOfWork unitOfWork,
+            IAuthService authService)
         {
             _tripRepo = tripRepo;
             _locationRepository = locationRepository;
             _segmentRepo = segmentRepo;
             _unitOfWork = unitOfWork;
+            _authService = authService;
         }
 
 
@@ -93,6 +96,13 @@ namespace Application.Services
                 await _unitOfWork.RollbackAsync();
                 throw;
             }
+        }
+
+        public async Task<List<Trip>> GetUserTrips()
+        {
+            var userId = _authService.GetCurrentAccount().Result.Id;
+            var tripList = await _tripRepo.GetUserTrips(userId);
+            return tripList;
         }
     }
 }
