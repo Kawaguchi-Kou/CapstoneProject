@@ -311,20 +311,13 @@ builder.Services.AddCors(options =>
                 "http://localhost:7176",
                 "https://localhost:7176",
                 "http://localhost:5173",
-                "https://localhost:5173"
+                "https://localhost:5173",
+                "https://capstonesp26v1.vercel.app"
               )
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials();
     });
-    //options.AddPolicy("AllowFrontend",
-    //    policy =>
-    //    {
-    //        policy.WithOrigins("https://traveler-planner-nine.vercel.app")
-    //              .AllowAnyHeader()
-    //              .AllowAnyMethod()
-    //              .AllowCredentials();
-    //    });
 });
 
 // Configure JWT
