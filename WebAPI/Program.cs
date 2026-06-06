@@ -165,8 +165,9 @@ builder.Services.AddScoped<ITripSegmentService, TripSegmentService>();
 //RouteGraph (singleton — JSON is static)
 var graphPath = Path.Combine(
     AppContext.BaseDirectory,
-    "..", "..", "..", "..",   // up from WebAPI/bin/Debug/net8.0 → solution root
-    "Infrastructure", "Graph", "vietnam_phuot_graph.json");
+    "Graph",
+    "vietnam_phuot_graph.json"
+);
 
 if (!File.Exists(graphPath))
 {

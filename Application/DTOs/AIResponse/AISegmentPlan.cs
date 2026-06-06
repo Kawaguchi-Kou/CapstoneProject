@@ -7,12 +7,12 @@ using System.Threading.Tasks;
 
 namespace Application.DTOs.AIResponse
 {
-    public class AIDayPlan
+    public class AISegmentPlan
     {
-        [JsonPropertyName("date")]
-        public DateTime Date { get; set; }
+        [JsonPropertyName("segmentOrder")]
+        public int SegmentOrder { get; set; }
 
-        [JsonPropertyName("plan")]
-        public List<AIActivity> Plan { get; set; } = [];
+        [JsonPropertyName("days")]
+        public List<AIDayPlan> Days { get; set; } = [];
     }
 }

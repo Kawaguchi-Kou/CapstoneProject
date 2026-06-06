@@ -2,6 +2,7 @@
 using System.Text.Json;
 using Application.Interfaces;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace Application.Services
 {
@@ -9,11 +10,14 @@ namespace Application.Services
     {
         private readonly HttpClient _http;
         private readonly string _apiKey;
+        private readonly ILogger<GeminiService> _logger;
 
-        public GeminiService(HttpClient http, IConfiguration config)
+
+        public GeminiService(HttpClient http, IConfiguration config, ILogger<GeminiService> logger)
         {
             _http = http;
             _apiKey = config["Gemini:ApiKey"]!;
+            _logger = logger;
         }
 
         public async Task<string> GenerateAsync(string prompt)
@@ -40,6 +44,13 @@ namespace Application.Services
                 $"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={_apiKey}";
 
             var response = await _http.PostAsJsonAsync(url, request);
+
+            var errorBody = await response.Content.ReadAsStringAsync();
+
+            _logger.LogError(
+                "Gemini returned {StatusCode}. Response: {Body}",
+                response.StatusCode,
+                errorBody);
 
             response.EnsureSuccessStatusCode();
 
