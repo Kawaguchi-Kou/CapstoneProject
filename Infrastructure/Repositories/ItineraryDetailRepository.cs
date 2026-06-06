@@ -67,20 +67,5 @@ namespace Infrastructure.Repositories
             _context.ItineraryDetails.RemoveRange(details);
             await _context.SaveChangesAsync();
         }
-
-        public async Task<List<ItineraryDetail>> GetHighRiskDetailsAsync(
-            Guid itineraryId,
-            double threshold)
-        {
-            return await _context.ItineraryDetails
-                .Where(x =>
-                    x.ItineraryId == itineraryId &&
-                    !x.IsManualOverride && // ⭐ respect user override
-                    x.WeatherRiskScore >= threshold)
-                .OrderByDescending(x => x.WeatherRiskScore)
-                .ToListAsync();
-        }
-
-
     }
 }

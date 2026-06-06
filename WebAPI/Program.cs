@@ -26,6 +26,7 @@ using System.Text.Json.Serialization;
 using System.Net;
 using Polly;
 using Polly.Extensions.Http;
+using Polly.Timeout;
 
 
 AppContext.SetSwitch("System.Net.DisableIPv6", true);
@@ -46,11 +47,17 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 //Hangfire configuration 
 builder.Services.AddHangfire(config =>
     config.UsePostgreSqlStorage(options =>
-        options.UseNpgsqlConnection(connectionString)
-    ));
+        options.UseNpgsqlConnection(connectionString),
+        new Hangfire.PostgreSql.PostgreSqlStorageOptions
+        {
+            // Tùy chỉnh timeout để tránh chờ quá lâu khi bị kẹt khóa (mặc định là 10 phút)
+            DistributedLockTimeout = TimeSpan.FromMinutes(1),
+        }));
 builder.Services.AddHangfireServer(options =>
 {
     options.WorkerCount = 2;
+    // Tăng thời gian chờ tắt server để Hangfire giải phóng các khóa đang giữ một cách mượt mà
+    options.ShutdownTimeout = TimeSpan.FromSeconds(15);
 });
 
 // =====================
@@ -63,25 +70,25 @@ builder.Services.AddHttpClient<IOpenMeteoService, OpenMeteoService>()
     .ConfigurePrimaryHttpMessageHandler(() =>
         new SocketsHttpHandler
         {
-            // 🔥 FIX SSL / EOF issue
+            // FIX SSL / EOF issue
             SslOptions = new System.Net.Security.SslClientAuthenticationOptions
             {
                 EnabledSslProtocols = System.Security.Authentication.SslProtocols.Tls12
             },
 
-            // 🔥 FIX VN network instability
+            // FIX VN network instability
             PooledConnectionLifetime = TimeSpan.FromMinutes(2),
             MaxConnectionsPerServer = 5,
 
-            // 🔥 avoid weird decompression bugs
+            //avoid weird decompression bugs
             AutomaticDecompression = System.Net.DecompressionMethods.All
         })
     .ConfigureHttpClient(client =>
     {
-        // 🔥 CRITICAL: disable HTTP/2 (causes EOF a lot)
+        // CRITICAL: disable HTTP/2 (causes EOF a lot)
         client.DefaultRequestVersion = HttpVersion.Version11;
 
-        // 🔥 timeout
+        // timeout
         client.Timeout = TimeSpan.FromSeconds(10);
     });
 
@@ -158,8 +165,9 @@ builder.Services.AddScoped<ITripSegmentService, TripSegmentService>();
 //RouteGraph (singleton — JSON is static)
 var graphPath = Path.Combine(
     AppContext.BaseDirectory,
-    "..", "..", "..", "..",   // up from WebAPI/bin/Debug/net8.0 → solution root
-    "Infrastructure", "Graph", "vietnam_phuot_graph.json");
+    "Graph",
+    "vietnam_phuot_graph.json"
+);
 
 if (!File.Exists(graphPath))
 {
@@ -173,15 +181,23 @@ builder.Services.AddSingleton<IRouteGraphService>(
     _ => new RouteGraphService(Path.GetFullPath(graphPath)));
 
 //Gemini
-builder.Services.AddHttpClient<IGeminiService, GeminiService>()
-   .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
-   {
-       ServerCertificateCustomValidationCallback =
-            HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
-   })
-   .AddTransientHttpErrorPolicy(policyBuilder =>
-    // Retries 3 times. Wait 500ms, then 1s, then 2s.
-    policyBuilder.WaitAndRetryAsync(3, retryAttempt => TimeSpan.FromMilliseconds(500 * Math.Pow(2, retryAttempt - 1))));
+builder.Services
+    .AddHttpClient<IGeminiService, GeminiService>()
+    .AddPolicyHandler(
+        Policy.TimeoutAsync<HttpResponseMessage>(
+            TimeSpan.FromMinutes(5)))
+    .ConfigurePrimaryHttpMessageHandler(() =>
+        new HttpClientHandler
+        {
+            ServerCertificateCustomValidationCallback =
+                HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+        })
+    .AddTransientHttpErrorPolicy(policyBuilder =>
+        policyBuilder.WaitAndRetryAsync(
+            3,
+            retryAttempt =>
+                TimeSpan.FromSeconds(Math.Pow(2, retryAttempt))
+        ));
 
 //Add repositories
 //Auth
@@ -296,20 +312,13 @@ builder.Services.AddCors(options =>
                 "http://localhost:7176",
                 "https://localhost:7176",
                 "http://localhost:5173",
-                "https://localhost:5173"
+                "https://localhost:5173",
+                "https://capstonesp26v1.vercel.app"
               )
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials();
     });
-    //options.AddPolicy("AllowFrontend",
-    //    policy =>
-    //    {
-    //        policy.WithOrigins("https://traveler-planner-nine.vercel.app")
-    //              .AllowAnyHeader()
-    //              .AllowAnyMethod()
-    //              .AllowCredentials();
-    //    });
 });
 
 // Configure JWT
@@ -437,22 +446,33 @@ app.MapControllers();
 app.MapHub<NotificationHub>("/hubs/notification");
 
 // ============================
-// HANGFIRE RECURRING JOB
+// HANGFIRE RECURRING JOB (Đăng ký an toàn để tránh crash app)
 // ============================
-//RecurringJob.AddOrUpdate<IWeatherMonitorJob>(
-//    "weather-hourly-scan",
-//    x => x.ScanUpcomingTripsAsync(),
-//    Cron.Hourly);
+app.Lifetime.ApplicationStarted.Register(() =>
+{
+    try
+    {
+        //RecurringJob.AddOrUpdate<IWeatherMonitorJob>(
+        //    "weather-hourly-scan",
+        //    x => x.ScanUpcomingTripsAsync(),
+        //    Cron.Hourly);
 
-RecurringJob.AddOrUpdate<IAdSchedulingJob>(
-    "ad-scheduling-scan",
-    x => x.ProcessScheduledAndExpiredAdsAsync(),
-    "*/5 * * * *");  // Mỗi 5 phút
+        RecurringJob.AddOrUpdate<IAdSchedulingJob>(
+            "ad-scheduling-scan",
+            x => x.ProcessScheduledAndExpiredAdsAsync(),
+            "*/5 * * * *");  // Mỗi 5 phút
 
-RecurringJob.AddOrUpdate<IPaymentExpiryJob>(
-    "payment-expiry-scan",
-    x => x.ExpirePendingPaymentsAsync(),
-    "*/5 * * * *");  // Mỗi 5 phút
+        RecurringJob.AddOrUpdate<IPaymentExpiryJob>(
+            "payment-expiry-scan",
+            x => x.ExpirePendingPaymentsAsync(),
+            "*/5 * * * *");  // Mỗi 5 phút
+    }
+    catch (Exception ex)
+    {
+        // Ghi log lỗi thay vì làm sập ứng dụng lúc khởi động
+        app.Logger.LogError(ex, "Lỗi xảy ra khi đăng ký Hangfire Recurring Jobs.");
+    }
+});
 
 
 

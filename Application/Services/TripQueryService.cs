@@ -21,11 +21,11 @@ namespace Application.Services
             _mapper = mapper;
         }
 
-        public async Task<TripRiskContextResponse> GetRiskContextAsync(Guid tripId)
-        {
-            var trip = await _repo.GetFullTripAsync(tripId);
-            var response = _mapper.Map<TripRiskContextResponse>(trip);
-            return response;
-        }
+        //public async Task<TripRiskContextResponse> GetRiskContextAsync(Guid tripId)
+        //{
+        //    var trip = await _repo.GetFullTripAsync(tripId);
+        //    var response = _mapper.Map<TripRiskContextResponse>(trip);
+        //    return response;
+        //}
     }
 }

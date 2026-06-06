@@ -8,16 +8,13 @@ namespace Application.DTOs.Responses
 {
     public class ItineraryItemResponse
     {
-        public string Type { get; set; } = default!; // Breakfast, Activity, etc
-        public string PoiName { get; set; } = default!;
-        public string Address { get; set; } = default!;
-        public string LocationName { get; set; } = default!;
+        public string Type { get; set; } = string.Empty; // Breakfast, Activity, etc
+        public string PoiName { get; set; } = string.Empty;
+        public string Address { get; set; } = string.Empty;
+        public string LocationName { get; set; } = string.Empty;
         public bool IsIndoor { get; set; }
-
-        public TimeOnly StartTime { get; set; }
-        public TimeOnly EndTime { get; set; }
-        public string Period { get; set; } = default!;
-
-        public double WeatherRiskScore { get; set; }
+        public string POIImg { get; set; } = string.Empty;
+        public string? AIReason { get; set; }
+        public WeatherSnapshotDto? Weather { get; set; }
     }
 }

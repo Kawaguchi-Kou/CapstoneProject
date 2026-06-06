@@ -22,6 +22,5 @@ namespace Domain.Interfaces
         Task UpdateRangeAsync(List<ItineraryDetail> details);
 
         Task DeleteByItineraryIdAsync(Guid itineraryId);
-        Task<List<ItineraryDetail>> GetHighRiskDetailsAsync(Guid itineraryId, double threshold);
     }
 }

@@ -98,15 +98,6 @@ namespace Application.Mappings
                 .ForMember(dest => dest.PoiPreferences, opt => opt.Ignore());
             CreateMap<Location, DTOs.Responses.LocationResponse>();
 
-            //Trip Risk Profile
-            CreateMap<Trip, TripRiskContextResponse>();
-
-            CreateMap<TripSegment, SegmentRiskContextResponse>();
-
-            CreateMap<ItineraryDetail, ItineraryRiskContextResponse>()
-                .ForMember(d => d.StoredRiskScore,
-                    opt => opt.MapFrom(s => s.WeatherRiskScore));
-
             //Trip
             CreateMap<TripRequest, Trip>();
             CreateMap<Trip, TripResponse>();
@@ -161,19 +152,18 @@ namespace Application.Mappings
 
             // 🔥 DETAIL → ITEM
             CreateMap<ItineraryDetail, ItineraryItemResponse>()
-                .ForMember(dest => dest.Period, opt => opt.MapFrom(src =>
-                    src.StartTime.Hour < 11 ? "Morning" :
-                    src.StartTime.Hour < 15 ? "Noon" :
-                    "Evening"
-                ))
-
                 .ForMember(dest => dest.PoiName, opt => opt.MapFrom(src => src.POI!.Name))
+                .ForMember(dest => dest.POIImg, opt => opt.MapFrom(src => src.POI!.POIImgUrl))
                 .ForMember(dest => dest.Address, opt => opt.MapFrom(src => src.POI!.Address))
                 .ForMember(dest => dest.LocationName, opt => opt.MapFrom(src => src.POI!.Location.LocationName))
                 .ForMember(dest => dest.IsIndoor, opt => opt.MapFrom(src => src.POI!.IsIndoor))
-                .ForMember(dest => dest.StartTime, opt => opt.MapFrom(src => src.StartTime))
-                .ForMember(dest => dest.EndTime, opt => opt.MapFrom(src => src.EndTime))
-                .ForMember(dest => dest.WeatherRiskScore, opt => opt.MapFrom(src => src.WeatherRiskScore));
+                .ForMember(dest => dest.Weather, opt => opt.MapFrom(src =>
+                    new WeatherSnapshotDto
+                    {
+                        TemperatureCelsius = src.TemperatureCelsius,
+                        PrecipitationProbability = src.PrecipitationProbability,
+                        WindSpeed = src.WindSpeed
+                    }));
         }
     }
 }

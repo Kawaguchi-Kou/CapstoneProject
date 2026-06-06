@@ -23,5 +23,7 @@ namespace Domain.Interfaces
         Task<List<POI>> GetByLocationAsync(Guid locationId);
         Task<List<POI>> GetPoisByDistrictAsync(Guid locationId,
         Guid districtId);
+
+        Task<List<POI>> GetAllWithLocationDistrictAsync();
     }
 }

@@ -336,6 +336,63 @@ namespace Application.Services
             };
         }
 
+        public async Task<PagedResultResponse<PaymentResponse>> GetAllTransactionsAsync(int page = 1, int pageSize = 15, string? status = null, string? sortOrder = null)
+        {
+            page = page <= 0 ? 1 : page;
+            pageSize = pageSize <= 0 ? 15 : pageSize;
+
+            await ExpirePendingPaymentsAsync();
+
+            var totalItems = await _paymentRepository.CountAllAsync(status);
+            var payments = await _paymentRepository.GetAllPagedAsync((page - 1) * pageSize, pageSize, status, sortOrder);
+
+            var packageIds = payments.Select(p => p.PackageId).Distinct().ToList();
+            var packageTitles = new Dictionary<Guid, string>();
+            foreach (var packageId in packageIds)
+            {
+                var pkg = await _packageRepository.GetByIdAsync(packageId);
+                if (pkg != null)
+                {
+                    packageTitles[packageId] = pkg.Title;
+                }
+            }
+
+            var accountIds = payments.Select(p => p.AccountId).Distinct().ToList();
+            var accountEmails = new Dictionary<Guid, string>();
+            foreach (var accountId in accountIds)
+            {
+                var account = await _authRepository.GetByIdAsync(accountId);
+                if (account != null)
+                {
+                    accountEmails[accountId] = account.Email;
+                }
+            }
+
+            var items = payments.Select(p =>
+            {
+                var response = MapToPurchaseHistoryResponse(p);
+                if (string.IsNullOrEmpty(response.PackageTitle) && packageTitles.TryGetValue(p.PackageId, out var title))
+                {
+                    response.PackageTitle = title;
+                }
+                if (accountEmails.TryGetValue(p.AccountId, out var email))
+                {
+                    response.AccountEmail = email;
+                }
+                response.AccountId = p.AccountId;
+                return response;
+            }).ToList();
+
+            return new PagedResultResponse<PaymentResponse>
+            {
+                Items = items,
+                Page = page,
+                PageSize = pageSize,
+                TotalItems = totalItems,
+                TotalPages = totalItems == 0 ? 0 : (int)Math.Ceiling(totalItems / (double)pageSize)
+            };
+        }
+
         public async Task<int> ExpirePendingPaymentsAsync()
         {
             return await _paymentRepository.ExpirePendingPaymentsAsync(DateTime.UtcNow);

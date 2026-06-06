@@ -235,9 +235,6 @@ namespace Infrastructure.EntitiesConfigurations
 
                 entity.HasKey(d => d.DetailId);
 
-                entity.Property(d => d.WeatherRiskScore)
-                      .HasDefaultValue(0);
-
                 entity.Property(d => d.CreatedAt)
                       .HasDefaultValueSql("NOW()");
 

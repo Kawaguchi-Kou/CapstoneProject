@@ -16,10 +16,15 @@ namespace Domain.Entities
         public Guid ItineraryId { get; set; }
         public DateTime VisitDate { get; set; }
         public Guid? PoiId { get; set; }
-        public double WeatherRiskScore { get; set; }
+        public double TemperatureCelsius { get; set; }
+
+        public double PrecipitationProbability { get; set; }
+
+        public double WindSpeed { get; set; }
         public TimeOnly StartTime { get; set; }
         public TimeOnly EndTime { get; set; }
         public int DurationMinutes { get; set; }
+        public string? AIReason { get; set; }
         public DateTime RiskCalculatedAt { get; set; }
         public bool IsManualOverride { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

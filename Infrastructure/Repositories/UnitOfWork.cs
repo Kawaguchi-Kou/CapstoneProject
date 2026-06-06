@@ -39,7 +39,13 @@ namespace Infrastructure.Repositories
 
             try
             {
+                await _context.SaveChangesAsync();
                 await _transaction.CommitAsync();
+            }
+            catch
+            {
+                await _transaction.RollbackAsync();
+                throw;
             }
             finally
             {

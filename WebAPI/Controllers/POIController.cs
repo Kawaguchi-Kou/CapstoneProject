@@ -61,6 +61,15 @@ namespace WebAPI.Controllers
             }));
         }
 
+        [HttpGet("grouped")]
+        public async Task<IActionResult> GetAllGroupedPOIs()
+        {
+            var result = await _poiService
+                .GetAllGroupedPOIsAsync();
+
+            return Ok(result);
+        }
+
     }
 
 }

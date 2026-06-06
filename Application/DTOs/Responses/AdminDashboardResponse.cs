@@ -5,8 +5,8 @@ namespace Application.DTOs.Responses
     public class AdminDashboardResponse
     {
         public int TotalAccounts { get; set; }
-        public int TotalPois { get; set; }
-        public int TotalAds { get; set; }
+        public float TotalRevenue { get; set; }
+        public int ActiveSubscriptions { get; set; }
         public AccountRoleBreakdown AccountRoles { get; set; } = new AccountRoleBreakdown();
         public List<DailyAccountGrowth> AccountGrowth { get; set; } = new List<DailyAccountGrowth>();
         public List<PackagePopularity> PackagePopularity { get; set; } = new List<PackagePopularity>();

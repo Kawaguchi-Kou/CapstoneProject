@@ -11,5 +11,10 @@ namespace Domain.Interfaces
     {
         Task<List<Preference>> GetAllAsync();
         Task<List<Guid>> GetUserPreferenceIdsAsync(Guid accountId);
+        Task<Preference?> GetByIdAsync(Guid id);
+        Task<Preference?> GetByNameAsync(string name);
+        Task AddAsync(Preference preference);
+        Task UpdateAsync(Preference preference);
+        Task DeleteAsync(Preference preference);
     }
 }
