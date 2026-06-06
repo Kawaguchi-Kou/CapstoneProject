@@ -12,15 +12,18 @@ namespace Application.Services
         private readonly IUserRepository _userRepository;
         private readonly IPaymentRepository _paymentRepository;
         private readonly IAccountSubscriptionRepository _accountSubscriptionRepository;
+        private readonly IAdSubscriptionPackageRepository _packageRepository;
 
         public AdminStatisticService(
             IUserRepository userRepository,
             IPaymentRepository paymentRepository,
-            IAccountSubscriptionRepository accountSubscriptionRepository)
+            IAccountSubscriptionRepository accountSubscriptionRepository,
+            IAdSubscriptionPackageRepository packageRepository)
         {
             _userRepository = userRepository;
             _paymentRepository = paymentRepository;
             _accountSubscriptionRepository = accountSubscriptionRepository;
+            _packageRepository = packageRepository;
         }
 
         public async Task<AdminDashboardResponse> GetDashboardStatisticsAsync(string period = "daily", DateTime? startDate = null, DateTime? endDate = null)
@@ -112,8 +115,9 @@ namespace Application.Services
             var totalRevenue = payments
                 .Where(p => p.PaymentStatus == Domain.Enums.PaymentStatus.Completed)
                 .Sum(p => p.Amount);
-            var activeSubscriptions = subscriptions
-                .Count(s => s.Status == Domain.Enums.SubStatus.Active);
+            var packages = await _packageRepository.GetAllAsync();
+            var activeSubscriptions = packages
+                .Count(p => p.Status != null && p.Status.Equals("active", StringComparison.OrdinalIgnoreCase));
 
             return new AdminDashboardResponse
             {
