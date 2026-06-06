@@ -1,4 +1,4 @@
-﻿using System.Security.Claims;
+using System.Security.Claims;
 using Application.DTOs.Requests;
 using Application.DTOs.Responses;
 using Application.Interfaces;
@@ -29,10 +29,8 @@ namespace WebAPI.Controllers
         [HttpGet("recommended")]
         [Authorize]
         public async Task<IActionResult> GetRecommendedPois(
-            [FromQuery] int limit = 10)
+            [FromQuery] int? limit = null)
         {
-            //var accountId = Guid.Parse(
-            //    User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
             try
             {
                 var account = await _authService.GetCurrentAccount();
@@ -41,7 +39,11 @@ namespace WebAPI.Controllers
                 var pois = await _poiService
                     .GetAllPoisSortedByPreferenceAsync(accountId);
 
-                return Ok(pois.Take(limit));
+                if (limit.HasValue)
+                {
+                    return Ok(pois.Take(limit.Value));
+                }
+                return Ok(pois);
             }
             catch(Exception ex)
             {
